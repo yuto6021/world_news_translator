@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'country_news_screen.dart';
 import 'trending_screen.dart';
+import 'settings_screen.dart';
 import '../utils/constants.dart';
 import '../widgets/country_tab.dart';
 
@@ -12,7 +13,21 @@ class HomeScreen extends StatelessWidget {
     final TextEditingController controller = TextEditingController();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('世界のニュースを日本語で読む')),
+      appBar: AppBar(
+        title: const Text('世界のニュースを日本語で読む'),
+        actions: [
+          IconButton(
+            tooltip: '設定',
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: Row(
         children: [
           Expanded(

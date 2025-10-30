@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/home_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'services/theme_service.dart';
 
 Future<void> main() async {
   // .envファイルの読み込み（APIキーなど）
@@ -16,25 +17,31 @@ class WorldNewsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'World News Translator',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        textTheme: TextTheme(
-          titleLarge:
-              GoogleFonts.notoSans(fontSize: 20, fontWeight: FontWeight.bold),
-          titleMedium:
-              GoogleFonts.notoSans(fontSize: 16, fontWeight: FontWeight.w600),
-          bodyMedium: GoogleFonts.notoSans(fontSize: 15),
-        ),
-        cardTheme: CardTheme(
-          elevation: 2,
-          margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-        ),
-        appBarTheme: const AppBarTheme(centerTitle: true),
-      ),
-      home: const HomeScreen(),
+    return ValueListenableBuilder(
+      valueListenable: ThemeService.instance.themeMode,
+      builder: (context, ThemeMode mode, _) {
+        return MaterialApp(
+          themeMode: mode,
+          title: 'World News Translator',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.indigo,
+            textTheme: TextTheme(
+              titleLarge: GoogleFonts.notoSans(
+                  fontSize: 20, fontWeight: FontWeight.bold),
+              titleMedium: GoogleFonts.notoSans(
+                  fontSize: 16, fontWeight: FontWeight.w600),
+              bodyMedium: GoogleFonts.notoSans(fontSize: 15),
+            ),
+            cardTheme: CardTheme(
+              elevation: 2,
+              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+            ),
+            appBarTheme: const AppBarTheme(centerTitle: true),
+          ),
+          home: const HomeScreen(),
+        );
+      },
     );
   }
 }

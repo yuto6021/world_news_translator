@@ -1,0 +1,22 @@
+// 国名とNewsAPI用の国コードのマップ
+const Map<String, String> countryCodes = {
+  'japan': 'jp',
+  'united states': 'us',
+  'france': 'fr',
+  'germany': 'de',
+  'brazil': 'br',
+  'mexico': 'mx',
+  'china': 'cn',
+  'south korea': 'kr',
+  'india': 'in',
+  'canada': 'ca',
+  'australia': 'au',
+  'russia': 'ru',
+  'ukraine': 'ua',
+  'italy': 'it',
+  'spain': 'es',
+  'argentina': 'ar',
+  'israel': 'il',
+  'cuba': 'cu',
+  'united kingdom': 'gb',
+};

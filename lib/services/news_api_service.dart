@@ -25,4 +25,14 @@ class NewsApiService {
     final data = jsonDecode(response.body);
     return (data['articles'] as List).map((e) => Article.fromJson(e)).toList();
   }
+
+  // keyword search across headlines (q parameter)
+  static Future<List<Article>> searchArticles(String query) async {
+    final uriStr =
+        '$baseUrl?q=${Uri.encodeQueryComponent(query)}&apiKey=$apiKey';
+    final response = await http.get(Uri.parse(uriStr));
+    final data = jsonDecode(response.body);
+    if (data == null || data['articles'] == null) return [];
+    return (data['articles'] as List).map((e) => Article.fromJson(e)).toList();
+  }
 }

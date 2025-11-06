@@ -5,9 +5,15 @@ class TranslationService {
   static const String deeplKey = '0d528a61-d312-4a5e-9096-cbbddbb17eb0:fx';
   static const String deeplUrl = 'https://api-free.deepl.com/v2/translate';
 
+  // simple in-memory cache to avoid duplicate DeepL calls within a session
+  static final Map<String, String> _cache = {};
+
   static Future<String> translateToJapanese(String text) async {
     // 早期リターン: 空文字は翻訳リクエスト不要
     if (text.trim().isEmpty) return '（本文なし）';
+
+    // return cached translation when available
+    if (_cache.containsKey(text)) return _cache[text]!;
 
     try {
       final response = await http.post(
@@ -25,12 +31,19 @@ class TranslationService {
         return '（翻訳サービスエラー:${response.statusCode}）';
       }
       final data = jsonDecode(response.body);
-      return (data['translations'] != null && data['translations'].isNotEmpty)
-          ? data['translations'][0]['text']
-          : '（翻訳結果なし）';
+      final result =
+          (data['translations'] != null && data['translations'].isNotEmpty)
+              ? data['translations'][0]['text']
+              : '（翻訳結果なし）';
+      _cache[text] = result;
+      return result;
     } catch (e) {
       // ネットワークや解析エラーを吸収して UI を壊さない
       return '（翻訳できません）';
     }
+  }
+
+  static void clearCache() {
+    _cache.clear();
   }
 }

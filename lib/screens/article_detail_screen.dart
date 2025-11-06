@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 import '../models/article.dart';
 import '../services/translation_service.dart';
 
@@ -48,6 +49,15 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
             icon: const Icon(Icons.open_in_browser),
             onPressed: () => launchUrl(Uri.parse(widget.article.url)),
             tooltip: '原文をブラウザで開く',
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: widget.article.url));
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('記事のリンクをコピーしました')));
+            },
+            tooltip: 'リンクをコピー',
           ),
         ],
       ),

@@ -38,6 +38,8 @@ dependencies:
   flutter_riverpod: ^2.6.1
   intl: ^0.20.2
   url_launcher: ^6.2.1
+  shared_preferences: ^2.2.2
+  font_awesome_flutter: 10.5.0 # SNSアイコン用
   cached_network_image: ^3.4.0
   flutter_hooks: ^0.20.5
   google_fonts: ^6.3.0

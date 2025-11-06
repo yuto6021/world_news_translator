@@ -23,7 +23,8 @@ class _NewsCardState extends State<NewsCard> {
   void _openDetail() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ArticleDetailScreen(article: widget.article)),
+      MaterialPageRoute(
+          builder: (_) => ArticleDetailScreen(article: widget.article)),
     );
   }
 
@@ -33,12 +34,8 @@ class _NewsCardState extends State<NewsCard> {
       valueListenable: UIService.instance.hoverEnabled,
       builder: (context, hoverEnabled, _) {
         return MouseRegion(
-          onEnter: hoverEnabled
-              ? (_) => setState(() => _hovered = true)
-              : null,
-          onExit: hoverEnabled
-              ? (_) => setState(() => _hovered = false)
-              : null,
+          onEnter: hoverEnabled ? (_) => setState(() => _hovered = true) : null,
+          onExit: hoverEnabled ? (_) => setState(() => _hovered = false) : null,
           cursor: SystemMouseCursors.click,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
@@ -122,7 +119,8 @@ class _NewsCardState extends State<NewsCard> {
                                 color: isFav ? Colors.redAccent : Colors.grey,
                               ),
                               onPressed: () {
-                                FavoritesService.instance.toggleFavorite(widget.article);
+                                FavoritesService.instance
+                                    .toggleFavorite(widget.article);
                               },
                             );
                           },

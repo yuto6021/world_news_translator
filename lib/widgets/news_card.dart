@@ -4,14 +4,15 @@ import '../models/article.dart';
 import '../screens/article_detail_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/favorites_service.dart';
+import '../services/translation_service.dart';
+import '../services/app_settings_service.dart';
 import '../services/ui_service.dart';
 
 class NewsCard extends StatefulWidget {
   final Article article;
-  final String translatedText;
+  final String? translatedText;
 
-  const NewsCard(
-      {super.key, required this.article, required this.translatedText});
+  const NewsCard({super.key, required this.article, this.translatedText});
 
   @override
   State<NewsCard> createState() => _NewsCardState();
@@ -19,6 +20,40 @@ class NewsCard extends StatefulWidget {
 
 class _NewsCardState extends State<NewsCard> {
   bool _hovered = false;
+  String? _localTranslated;
+  bool _loadingTranslation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // If caller didn't provide a translatedText, fetch one lazily (respecting user settings)
+    if ((widget.translatedText == null || widget.translatedText!.isEmpty) &&
+        AppSettingsService.instance.autoTranslate.value) {
+      _fetchLocalTranslation();
+    }
+    AppSettingsService.instance.autoTranslate.addListener(() {
+      if (AppSettingsService.instance.autoTranslate.value &&
+          (widget.translatedText == null || widget.translatedText!.isEmpty) &&
+          _localTranslated == null &&
+          !_loadingTranslation) {
+        _fetchLocalTranslation();
+      }
+    });
+  }
+
+  Future<void> _fetchLocalTranslation() async {
+    setState(() => _loadingTranslation = true);
+    final textForTranslation = (widget.article.description != null &&
+            widget.article.description!.trim().isNotEmpty)
+        ? widget.article.description!
+        : widget.article.title;
+    final t = await TranslationService.translateToJapanese(textForTranslation);
+    if (!mounted) return;
+    setState(() {
+      _localTranslated = t;
+      _loadingTranslation = false;
+    });
+  }
 
   void _openDetail() {
     Navigator.push(
@@ -97,7 +132,13 @@ class _NewsCardState extends State<NewsCard> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            widget.translatedText,
+                            (widget.translatedText != null &&
+                                    widget.translatedText!.isNotEmpty)
+                                ? widget.translatedText!
+                                : (_localTranslated ??
+                                    (_loadingTranslation
+                                        ? '翻訳中...'
+                                        : '（翻訳なし）')),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),

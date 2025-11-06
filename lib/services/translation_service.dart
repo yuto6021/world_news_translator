@@ -52,8 +52,8 @@ class TranslationService {
     if (text.trim().isEmpty) return '（本文なし）';
     if (_cache.containsKey(text)) return _cache[text]!;
     // ユーザーが DeepL を優先しない設定の場合、簡易翻訳をすぐ返す
-    debugPrint(
-        '[TranslationService] translateToJapanese: text="${text.length > 120 ? text.substring(0, 120) + '...' : text}"');
+    final snippet = text.length > 120 ? '${text.substring(0, 120)}...' : text;
+    debugPrint('[TranslationService] translateToJapanese: text="$snippet"');
     if (!AppSettingsService.instance.preferDeepl.value) {
       debugPrint(
           '[TranslationService] preferDeepl is false: using pseudo-translation');
@@ -140,18 +140,18 @@ class TranslationService {
         }
       }
       if (worked) {
-        _cache[text] = out + '（簡易翻訳）';
-        return out + '（簡易翻訳）';
+        _cache[text] = '${out}（簡易翻訳）';
+        return '${out}（簡易翻訳）';
       }
 
       // 本当に置換ができない場合、長い文は先頭だけ切って注記を付与
       if (text.length > 160) {
         return '${text.substring(0, 157)}...（原文/簡易表示）';
       }
-      return '$text（未翻訳・簡易表示）';
+      return '${text}（未翻訳・簡易表示）';
     }
 
-    return '$result（簡易翻訳）';
+    return '${result}（簡易翻訳）';
   }
 
   static void clearCache() {

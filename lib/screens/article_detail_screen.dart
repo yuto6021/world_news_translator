@@ -143,10 +143,12 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                     lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
                   );
                   if (date == null) return;
+                  if (!mounted) return;
                   final time = await showTimePicker(
                     context: context,
-                    initialTime: TimeOfDay(hour: 12, minute: 0),
+                    initialTime: const TimeOfDay(hour: 12, minute: 0),
                   );
+                  if (!mounted) return;
                   final unlock = DateTime(
                     date.year,
                     date.month,
@@ -157,6 +159,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   final insight = NewsInsight.fromArticle(widget.article);
                   await TimeCapsuleService.instance
                       .addToCapsule(insight, unlock);
+                  if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('タイムカプセルに保存しました')),
                   );

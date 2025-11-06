@@ -171,8 +171,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             itemBuilder: (context, idx) {
                               final article = articles[idx];
                               // 翻訳は記事詳細で遅延取得するシンプルなフローにする
-                              return NewsCard(
-                                  article: article, translatedText: '');
+                              return NewsCard(article: article);
                             },
                           ),
                         );

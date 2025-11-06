@@ -69,6 +69,7 @@ flutter:
   # Add .env so flutter_dotenv can load it on web (assets/.env)
   assets:
     - .env
+    - assets/translation_dict.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

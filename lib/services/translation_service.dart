@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'app_settings_service.dart';
 
@@ -372,9 +373,45 @@ class TranslationService {
     'appeals process': '上訴手続き',
   };
 
+  static bool _dictLoadedFromAsset = false;
+
+  static Future<void> _loadDictFromAsset() async {
+    if (_dictLoadedFromAsset) return;
+    try {
+      final jsonStr =
+          await rootBundle.loadString('assets/translation_dict.json');
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      // Merge, but keep existing keys (inline) as defaults; asset can override if desired
+      data.forEach((k, v) {
+        if (v != null) {
+          _tinyDict[k] = v.toString();
+        }
+      });
+      _dictLoadedFromAsset = true;
+      debugPrint(
+          '[TranslationService] Loaded translation_dict.json (${data.length} entries)');
+    } catch (e) {
+      debugPrint(
+          '[TranslationService] No asset dict loaded or parse error: $e');
+      // Not fatal — keep inline dictionary
+    }
+  }
+
   static Future<String> translateToJapanese(String text) async {
+    // Try to load external dictionary (if present) once on first use
+    await _loadDictFromAsset();
     if (text.trim().isEmpty) return '（本文なし）';
     if (_cache.containsKey(text)) return _cache[text]!;
+    // Web (ブラウザ) では DeepL API への直接呼び出しは CORS により失敗することが多い。
+    // ブラウザ実行時は自動的に簡易翻訳にフォールバックして安定させる。
+    if (kIsWeb) {
+      debugPrint(
+          '[TranslationService] Running on web: skipping DeepL (use proxy to enable)');
+      final fallback = _pseudoTranslate(text);
+      _cache[text] = fallback;
+      return fallback;
+    }
+
     // ユーザーが DeepL を優先しない設定の場合、簡易翻訳をすぐ返す
     final snippet = text.length > 120 ? '${text.substring(0, 120)}...' : text;
     debugPrint('[TranslationService] translateToJapanese: text="$snippet"');

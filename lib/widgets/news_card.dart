@@ -209,7 +209,6 @@ class _NewsCardState extends State<NewsCard> {
                           tooltip: '要約を見る',
                           icon: const Icon(Icons.subject, color: Colors.indigo),
                           onPressed: () async {
-                            final dialogContext = context;
                             final excerpt =
                                 (widget.article.description != null &&
                                         widget.article.description!.isNotEmpty)
@@ -226,8 +225,9 @@ class _NewsCardState extends State<NewsCard> {
                                       short);
                             }
                             if (!mounted) return;
+                            // ignore: use_build_context_synchronously
                             showDialog(
-                              context: dialogContext,
+                              context: context,
                               builder: (ctx) => AlertDialog(
                                 title: const Text('要約'),
                                 content: SingleChildScrollView(

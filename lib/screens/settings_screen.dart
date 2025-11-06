@@ -31,7 +31,7 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     ElevatedButton.icon(
                       onPressed: () {
-                        ThemeService.instance.themeMode.value = ThemeMode.light;
+                        ThemeService.instance.setThemeMode(ThemeMode.light);
                       },
                       icon: const Icon(Icons.wb_sunny),
                       label: const Text('ライト'),
@@ -39,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
                       onPressed: () {
-                        ThemeService.instance.themeMode.value = ThemeMode.dark;
+                        ThemeService.instance.setThemeMode(ThemeMode.dark);
                       },
                       icon: const Icon(Icons.dark_mode),
                       label: const Text('ダーク'),
@@ -47,8 +47,7 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
                       onPressed: () {
-                        ThemeService.instance.themeMode.value =
-                            ThemeMode.system;
+                        ThemeService.instance.setThemeMode(ThemeMode.system);
                       },
                       icon: const Icon(Icons.phone_iphone),
                       label: const Text('システム'),

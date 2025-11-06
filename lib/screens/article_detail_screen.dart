@@ -136,6 +136,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
               ElevatedButton.icon(
                 onPressed: () async {
                   // 解禁日時を選択
+                  final messenger = ScaffoldMessenger.of(context);
                   final date = await showDatePicker(
                     context: context,
                     initialDate: DateTime.now().add(const Duration(days: 7)),
@@ -160,7 +161,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   await TimeCapsuleService.instance
                       .addToCapsule(insight, unlock);
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     const SnackBar(content: Text('タイムカプセルに保存しました')),
                   );
                 },

@@ -80,7 +80,7 @@ class _NewsCardState extends State<NewsCard> {
               borderRadius: BorderRadius.circular(8),
               boxShadow: _hovered
                   ? [
-                      BoxShadow(
+                      const BoxShadow(
                         color: Colors.black26,
                         blurRadius: 10,
                         offset: Offset(0, 4),
@@ -96,22 +96,19 @@ class _NewsCardState extends State<NewsCard> {
                 child: Row(
                   children: [
                     if (widget.article.urlToImage != null)
-                      Hero(
-                        tag: widget.article.url,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: CachedNetworkImage(
-                            imageUrl: widget.article.urlToImage!,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: CachedNetworkImage(
+                          imageUrl: widget.article.urlToImage!,
+                          width: 110,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                              width: 110, color: Colors.grey.shade200),
+                          errorWidget: (context, url, error) => Container(
                             width: 110,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                                width: 110, color: Colors.grey.shade200),
-                            errorWidget: (context, url, error) => Container(
-                              width: 110,
-                              color: Colors.grey.shade200,
-                              child: const Icon(Icons.broken_image),
-                            ),
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.broken_image),
                           ),
                         ),
                       ),
@@ -130,7 +127,36 @@ class _NewsCardState extends State<NewsCard> {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          // 翻訳ステータスバッジ
                           const SizedBox(height: 6),
+                          Builder(builder: (ctx) {
+                            final effective = (widget.translatedText != null &&
+                                    widget.translatedText!.isNotEmpty)
+                                ? widget.translatedText
+                                : _localTranslated;
+                            if (_loadingTranslation) {
+                              return Row(children: [
+                                Chip(
+                                    label: Text('翻訳中...'),
+                                    visualDensity: VisualDensity.compact),
+                                const SizedBox(width: 6),
+                              ]);
+                            }
+                            if (effective != null) {
+                              final isPseudo = effective.contains('簡易翻訳') ||
+                                  effective.contains('未翻訳');
+                              return Row(children: [
+                                Chip(
+                                    label: Text(isPseudo ? '簡易訳' : '翻訳済み'),
+                                    backgroundColor: isPseudo
+                                        ? Colors.orange.shade100
+                                        : Colors.green.shade100,
+                                    visualDensity: VisualDensity.compact),
+                                const SizedBox(width: 6),
+                              ]);
+                            }
+                            return const SizedBox.shrink();
+                          }),
                           Text(
                             (widget.translatedText != null &&
                                     widget.translatedText!.isNotEmpty)
@@ -163,6 +189,67 @@ class _NewsCardState extends State<NewsCard> {
                                 FavoritesService.instance
                                     .toggleFavorite(widget.article);
                               },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 4),
+                        // 手動翻訳ボタン: 自動翻訳がオフでも一覧から翻訳を取得できる
+                        IconButton(
+                          tooltip: '翻訳を取得',
+                          icon:
+                              const Icon(Icons.translate, color: Colors.indigo),
+                          onPressed: _loadingTranslation
+                              ? null
+                              : () async {
+                                  await _fetchLocalTranslation();
+                                },
+                        ),
+                        // クイック要約ボタン（簡易表示）
+                        IconButton(
+                          tooltip: '要約を見る',
+                          icon: const Icon(Icons.subject, color: Colors.indigo),
+                          onPressed: () async {
+                            final dialogContext = context;
+                            final excerpt =
+                                (widget.article.description != null &&
+                                        widget.article.description!.isNotEmpty)
+                                    ? widget.article.description!
+                                    : widget.article.title;
+                            final short = excerpt.length > 240
+                                ? '${excerpt.substring(0, 237)}...'
+                                : excerpt;
+                            String translated = '';
+                            if (AppSettingsService
+                                .instance.autoTranslate.value) {
+                              translated =
+                                  await TranslationService.translateToJapanese(
+                                      short);
+                            }
+                            if (!mounted) return;
+                            showDialog(
+                              context: dialogContext,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('要約'),
+                                content: SingleChildScrollView(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(short),
+                                      if (translated.isNotEmpty) ...[
+                                        const SizedBox(height: 12),
+                                        const Divider(),
+                                        Text(translated),
+                                      ]
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () => Navigator.pop(ctx),
+                                      child: const Text('閉じる')),
+                                ],
+                              ),
                             );
                           },
                         ),

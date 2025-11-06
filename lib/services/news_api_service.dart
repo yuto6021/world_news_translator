@@ -18,6 +18,7 @@ class NewsApiService {
   // null の場合は country を指定せず取得します（API のデフォルト動作に委ねる）。
   static Future<List<Article>> fetchTrendingArticles(
       [String? countryCode]) async {
+    // デフォルトは Global（country パラメータを送らない）
     final uriStr = (countryCode != null && countryCode.isNotEmpty)
         ? '$baseUrl?category=general&country=$countryCode&apiKey=$apiKey'
         : '$baseUrl?category=general&apiKey=$apiKey';

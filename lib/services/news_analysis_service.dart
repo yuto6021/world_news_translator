@@ -9,8 +9,7 @@ class NewsAnalysisService {
 
   NewsAnalysisService._();
 
-  // この例では簡易的なルールベースの分析を行います
-  // 実際のアプリではより高度なAIサービスを利用することを想定
+  // 簡易ルールベースの分析。記事が英語か日本語かを自動判定して適切な処理を行う。
   Future<NewsAnalysis> analyzeContent(String content) async {
     if (content.trim().isEmpty) {
       return NewsAnalysis(
@@ -21,22 +20,40 @@ class NewsAnalysisService {
       );
     }
 
+    final isEnglish = _isProbablyEnglish(content);
+
     // 感情分析（簡易版）
     String mood = 'neutral';
-    if (content.contains(RegExp(r'成功|達成|勝利|発見|革新|期待'))) {
-      mood = 'positive';
-    } else if (content.contains(RegExp(r'失敗|敗北|事故|災害|危機'))) {
-      mood = 'negative';
-    } else if (content.contains(RegExp(r'驚き|衝撃|急進|革命|爆発的'))) {
-      mood = 'exciting';
+    if (isEnglish) {
+      if (content.contains(RegExp(
+          r'success|achieve|victory|discover|innovation|hope|positive|progress|agreement|collaboration|breakthrough',
+          caseSensitive: false))) {
+        mood = 'positive';
+      } else if (content.contains(RegExp(
+          r'fail|defeat|accident|disaster|crisis|death|damage|tragedy|conflict|war',
+          caseSensitive: false))) {
+        mood = 'negative';
+      } else if (content.contains(RegExp(
+          r'surprise|shock|radical|revolution|explosive|dramatic|urgent|emergency|breaking',
+          caseSensitive: false))) {
+        mood = 'exciting';
+      }
+    } else {
+      if (content.contains(RegExp(r'成功|達成|勝利|発見|革新|期待|前進|合意|協力|進展'))) {
+        mood = 'positive';
+      } else if (content.contains(RegExp(r'失敗|敗北|事故|災害|危機|死亡|被害|悲劇|紛争|戦争'))) {
+        mood = 'negative';
+      } else if (content.contains(RegExp(r'驚き|衝撃|急進|革命|爆発的|劇的|緊急|速報'))) {
+        mood = 'exciting';
+      }
     }
 
-    // キーワード抽出（簡易版）
-    final keywords = _extractKeywords(content);
+    // キーワード抽出
+    final keywords = _extractKeywords(content, isEnglish: isEnglish);
 
-    // 要約（簡易版）
+    // 要約（簡易）: 先頭を切り取る
     final summary =
-        content.length > 100 ? '${content.substring(0, 97)}...' : content;
+        content.length > 120 ? '${content.substring(0, 117)}...' : content;
 
     return NewsAnalysis(
       summary: summary,
@@ -46,16 +63,72 @@ class NewsAnalysisService {
     );
   }
 
-  List<String> _extractKeywords(String content) {
+  // 英語かどうかを簡易判定（アルファベット文字の割合 vs 日本語文字）
+  bool _isProbablyEnglish(String content) {
+    final engMatches = RegExp(r'[A-Za-z]').allMatches(content).length;
+    final jpMatches = RegExp(r'[ぁ-んァ-ン一-龥]').allMatches(content).length;
+    return engMatches >= jpMatches;
+  }
+
+  List<String> _extractKeywords(String content, {required bool isEnglish}) {
+    if (isEnglish) {
+      // 英語用の簡易ストップワード
+      const englishStop = {
+        'the',
+        'is',
+        'at',
+        'which',
+        'on',
+        'a',
+        'an',
+        'and',
+        'or',
+        'but',
+        'in',
+        'into',
+        'to',
+        'for',
+        'with',
+        'by',
+        'of',
+        'as',
+        'from',
+        'that',
+        'this',
+        'are',
+        'was',
+        'were',
+        'be',
+        'has',
+        'have'
+      };
+
+      final words = content
+          .toLowerCase()
+          .split(RegExp(r"[^a-zA-Z]+"))
+          .where((w) => w.length > 2 && !englishStop.contains(w))
+          .toList();
+
+      // 上位のユニークな語を返す
+      final seen = <String>{};
+      final out = <String>[];
+      for (final w in words) {
+        if (seen.add(w)) out.add(w);
+        if (out.length >= 5) break;
+      }
+      return out;
+    }
+
+    // 日本語: 既存の実装を活かす
     final words = content
-        .split(RegExp(r'[\s,\.。、]+'))
+        .split(RegExp(r'[\\s,\\.。、]+'))
         .where((word) => word.length >= 2 && !_stopWords.contains(word))
         .toList();
 
     return words.take(5).toList();
   }
 
-  // 簡易的なストップワード
+  // 簡易的なストップワード（日本語）
   static const _stopWords = {
     'これ',
     'それ',
@@ -95,7 +168,7 @@ class NewsAnalysisService {
     }
 
     // キーワード数に基づくスコア
-    score += news.analysis!.keywords.length * 0.1; // 最大0.5
+    score += (news.analysis!.keywords.length * 0.08).clamp(0.0, 0.4);
 
     // 新しさによるボーナス（24時間以内）
     final hoursAgo =
@@ -104,6 +177,6 @@ class NewsAnalysisService {
       score += (24 - hoursAgo) * 0.01; // 最大0.24
     }
 
-    return score.clamp(0.0, 1.0); // 0-1の範囲に収める
+    return score.clamp(0.0, 1.0);
   }
 }

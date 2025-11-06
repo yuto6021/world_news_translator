@@ -4,6 +4,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import '../models/article.dart';
 import '../services/translation_service.dart';
+import '../services/app_settings_service.dart';
+import '../services/time_capsule_service.dart';
+import '../models/news_insight.dart';
 
 class ArticleDetailScreen extends StatefulWidget {
   final Article article;
@@ -21,7 +24,19 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchTranslation();
+    // 自動翻訳が有効な場合のみ翻訳を行う
+    if (AppSettingsService.instance.autoTranslate.value) {
+      _fetchTranslation();
+    } else {
+      // ただし、将来切り替えた場合に対応するために listener を残しておく
+      AppSettingsService.instance.autoTranslate.addListener(() {
+        if (AppSettingsService.instance.autoTranslate.value &&
+            _translated == null &&
+            !_loading) {
+          _fetchTranslation();
+        }
+      });
+    }
   }
 
   Future<void> _fetchTranslation() async {
@@ -116,6 +131,38 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(_translated ?? (_loading ? '翻訳中...' : '（翻訳なし）')),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  // 解禁日時を選択
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now().add(const Duration(days: 7)),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                  );
+                  if (date == null) return;
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay(hour: 12, minute: 0),
+                  );
+                  final unlock = DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    time?.hour ?? 12,
+                    time?.minute ?? 0,
+                  );
+                  final insight = NewsInsight.fromArticle(widget.article);
+                  await TimeCapsuleService.instance
+                      .addToCapsule(insight, unlock);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('タイムカプセルに保存しました')),
+                  );
+                },
+                icon: const Icon(Icons.hourglass_bottom),
+                label: const Text('タイムカプセルに保存'),
               ),
             ],
           ),

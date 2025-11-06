@@ -3,12 +3,17 @@ import '../services/theme_service.dart';
 import '../services/ui_service.dart';
 import '../services/favorites_service.dart';
 import '../services/translation_service.dart';
+import '../services/app_settings_service.dart';
+import 'guide_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // 非同期で設定をロード（軽量なので unawaited）
+    AppSettingsService.instance.load();
+
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
       body: Padding(
@@ -69,6 +74,44 @@ class SettingsScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 12),
+
+            // 自動翻訳トグル
+            ValueListenableBuilder<bool>(
+              valueListenable: AppSettingsService.instance.autoTranslate,
+              builder: (context, enabled, _) {
+                return SwitchListTile(
+                  title: const Text('自動翻訳を有効にする'),
+                  subtitle: const Text('記事詳細で自動的に日本語翻訳を取得します'),
+                  value: enabled,
+                  onChanged: (v) =>
+                      AppSettingsService.instance.setAutoTranslate(v),
+                );
+              },
+            ),
+
+            // DeepL優先トグル
+            ValueListenableBuilder<bool>(
+              valueListenable: AppSettingsService.instance.preferDeepl,
+              builder: (context, prefer, _) {
+                return SwitchListTile(
+                  title: const Text('DeepL を優先して使用する'),
+                  subtitle: const Text('DeepL 利用を優先します（利用不可時は簡易翻訳にフォールバック）'),
+                  value: prefer,
+                  onChanged: (v) =>
+                      AppSettingsService.instance.setPreferDeepl(v),
+                );
+              },
+            ),
+
+            const SizedBox(height: 8),
+
+            ListTile(
+              leading: const Icon(Icons.help_outline),
+              title: const Text('使い方ガイド'),
+              subtitle: const Text('アプリの各機能の簡単な説明を見る'),
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const GuideScreen())),
+            ),
 
             // お気に入りのクリア
             ElevatedButton.icon(

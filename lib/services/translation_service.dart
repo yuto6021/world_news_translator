@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'app_settings_service.dart';
 
 class TranslationService {
@@ -448,8 +449,10 @@ class TranslationService {
       _activeRequests++;
       try {
         debugPrint('[TranslationService] Calling DeepL API (throttled)...');
+        final proxy = dotenv.env['DEEPL_PROXY'];
+        final urlToUse = (proxy != null && proxy.isNotEmpty) ? proxy : deeplUrl;
         final response = await http.post(
-          Uri.parse(deeplUrl),
+          Uri.parse(urlToUse),
           body: {
             'auth_key': deeplKey,
             'text': text,

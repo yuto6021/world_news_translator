@@ -25,7 +25,9 @@ class WorldNewsApp extends StatelessWidget {
           title: 'World News Translator',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
+            brightness: Brightness.light,
             primarySwatch: Colors.indigo,
+            scaffoldBackgroundColor: Colors.white,
             textTheme: TextTheme(
               titleLarge: GoogleFonts.notoSans(
                   fontSize: 20, fontWeight: FontWeight.bold),
@@ -37,7 +39,40 @@ class WorldNewsApp extends StatelessWidget {
               elevation: 2,
               margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
             ),
-            appBarTheme: const AppBarTheme(centerTitle: true),
+            appBarTheme: const AppBarTheme(
+              centerTitle: true,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.indigo,
+              elevation: 0,
+            ),
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            primarySwatch: Colors.indigo,
+            scaffoldBackgroundColor: Color(0xFF1A1A1A),
+            cardColor: Color(0xFF242424),
+            textTheme: TextTheme(
+              titleLarge: GoogleFonts.notoSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
+              titleMedium: GoogleFonts.notoSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white),
+              bodyMedium: GoogleFonts.notoSans(
+                  fontSize: 15, color: Colors.grey.shade300),
+            ),
+            cardTheme: CardTheme(
+              elevation: 2,
+              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+            ),
+            appBarTheme: AppBarTheme(
+              centerTitle: true,
+              backgroundColor: Color(0xFF242424),
+              foregroundColor: Colors.grey.shade100,
+              elevation: 0,
+            ),
           ),
           home: const HomeScreen(),
         );

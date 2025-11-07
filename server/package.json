@@ -1,0 +1,14 @@
+{
+    "name": "deepL-proxy-sample",
+    "version": "0.1.0",
+    "description": "Simple Express proxy to forward DeepL requests from web clients (store API key server-side)",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "node-fetch": "^2.6.7",
+        "dotenv": "^16.0.3"
+    }
+}

@@ -30,6 +30,18 @@ class SettingsScreen extends StatelessWidget {
                 return Row(
                   children: [
                     ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            ThemeService.instance.themeMode.value ==
+                                    ThemeMode.light
+                                ? Colors.indigo
+                                : null,
+                        foregroundColor:
+                            ThemeService.instance.themeMode.value ==
+                                    ThemeMode.light
+                                ? Colors.white
+                                : null,
+                      ),
                       onPressed: () {
                         ThemeService.instance.setThemeMode(ThemeMode.light);
                       },
@@ -38,6 +50,18 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            ThemeService.instance.themeMode.value ==
+                                    ThemeMode.dark
+                                ? Colors.indigo
+                                : null,
+                        foregroundColor:
+                            ThemeService.instance.themeMode.value ==
+                                    ThemeMode.dark
+                                ? Colors.white
+                                : null,
+                      ),
                       onPressed: () {
                         ThemeService.instance.setThemeMode(ThemeMode.dark);
                       },
@@ -46,6 +70,18 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            ThemeService.instance.themeMode.value ==
+                                    ThemeMode.system
+                                ? Colors.indigo
+                                : null,
+                        foregroundColor:
+                            ThemeService.instance.themeMode.value ==
+                                    ThemeMode.system
+                                ? Colors.white
+                                : null,
+                      ),
                       onPressed: () {
                         ThemeService.instance.setThemeMode(ThemeMode.system);
                       },
@@ -98,6 +134,56 @@ class SettingsScreen extends StatelessWidget {
                   value: prefer,
                   onChanged: (v) =>
                       AppSettingsService.instance.setPreferDeepl(v),
+                );
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            // カード表示モード
+            ValueListenableBuilder<String>(
+              valueListenable: UIService.instance.cardMode,
+              builder: (context, mode, _) {
+                return Row(
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: mode == 'list' ? Colors.indigo : null,
+                        foregroundColor: mode == 'list' ? Colors.white : null,
+                      ),
+                      onPressed: () =>
+                          UIService.instance.cardMode.value = 'list',
+                      child: const Text('リスト表示'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            mode == 'overlay' ? Colors.indigo : null,
+                        foregroundColor:
+                            mode == 'overlay' ? Colors.white : null,
+                      ),
+                      onPressed: () =>
+                          UIService.instance.cardMode.value = 'overlay',
+                      child: const Text('画像オーバーレイ'),
+                    ),
+                  ],
+                );
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            // ヒットターゲット拡大トグル
+            ValueListenableBuilder<bool>(
+              valueListenable: UIService.instance.expandHitTargets,
+              builder: (context, expand, _) {
+                return SwitchListTile(
+                  title: const Text('操作領域を広げる'),
+                  subtitle: const Text('アイコンのタップ領域を広げて操作しやすくします'),
+                  value: expand,
+                  onChanged: (v) =>
+                      UIService.instance.expandHitTargets.value = v,
                 );
               },
             ),

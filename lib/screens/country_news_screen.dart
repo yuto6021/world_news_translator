@@ -80,14 +80,14 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                   await (_translationsFuture ?? Future.value([]));
                 },
                 child: ListView.builder(
-                  itemCount: articles.length + 1, // +1 for headline banner
+                  itemCount: articles.length,
                   itemBuilder: (context, index) {
                     if (index == 0) {
                       // 先頭記事をバナー表示
-                      final firstArticle = articles.first;
+                      final firstArticle = articles[0];
                       final firstTranslation =
                           translations != null && translations.isNotEmpty
-                              ? translations.first
+                              ? translations[0]
                               : (tSnapshot.connectionState ==
                                       ConnectionState.waiting
                                   ? '翻訳中...'
@@ -96,10 +96,11 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                           article: firstArticle,
                           translatedText: firstTranslation);
                     }
-                    final article = articles[index - 1];
+                    // items after the banner should be different articles
+                    final article = articles[index];
                     final translated = (translations != null &&
-                            translations.length >= index)
-                        ? translations[index - 1]
+                            translations.length > index)
+                        ? translations[index]
                         : (tSnapshot.connectionState == ConnectionState.waiting
                             ? '翻訳中...'
                             : '（翻訳なし）');

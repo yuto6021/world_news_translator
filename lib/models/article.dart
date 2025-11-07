@@ -3,12 +3,15 @@ class Article {
   final String? description;
   final String url;
   final String? urlToImage;
+  final double? importance; // 重要度スコア
 
-  Article(
-      {required this.title,
-      this.description,
-      required this.url,
-      this.urlToImage});
+  Article({
+    required this.title,
+    this.description,
+    required this.url,
+    this.urlToImage,
+    this.importance,
+  });
 
   factory Article.fromJson(Map<String, dynamic> json) {
     return Article(
@@ -16,6 +19,7 @@ class Article {
       description: json['description'],
       url: json['url'] ?? '',
       urlToImage: json['urlToImage'],
+      importance: json['importance']?.toDouble() ?? 0.5,
     );
   }
 
@@ -25,6 +29,7 @@ class Article {
       'description': description,
       'url': url,
       'urlToImage': urlToImage,
+      'importance': importance,
     };
   }
 }

@@ -36,4 +36,19 @@ class NewsApiService {
     if (data == null || data['articles'] == null) return [];
     return (data['articles'] as List).map((e) => Article.fromJson(e)).toList();
   }
+
+  // 重要なトップニュースを取得
+  Future<List<Article>> getTopHeadlines() async {
+    const uriStr = '$baseUrl?language=en&pageSize=10&apiKey=$apiKey';
+    final response = await http.get(Uri.parse(uriStr));
+    final data = jsonDecode(response.body);
+    if (data == null || data['articles'] == null) return [];
+    final articles = (data['articles'] as List)
+        .map((e) => Article.fromJson(e))
+        .where((article) => article.urlToImage != null) // 画像のある記事のみ
+        .toList();
+    articles
+        .sort((a, b) => (b.importance ?? 0.5).compareTo(a.importance ?? 0.5));
+    return articles;
+  }
 }

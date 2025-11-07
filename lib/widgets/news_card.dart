@@ -25,6 +25,22 @@ class _NewsCardState extends State<NewsCard> {
   bool _loadingTranslation = false;
   bool _visible = false;
 
+  Color _getImportanceColor(double importance) {
+    if (importance >= 0.8) return Colors.red.shade700;
+    if (importance >= 0.6) return Colors.orange.shade700;
+    if (importance >= 0.4) return Colors.blue.shade700;
+    if (importance >= 0.2) return Colors.green.shade700;
+    return Colors.grey.shade700;
+  }
+
+  String _getImportanceLabel(double importance) {
+    if (importance >= 0.8) return "重要";
+    if (importance >= 0.6) return "注目";
+    if (importance >= 0.4) return "一般";
+    if (importance >= 0.2) return "参考";
+    return "その他";
+  }
+
   @override
   void initState() {
     super.initState();
@@ -121,16 +137,16 @@ class _NewsCardState extends State<NewsCard> {
                       final hasImage = widget.article.urlToImage != null;
                       return Row(
                         children: [
-                          if (hasImage && cardMode == 'overlay')
-                            // Image overlay mode: show a larger image with title overlaid
+                          if (hasImage)
+                            // 画像を大きく表示
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                               child: Stack(
                                 children: [
                                   CachedNetworkImage(
                                     imageUrl: widget.article.urlToImage!,
-                                    width: 140,
-                                    height: 100,
+                                    width: 160,
+                                    height: 120,
                                     fit: BoxFit.cover,
                                     placeholder: (context, url) => Container(
                                         width: 140,

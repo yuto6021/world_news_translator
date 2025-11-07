@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this); // タブ数を6に変更
   }
 
   @override
@@ -40,11 +40,11 @@ class _HomeScreenState extends State<HomeScreen>
     return Container(
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: const AssetImage('assets/images/skyline_gradient.jpg'),
+          image: const AssetImage('assets/images/background.jpg'),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
-            Colors.black.withOpacity(0.15),
-            BlendMode.darken,
+            Colors.white.withOpacity(0.7), // 透明度を調整
+            BlendMode.lighten,
           ),
         ),
       ),
@@ -68,21 +68,36 @@ class _HomeScreenState extends State<HomeScreen>
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
                 SliverAppBar(
-                  title: Text(
-                    '世界のニュースを日本語で読む',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.grey.shade100 : Colors.indigo,
-                    ),
-                  ),
+                  expandedHeight: 120.0,
                   floating: true,
                   pinned: true,
-                  snap: false,
-                  forceElevated: innerBoxIsScrolled,
+                  elevation: innerBoxIsScrolled ? 4 : 0,
                   backgroundColor: isDark
-                      ? const Color(0xFF242424)
+                      ? const Color(0xFF242424).withOpacity(0.95)
                       : Colors.white.withOpacity(0.95),
+                  flexibleSpace: FlexibleSpaceBar(
+                    title: Text(
+                      '世界のニュース',
+                      style: TextStyle(
+                        color: isDark ? Colors.grey.shade100 : Colors.indigo,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    background: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: isDark
+                              ? [Colors.indigo.shade900, Colors.indigo.shade800]
+                              : [
+                                  Colors.indigo.shade400,
+                                  Colors.indigo.shade300
+                                ],
+                        ),
+                      ),
+                    ),
+                  ),
                   actions: [
                     IconButton(
                       tooltip: '検索',
@@ -120,6 +135,8 @@ class _HomeScreenState extends State<HomeScreen>
                       Tab(icon: Icon(Icons.chat), text: 'コメント'),
                       Tab(icon: Icon(Icons.language), text: '国別'),
                       Tab(icon: Icon(Icons.hourglass_bottom), text: 'タイムカプセル'),
+                      Tab(icon: Icon(Icons.psychology), text: '知識ベース'),
+                      Tab(icon: Icon(Icons.insights), text: 'インサイト'),
                     ],
                   ),
                 ),
@@ -133,6 +150,18 @@ class _HomeScreenState extends State<HomeScreen>
                     children: [
                       // ニュースタブ
                       const TrendingScreen(),
+                      // お気に入りタブ
+                      const FavoritesScreen(),
+                      // コメントタブ
+                      const CommentsScreen(),
+                      // 国別タブ
+                      const CountryNewsScreen(),
+                      // タイムカプセルタブ
+                      const TimeCapsuleScreen(),
+                      // 知識ベースタブ
+                      const KnowledgeBaseScreen(),
+                      // インサイトタブ
+                      const InsightsScreen(),
                       // お気に入りタブ
                       const FavoritesScreen(),
                       // コメントタブ

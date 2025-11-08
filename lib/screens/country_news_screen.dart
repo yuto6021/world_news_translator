@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/news_api_service.dart';
 import '../services/translation_service.dart';
+import '../services/offline_service.dart';
 import '../widgets/news_card.dart';
 import '../widgets/headline_banner.dart';
+import '../widgets/news_card_skeleton.dart';
 import '../models/article.dart';
 
 class CountryNewsScreen extends StatefulWidget {
@@ -20,11 +22,27 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
   late Future<List<Article>> _articles;
   // 翻訳済みテキストの Future（並列で取得）
   Future<List<String>>? _translationsFuture;
+  bool _isOffline = false;
 
   @override
   void initState() {
     super.initState();
-    _articles = NewsApiService.fetchArticlesByCountry(widget.countryCode);
+    _loadArticles();
+  }
+
+  void _loadArticles() {
+    _articles = NewsApiService.fetchArticlesByCountry(widget.countryCode)
+        .then((articles) async {
+      // オフラインキャッシュへ保存
+      await OfflineService.instance.upsertArticles(articles);
+      _isOffline = false;
+      return articles;
+    }).catchError((error) async {
+      // ネット失敗時はローカルキャッシュから復元
+      _isOffline = true;
+      return await OfflineService.instance.getArticles(limit: 20);
+    });
+
     // 記事一覧取得後に翻訳を並列で走らせる
     _translationsFuture = _articles.then((articles) {
       // 翻訳する本文が無ければタイトルを代わりに翻訳する
@@ -42,12 +60,28 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('${widget.countryName.toUpperCase()}のニュース')),
+      appBar: AppBar(
+        title: Text('${widget.countryName.toUpperCase()}のニュース'),
+        actions: [
+          if (_isOffline)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              child: Chip(
+                avatar: Icon(Icons.wifi_off, size: 16),
+                label: Text('オフライン', style: TextStyle(fontSize: 12)),
+                backgroundColor: Colors.orange,
+              ),
+            ),
+        ],
+      ),
       body: FutureBuilder<List<Article>>(
         future: _articles,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.builder(
+              itemCount: 5,
+              itemBuilder: (context, index) => const NewsCardSkeleton(),
+            );
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('記事が見つかりませんでした'));
@@ -62,19 +96,7 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
               return RefreshIndicator(
                 onRefresh: () async {
                   setState(() {
-                    _articles = NewsApiService.fetchArticlesByCountry(
-                        widget.countryCode);
-                    _translationsFuture = _articles.then((articles) {
-                      final futures = articles.map((a) {
-                        final textForTranslation = (a.description != null &&
-                                a.description!.trim().isNotEmpty)
-                            ? a.description!
-                            : a.title;
-                        return TranslationService.translateToJapanese(
-                            textForTranslation);
-                      }).toList();
-                      return Future.wait(futures);
-                    });
+                    _loadArticles();
                   });
                   await _articles;
                   await (_translationsFuture ?? Future.value([]));

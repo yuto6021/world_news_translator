@@ -21,7 +21,7 @@ class CountryTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final flag = _codeToFlag(code);
     return Card(
-      margin: const EdgeInsets.all(8),
+      margin: EdgeInsets.zero,
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -32,20 +32,37 @@ class CountryTab extends StatelessWidget {
             ),
           );
         },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          height: 80,
+          child: Row(
             children: [
               if (flag.isNotEmpty)
-                Text(flag, style: const TextStyle(fontSize: 28)),
-              const SizedBox(height: 8),
-              Text(name.toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text(code.toUpperCase(),
-                  style: TextStyle(color: Colors.grey.shade600)),
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Text(flag, style: const TextStyle(fontSize: 32)),
+                ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      code.toUpperCase(),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade600,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

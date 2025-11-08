@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/article.dart';
 import '../services/translation_service.dart';
 import '../services/app_settings_service.dart';
 import '../services/time_capsule_service.dart';
+import '../services/wikipedia_service.dart';
 import '../models/news_insight.dart';
 
 class ArticleDetailScreen extends StatefulWidget {
@@ -54,12 +56,112 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
     });
   }
 
+  void _showWikipediaSearch(String query) async {
+    if (query.trim().isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.public, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Wikipedia: $query',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Divider(),
+              const SizedBox(height: 8),
+              Expanded(
+                child: FutureBuilder<String?>(
+                  future: WikipediaService.getSummary(query),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data == null) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                            const SizedBox(height: 16),
+                            Text(
+                              '「$query」の情報が見つかりませんでした',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              '別の単語を選択して試してみてください',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return ListView(
+                      controller: scrollController,
+                      children: [
+                        Text(
+                          snapshot.data!,
+                          style: const TextStyle(fontSize: 15),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            final encodedQuery = Uri.encodeComponent(query);
+                            launchUrl(Uri.parse(
+                                'https://ja.wikipedia.org/wiki/$encodedQuery'));
+                          },
+                          icon: const Icon(Icons.open_in_browser),
+                          label: const Text('Wikipediaで全文を読む'),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('記事詳細'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () {
+              Share.share(
+                '${widget.article.title}\n\n${widget.article.url}',
+                subject: widget.article.title,
+              );
+            },
+            tooltip: '記事を共有',
+          ),
           IconButton(
             icon: const Icon(Icons.open_in_browser),
             onPressed: () => launchUrl(Uri.parse(widget.article.url)),
@@ -103,12 +205,52 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   ),
                 ),
               const SizedBox(height: 12),
-              Text(widget.article.title,
-                  style: Theme.of(context).textTheme.titleLarge),
+              SelectableText(
+                widget.article.title,
+                style: Theme.of(context).textTheme.titleLarge,
+                contextMenuBuilder: (context, editableTextState) {
+                  return AdaptiveTextSelectionToolbar.buttonItems(
+                    anchors: editableTextState.contextMenuAnchors,
+                    buttonItems: [
+                      ...editableTextState.contextMenuButtonItems,
+                      ContextMenuButtonItem(
+                        onPressed: () {
+                          final selection = editableTextState.textEditingValue.selection;
+                          final selectedText = editableTextState.textEditingValue.text
+                              .substring(selection.start, selection.end);
+                          ContextMenuController.removeAny();
+                          _showWikipediaSearch(selectedText);
+                        },
+                        label: 'Wikipediaで検索',
+                      ),
+                    ],
+                  );
+                },
+              ),
               const SizedBox(height: 8),
               if (widget.article.description != null &&
                   widget.article.description!.isNotEmpty)
-                Text(widget.article.description!),
+                SelectableText(
+                  widget.article.description!,
+                  contextMenuBuilder: (context, editableTextState) {
+                    return AdaptiveTextSelectionToolbar.buttonItems(
+                      anchors: editableTextState.contextMenuAnchors,
+                      buttonItems: [
+                        ...editableTextState.contextMenuButtonItems,
+                        ContextMenuButtonItem(
+                          onPressed: () {
+                            final selection = editableTextState.textEditingValue.selection;
+                            final selectedText = editableTextState.textEditingValue.text
+                                .substring(selection.start, selection.end);
+                            ContextMenuController.removeAny();
+                            _showWikipediaSearch(selectedText);
+                          },
+                          label: 'Wikipediaで検索',
+                        ),
+                      ],
+                    );
+                  },
+                ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -130,7 +272,29 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(_translated ?? (_loading ? '翻訳中...' : '（翻訳なし）')),
+                child: _translated != null
+                    ? SelectableText(
+                        _translated!,
+                        contextMenuBuilder: (context, editableTextState) {
+                          return AdaptiveTextSelectionToolbar.buttonItems(
+                            anchors: editableTextState.contextMenuAnchors,
+                            buttonItems: [
+                              ...editableTextState.contextMenuButtonItems,
+                              ContextMenuButtonItem(
+                                onPressed: () {
+                                  final selection = editableTextState.textEditingValue.selection;
+                                  final selectedText = editableTextState.textEditingValue.text
+                                      .substring(selection.start, selection.end);
+                                  ContextMenuController.removeAny();
+                                  _showWikipediaSearch(selectedText);
+                                },
+                                label: 'Wikipediaで検索',
+                              ),
+                            ],
+                          );
+                        },
+                      )
+                    : Text(_loading ? '翻訳中...' : '（翻訳なし）'),
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(

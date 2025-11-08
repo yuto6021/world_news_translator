@@ -65,48 +65,55 @@ class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Text(article.description!),
                 ),
-              if (entities.isNotEmpty) ...[
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '関連知識',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ...entities.map((entity) => Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        color: Colors.grey.shade100,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                entity,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _wikiCache[entity] ?? '情報を読み込み中...',
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ],
+              if (entities.isNotEmpty)
+                Column(
+                  children: [
+                    const Divider(),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '関連知識',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      )),
-                    ],
-                  ),
+                          const SizedBox(height: 8),
+                          ...entities
+                              .map((entity) => Card(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    color: Colors.grey.shade100,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            entity,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _wikiCache[entity] ?? '情報を読み込み中...',
+                                            style:
+                                                const TextStyle(fontSize: 14),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
             ],
           ),
         );

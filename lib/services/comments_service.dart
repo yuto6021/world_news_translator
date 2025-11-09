@@ -27,7 +27,7 @@ class ArticleComment {
         'comment': comment,
         'createdAt': createdAt.toIso8601String(),
         'articleImage': articleImage,
-    'parentCreatedAt': parentCreatedAt?.toIso8601String(),
+        'parentCreatedAt': parentCreatedAt?.toIso8601String(),
       };
 
   factory ArticleComment.fromJson(Map<String, dynamic> json) => ArticleComment(

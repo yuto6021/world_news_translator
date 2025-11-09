@@ -24,7 +24,7 @@ class CountryTab extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOut,
-  height: 78, // 親のSizedBox(80)に収まるよう少し小さめ
+      height: 78, // 親のSizedBox(80)に収まるよう少し小さめ
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -107,10 +107,10 @@ class CountryTab extends StatelessWidget {
                             letterSpacing: 0.5,
                           ),
                     ),
-        const SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-          horizontal: 10, vertical: 3),
+                          horizontal: 10, vertical: 3),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.25),
                         borderRadius: BorderRadius.circular(30),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import '../widgets/app_background.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -154,253 +154,269 @@ class _CommentsScreenState extends State<CommentsScreen> {
       ),
       body: Stack(
         children: [
-          _BackgroundLayer(isDark: isDark),
+          AppBackground(dark: isDark),
           _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _comments.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.comment_outlined,
-                          size: 64, color: Colors.grey.shade400),
-                      const SizedBox(height: 16),
-                      Text(
-                        'コメントがありません',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '記事詳細から\n「記事にコメント」でコメントを追加できます',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-        : ListView.builder(
-                  itemCount: _comments.length,
-                  itemBuilder: (context, index) {
-                    final comment = _comments[index];
-                    final isReply = comment.parentCreatedAt != null;
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+              ? const Center(child: CircularProgressIndicator())
+              : _comments.isEmpty
+                  ? Center(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          if (isReply)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 12, top: 8),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.reply, size: 14, color: Colors.grey.shade600),
-                                  const SizedBox(width: 4),
-                                  Text('返信', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                                ],
-                              ),
+                          Icon(Icons.comment_outlined,
+                              size: 64, color: Colors.grey.shade400),
+                          const SizedBox(height: 16),
+                          Text(
+                            'コメントがありません',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
                             ),
-                          // 記事情報
-                          if (comment.articleUrl.isNotEmpty) ...[
-                            InkWell(
-                              onTap: () =>
-                                  launchUrl(Uri.parse(comment.articleUrl)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Row(
-                                  children: [
-                                    if (comment.articleImage != null)
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(4),
-                                        child: CachedNetworkImage(
-                                          imageUrl: comment.articleImage!,
-                                          width: 60,
-                                          height: 60,
-                                          fit: BoxFit.cover,
-                                          placeholder: (c, u) => Container(
-                                            width: 60,
-                                            height: 60,
-                                            color: Colors.grey.shade200,
-                                          ),
-                                          errorWidget: (c, u, e) => Container(
-                                            width: 60,
-                                            height: 60,
-                                            color: Colors.grey.shade300,
-                                            child:
-                                                const Icon(Icons.broken_image),
-                                          ),
-                                        ),
-                                      ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            comment.articleTitle,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '記事詳細から\n「記事にコメント」でコメントを追加できます',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                    ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _comments.length,
+                      itemBuilder: (context, index) {
+                        final comment = _comments[index];
+                        final isReply = comment.parentCreatedAt != null;
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (isReply)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 12, top: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.reply,
+                                          size: 14,
+                                          color: Colors.grey.shade600),
+                                      const SizedBox(width: 4),
+                                      Text('返信',
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600)),
+                                    ],
+                                  ),
+                                ),
+                              // 記事情報
+                              if (comment.articleUrl.isNotEmpty) ...[
+                                InkWell(
+                                  onTap: () =>
+                                      launchUrl(Uri.parse(comment.articleUrl)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Row(
+                                      children: [
+                                        if (comment.articleImage != null)
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            child: CachedNetworkImage(
+                                              imageUrl: comment.articleImage!,
+                                              width: 60,
+                                              height: 60,
+                                              fit: BoxFit.cover,
+                                              placeholder: (c, u) => Container(
+                                                width: 60,
+                                                height: 60,
+                                                color: Colors.grey.shade200,
+                                              ),
+                                              errorWidget: (c, u, e) =>
+                                                  Container(
+                                                width: 60,
+                                                height: 60,
+                                                color: Colors.grey.shade300,
+                                                child: const Icon(
+                                                    Icons.broken_image),
+                                              ),
                                             ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                          const SizedBox(height: 4),
-                                          const Row(
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              Icon(Icons.link, size: 12),
-                                              SizedBox(width: 4),
                                               Text(
-                                                '記事を開く',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.blue,
+                                                comment.articleTitle,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
                                                 ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              const Row(
+                                                children: [
+                                                  Icon(Icons.link, size: 12),
+                                                  SizedBox(width: 4),
+                                                  Text(
+                                                    '記事を開く',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.blue,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const Divider(height: 1),
+                              ],
+                              // 引用部分
+                              if (comment.quote.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  color: Colors.grey.shade100,
+                                  width: double.infinity,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Row(
+                                        children: [
+                                          Icon(Icons.format_quote, size: 16),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            '引用',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ],
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const Divider(height: 1),
-                          ],
-                          // 引用部分
-                          if (comment.quote.isNotEmpty)
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              color: Colors.grey.shade100,
-                              width: double.infinity,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Row(
-                                    children: [
-                                      Icon(Icons.format_quote, size: 16),
-                                      SizedBox(width: 4),
+                                      const SizedBox(height: 4),
                                       Text(
-                                        '引用',
+                                        comment.quote,
                                         style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          fontStyle: FontStyle.italic,
+                                          color: Colors.grey.shade700,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    comment.quote,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          // コメント本文
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  comment.comment,
-                                  style: const TextStyle(fontSize: 15),
                                 ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                              // コメント本文
+                              Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      _formatDate(comment.createdAt),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                      ),
+                                      comment.comment,
+                                      style: const TextStyle(fontSize: 15),
                                     ),
+                                    const SizedBox(height: 8),
                                     Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        IconButton(
-                                          icon:
-                                              const Icon(Icons.edit, size: 20),
-                                          onPressed: () =>
-                                              _showEditDialog(comment),
-                                          tooltip: '編集',
+                                        Text(
+                                          _formatDate(comment.createdAt),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
                                         ),
-                                        IconButton(
-                                          icon: const Icon(Icons.reply, size: 20),
-                                          onPressed: () {
-                                            setState(() => _replyTo = comment.createdAt);
-                                            _newCommentController.text = '@返信: ';
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('返信先をセットしました。下の入力欄から投稿できます')),
-                                            );
-                                          },
-                                          tooltip: '返信',
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete,
-                                              size: 20),
-                                          onPressed: () async {
-                                            final confirm =
-                                                await showDialog<bool>(
-                                              context: context,
-                                              builder: (ctx) => AlertDialog(
-                                                title: const Text('確認'),
-                                                content: const Text(
-                                                    'このコメントを削除しますか？'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.pop(
-                                                            ctx, false),
-                                                    child: const Text('キャンセル'),
+                                        Row(
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.edit,
+                                                  size: 20),
+                                              onPressed: () =>
+                                                  _showEditDialog(comment),
+                                              tooltip: '編集',
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.reply,
+                                                  size: 20),
+                                              onPressed: () {
+                                                setState(() => _replyTo =
+                                                    comment.createdAt);
+                                                _newCommentController.text =
+                                                    '@返信: ';
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  const SnackBar(
+                                                      content: Text(
+                                                          '返信先をセットしました。下の入力欄から投稿できます')),
+                                                );
+                                              },
+                                              tooltip: '返信',
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.delete,
+                                                  size: 20),
+                                              onPressed: () async {
+                                                final confirm =
+                                                    await showDialog<bool>(
+                                                  context: context,
+                                                  builder: (ctx) => AlertDialog(
+                                                    title: const Text('確認'),
+                                                    content: const Text(
+                                                        'このコメントを削除しますか？'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                                ctx, false),
+                                                        child:
+                                                            const Text('キャンセル'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                                ctx, true),
+                                                        child: const Text('削除'),
+                                                      ),
+                                                    ],
                                                   ),
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.pop(
-                                                            ctx, true),
-                                                    child: const Text('削除'),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                            if (confirm == true) {
-                                              await CommentsService
-                                                  .deleteComment(
-                                                      comment.createdAt);
-                                              _loadComments();
-                                            }
-                                          },
-                                          tooltip: '削除',
+                                                );
+                                                if (confirm == true) {
+                                                  await CommentsService
+                                                      .deleteComment(
+                                                          comment.createdAt);
+                                                  _loadComments();
+                                                }
+                                              },
+                                              tooltip: '削除',
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-      // 画面下に新規コメント入力欄
-      ],
+                        );
+                      },
+                    ),
+          // 画面下に新規コメント入力欄
+        ],
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(

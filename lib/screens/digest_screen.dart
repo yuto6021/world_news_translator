@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/article.dart';
 import '../services/news_api_service.dart';
-import '../services/translation_service.dart';
 
 class DigestScreen extends StatefulWidget {
   const DigestScreen({super.key});

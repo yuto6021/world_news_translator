@@ -229,7 +229,8 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                             children: [
                               // マルチティッカー (USD/JPY + BTC)
                               FutureBuilder<List<String>>(
-                                future: MarketDataService.instance.fetchTickerItems(),
+                                future: MarketDataService.instance
+                                    .fetchTickerItems(),
                                 builder: (context, snap) {
                                   final items = snap.data ?? const ['読み込み中...'];
                                   return Container(

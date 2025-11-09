@@ -102,7 +102,8 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                            const Icon(Icons.search_off,
+                                size: 64, color: Colors.grey),
                             const SizedBox(height: 16),
                             Text(
                               '「$query」の情報が見つかりませんでした',
@@ -215,8 +216,10 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                       ...editableTextState.contextMenuButtonItems,
                       ContextMenuButtonItem(
                         onPressed: () {
-                          final selection = editableTextState.textEditingValue.selection;
-                          final selectedText = editableTextState.textEditingValue.text
+                          final selection =
+                              editableTextState.textEditingValue.selection;
+                          final selectedText = editableTextState
+                              .textEditingValue.text
                               .substring(selection.start, selection.end);
                           ContextMenuController.removeAny();
                           _showWikipediaSearch(selectedText);
@@ -239,8 +242,10 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                         ...editableTextState.contextMenuButtonItems,
                         ContextMenuButtonItem(
                           onPressed: () {
-                            final selection = editableTextState.textEditingValue.selection;
-                            final selectedText = editableTextState.textEditingValue.text
+                            final selection =
+                                editableTextState.textEditingValue.selection;
+                            final selectedText = editableTextState
+                                .textEditingValue.text
                                 .substring(selection.start, selection.end);
                             ContextMenuController.removeAny();
                             _showWikipediaSearch(selectedText);
@@ -282,9 +287,12 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                               ...editableTextState.contextMenuButtonItems,
                               ContextMenuButtonItem(
                                 onPressed: () {
-                                  final selection = editableTextState.textEditingValue.selection;
-                                  final selectedText = editableTextState.textEditingValue.text
-                                      .substring(selection.start, selection.end);
+                                  final selection = editableTextState
+                                      .textEditingValue.selection;
+                                  final selectedText = editableTextState
+                                      .textEditingValue.text
+                                      .substring(
+                                          selection.start, selection.end);
                                   ContextMenuController.removeAny();
                                   _showWikipediaSearch(selectedText);
                                 },

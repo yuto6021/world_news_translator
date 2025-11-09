@@ -41,6 +41,8 @@ class NewsAnalysis {
         return Colors.blue.shade50;
       case 'exciting':
         return Colors.orange.shade100;
+      case 'cautious':
+        return Colors.yellow.shade100;
       default:
         return Colors.grey.shade50;
     }

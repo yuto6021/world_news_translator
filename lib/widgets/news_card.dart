@@ -24,6 +24,8 @@ class _NewsCardState extends State<NewsCard> {
   String? _localTranslated;
   bool _loadingTranslation = false;
   bool _visible = false;
+  double? _computedImportance; // 再計算された重要度
+  String? _mood; // 簡易ムード
 
   Color _getImportanceColor(double importance) {
     if (importance >= 0.8) return Colors.red.shade700;
@@ -57,6 +59,7 @@ class _NewsCardState extends State<NewsCard> {
         AppSettingsService.instance.autoTranslate.value) {
       _fetchLocalTranslation();
     }
+    _computeImportanceAndMood();
     AppSettingsService.instance.autoTranslate.addListener(() {
       if (AppSettingsService.instance.autoTranslate.value &&
           (widget.translatedText == null || widget.translatedText!.isEmpty) &&
@@ -65,6 +68,45 @@ class _NewsCardState extends State<NewsCard> {
         _fetchLocalTranslation();
       }
     });
+  }
+
+  void _computeImportanceAndMood() {
+    final text = (widget.article.description != null &&
+            widget.article.description!.trim().isNotEmpty)
+        ? widget.article.description!
+        : widget.article.title;
+    final lower = text.toLowerCase();
+    double score = widget.article.importance ?? 0.5;
+    // キーワードによる補正
+    if (RegExp(r'breaking|urgent|emergency|earthquake|wildfire|crisis').hasMatch(lower)) {
+      score += 0.3;
+    } else if (RegExp(r'warn|alert|security|inflation|rate hike|policy').hasMatch(lower)) {
+      score += 0.15;
+    } else if (RegExp(r'celebrate|win|growth|record|innovation|discover').hasMatch(lower)) {
+      score += 0.05;
+    }
+    // 長さ（情報量）
+    if (text.length > 160) score += 0.05;
+    if (text.length > 300) score += 0.05;
+    // 数字（統計・指標）
+    final numbers = RegExp(r'\d+').allMatches(text).length;
+    if (numbers >= 2) score += 0.05;
+    if (numbers >= 5) score += 0.05;
+    // 記号（% や $）
+    if (text.contains('%')) score += 0.03;
+      if (text.contains('\$')) score += 0.0; // no-op safeguard
+      if (text.contains('')) score += 0.0; // placeholder
+    // ムード推定
+    if (RegExp(r'success|win|growth|record|innovation|progress|improve').hasMatch(lower)) {
+      _mood = 'positive';
+    } else if (RegExp(r'fail|loss|decline|drop|crisis|war|conflict|death').hasMatch(lower)) {
+      _mood = 'negative';
+    } else if (RegExp(r'breaking|urgent|shock|surge|plunge|spike').hasMatch(lower)) {
+      _mood = 'volatile';
+    } else {
+      _mood = 'neutral';
+    }
+    _computedImportance = score.clamp(0.0, 1.0);
   }
 
   Future<void> _fetchLocalTranslation() async {
@@ -206,6 +248,18 @@ class _NewsCardState extends State<NewsCard> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // 重要度 & ムードチップ
+                                if (_computedImportance != null) ...[
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 6,
+                                    children: [
+                                      _buildImportanceChip(_computedImportance!),
+                                      _buildMoodChip(_mood),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                ],
                                 if (cardMode != 'overlay') ...[
                                   Text(
                                     widget.article.title,
@@ -421,6 +475,63 @@ class _NewsCardState extends State<NewsCard> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMoodChip(String? mood) {
+    if (mood == null) return const SizedBox.shrink();
+    Color base;
+    String label;
+    switch (mood) {
+      case 'positive':
+        base = Colors.green.shade600;
+        label = '好調';
+        break;
+      case 'negative':
+        base = Colors.red.shade600;
+        label = '不調';
+        break;
+      case 'volatile':
+        base = Colors.orange.shade700;
+        label = '変動';
+        break;
+      default:
+        base = Colors.blueGrey.shade600;
+        label = '中立';
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: base.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: base.withOpacity(0.45)),
+      ),
+      child: Text(label, style: TextStyle(color: base, fontSize: 11)),
+    );
+  }
+
+  Widget _buildImportanceChip(double importance) {
+    Color color = _getImportanceColor(importance);
+    String label;
+    if (importance >= 0.9) {
+      label = '緊急';
+    } else if (importance >= 0.75) {
+      label = '高';
+    } else if (importance >= 0.55) {
+      label = '中';
+    } else if (importance >= 0.35) {
+      label = '低';
+    } else {
+      label = '参考';
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(label, style: TextStyle(color: color, fontSize: 11)),
     );
   }
 }

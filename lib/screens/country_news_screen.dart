@@ -3,11 +3,13 @@ import '../services/news_api_service.dart';
 import '../services/translation_service.dart';
 import '../services/offline_service.dart';
 import '../widgets/news_card.dart';
-import '../widgets/headline_banner.dart';
+// import '../widgets/headline_banner.dart'; // ユーザー要望により削除
+import '../services/forex_service.dart';
+import '../widgets/fx_ticker.dart';
 import '../widgets/news_card_skeleton.dart';
 import '../models/article.dart';
 import '../services/wikipedia_service.dart';
-import '../screens/article_detail_screen.dart';
+// import '../screens/article_detail_screen.dart'; // 関連記事セクション削除により未使用
 
 class CountryNewsScreen extends StatefulWidget {
   final String countryCode;
@@ -29,7 +31,7 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
   // 追加UI用の状態
   String? _topicFilter;
   List<String> _topKeywords = [];
-  List<int> _relatedIdx = [];
+  // List<int> _relatedIdx = [];
   Future<String?>? _countrySummaryFuture;
 
   @override
@@ -73,22 +75,14 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
   void _prepareEnhancements(List<Article> articles) {
     if (articles.isEmpty) return;
     // トップ記事に対する関連記事抽出とトップキーワード抽出
-    final first = articles.first;
-    final related = <int>[];
-    final firstTokens =
-        _tokenize(first.title) + _tokenize(first.description ?? '');
-    final firstSet = firstTokens.toSet();
+  // final first = articles.first; // 関連記事算出を削除したため未使用
+  // final related = <int>[]; // 関連記事は非表示化
+  // 関連記事機能を削除したため firstTokens/firstSet は不要
 
     final freq = <String, int>{};
     for (int i = 0; i < articles.length; i++) {
       final a = articles[i];
-      if (i != 0) {
-        final tokens = (_tokenize(a.title) + _tokenize(a.description ?? ''));
-        final overlap = tokens.where(firstSet.contains).toSet();
-        if (overlap.length >= 2) {
-          related.add(i);
-        }
-      }
+      // 関連記事の抽出は無効化
       for (final t in _tokenize(a.title) + _tokenize(a.description ?? '')) {
         freq[t] = (freq[t] ?? 0) + 1;
       }
@@ -101,7 +95,6 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
       ..sort((a, b) => b.value.compareTo(a.value));
 
     setState(() {
-      _relatedIdx = related.take(10).toList();
       _topKeywords = sorted.take(8).map((e) => e.key).toList();
     });
   }
@@ -220,231 +213,147 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                     itemCount: 1 + visibleIdx.length,
                     itemBuilder: (context, index) {
                       if (index == 0) {
-                        // ヘッダー部（バナー＋追加セクション）
-                        final firstArticle = articles[0];
-                        final firstTranslation =
-                            translations != null && translations.isNotEmpty
-                                ? translations[0]
-                                : (tSnapshot.connectionState ==
-                                        ConnectionState.waiting
-                                    ? '翻訳中...'
-                                    : '（翻訳なし）');
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            HeadlineBanner(
-                                article: firstArticle,
-                                translatedText: firstTranslation),
-                            const SizedBox(height: 12),
-                            if (_topKeywords.isNotEmpty)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                child: Card(
-                                  elevation: 1,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  child: ExpansionTile(
-                                    leading: const Icon(Icons.local_offer,
-                                        color: Colors.indigo),
-                                    title: const Text('関連トピック'),
-                                    trailing: _topicFilter != null
-                                        ? TextButton.icon(
-                                            onPressed: () => setState(
-                                                () => _topicFilter = null),
-                                            icon: const Icon(Icons.clear,
-                                                size: 18),
-                                            label: const Text('クリア'),
-                                          )
-                                        : null,
-                                    childrenPadding: const EdgeInsets.fromLTRB(
-                                        16, 0, 16, 16),
-                                    children: [
-                                      Wrap(
-                                        spacing: 8,
-                                        runSpacing: 8,
-                                        children: _topKeywords
-                                            .map((k) => FilterChip(
-                                                  label: Text(k),
-                                                  selected: _topicFilter == k,
-                                                  onSelected: (_) => setState(
-                                                      () => _topicFilter = k),
-                                                ))
-                                            .toList(),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            const SizedBox(height: 12),
-                            if (_countrySummaryFuture != null)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                child: FutureBuilder<String?>(
-                                  future: _countrySummaryFuture,
-                                  builder: (context, s) {
-                                    if (s.connectionState !=
-                                            ConnectionState.done ||
-                                        !s.hasData ||
-                                        s.data == null) {
-                                      return const SizedBox.shrink();
-                                    }
-                                    return Card(
-                                      elevation: 1,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12)),
-                                      child: ExpansionTile(
-                                        leading: const Icon(Icons.flag,
-                                            color: Colors.indigo),
-                                        title: Text('${widget.countryName}の概要'),
-                                        childrenPadding:
-                                            const EdgeInsets.fromLTRB(
-                                                16, 0, 16, 16),
+                        // 先頭: ドル円ティッカー +（USのみ）概要 + 関連トピック
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // ティッカー
+                              FutureBuilder<double?>(
+                                future: ForexService.getUsdJpy(),
+                                builder: (context, fx) {
+                                  final rate = fx.data;
+                                  final text = rate != null
+                                      ? 'USD/JPY: ${rate.toStringAsFixed(3)}'
+                                      : 'USD/JPY: 取得失敗';
+                                  return Container(
+                                    height: 38,
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(24),
+                                      color: Colors.indigo.withOpacity(0.12),
+                                      border: Border.all(
+                                          color: Colors.indigo.shade300
+                                              .withOpacity(0.5)),
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: FxTicker(
+                                      duration: const Duration(seconds: 12),
+                                      child: Row(
                                         children: [
+                                          const SizedBox(width: 16),
+                                          Icon(Icons.trending_flat,
+                                              color: Colors.indigo.shade700),
+                                          const SizedBox(width: 8),
                                           Text(
-                                            s.data!,
-                                            style:
-                                                const TextStyle(fontSize: 14),
+                                            text,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5),
+                                          ),
+                                          const SizedBox(width: 32),
+                                          Text(
+                                            '為替レート (exchangerate.host) | 更新毎回取得',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.indigo.shade700),
                                           ),
                                         ],
                                       ),
-                                    );
-                                  },
-                                ),
+                                    ),
+                                  );
+                                },
                               ),
-                            if (_relatedIdx.isNotEmpty)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                child: Card(
-                                  elevation: 1,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  child: ExpansionTile(
-                                    leading: const Icon(Icons.link,
-                                        color: Colors.indigo),
-                                    title: const Text('関連記事'),
-                                    children: [
-                                      const SizedBox(height: 8),
-                                      SizedBox(
-                                        height: 170,
-                                        child: ListView.separated(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12),
-                                          scrollDirection: Axis.horizontal,
-                                          itemBuilder: (context, i) {
-                                            final idx = _relatedIdx[i];
-                                            if (idx < 0 ||
-                                                idx >= articles.length) {
-                                              return const SizedBox.shrink();
-                                            }
-                                            final a = articles[idx];
-                                            return SizedBox(
-                                              width: 240,
-                                              child: InkWell(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                onTap: () => Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        ArticleDetailScreen(
-                                                            article: a),
-                                                  ),
-                                                ),
-                                                child: Card(
-                                                  shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              12)),
-                                                  clipBehavior: Clip.antiAlias,
-                                                  child: Stack(
-                                                    fit: StackFit.expand,
-                                                    children: [
-                                                      if (a.urlToImage !=
-                                                              null &&
-                                                          a.urlToImage!
-                                                              .isNotEmpty)
-                                                        Image.network(
-                                                          a.urlToImage!,
-                                                          fit: BoxFit.cover,
-                                                        )
-                                                      else
-                                                        Container(
-                                                            color: Colors
-                                                                .grey.shade200),
-                                                      Container(
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          gradient:
-                                                              LinearGradient(
-                                                            begin: Alignment
-                                                                .topCenter,
-                                                            end: Alignment
-                                                                .bottomCenter,
-                                                            colors: [
-                                                              Colors
-                                                                  .transparent,
-                                                              Colors.black
-                                                                  .withOpacity(
-                                                                      0.55),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Positioned(
-                                                        left: 10,
-                                                        right: 10,
-                                                        bottom: 10,
-                                                        child: Text(
-                                                          a.title,
-                                                          maxLines: 2,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style:
-                                                              const TextStyle(
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.w700,
-                                                            shadows: [
-                                                              Shadow(
-                                                                  color: Colors
-                                                                      .black54,
-                                                                  blurRadius: 3,
-                                                                  offset:
-                                                                      Offset(0,
-                                                                          1)),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          separatorBuilder: (_, __) =>
-                                              const SizedBox(width: 12),
-                                          itemCount: _relatedIdx.length,
+                              // US概要カード
+                              if (widget.countryCode.toLowerCase() == 'us' &&
+                                  _countrySummaryFuture != null)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  child: FutureBuilder<String?>(
+                                    future: _countrySummaryFuture,
+                                    builder: (context, s) {
+                                      if (s.connectionState !=
+                                              ConnectionState.done ||
+                                          s.data == null) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      return Card(
+                                        elevation: 1,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12)),
+                                        child: ExpansionTile(
+                                          leading: const Icon(Icons.flag,
+                                              color: Colors.indigo),
+                                          title: const Text('アメリカの概要'),
+                                          childrenPadding:
+                                              const EdgeInsets.fromLTRB(
+                                                  16, 0, 16, 16),
+                                          children: [
+                                            Text(s.data!,
+                                                style: const TextStyle(
+                                                    fontSize: 14)),
+                                          ],
                                         ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                    ],
+                                      );
+                                    },
                                   ),
                                 ),
-                              ),
-                            const SizedBox(height: 8),
-                          ],
+                              // 関連トピック（USのみ）
+                              if (widget.countryCode.toLowerCase() == 'us' &&
+                                  _topKeywords.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  child: Card(
+                                    elevation: 1,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                    child: ExpansionTile(
+                                      leading: const Icon(Icons.local_offer,
+                                          color: Colors.indigo),
+                                      title: const Text('関連トピック'),
+                                      trailing: _topicFilter != null
+                                          ? TextButton.icon(
+                                              onPressed: () => setState(
+                                                  () => _topicFilter = null),
+                                              icon: const Icon(Icons.clear,
+                                                  size: 18),
+                                              label: const Text('クリア'),
+                                            )
+                                          : null,
+                                      childrenPadding: const EdgeInsets.fromLTRB(
+                                          16, 0, 16, 16),
+                                      children: [
+                                        Wrap(
+                                          spacing: 8,
+                                          runSpacing: 8,
+                                          children: _topKeywords
+                                              .map((k) => FilterChip(
+                                                    label: Text(k),
+                                                    selected: _topicFilter == k,
+                                                    onSelected: (_) => setState(
+                                                        () => _topicFilter = k),
+                                                  ))
+                                              .toList(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 4),
+                            ],
+                          ),
                         );
                       }
 
                       // 通常のニュースカード（フィルタ適用後）
                       final realIdx = visibleIdx[index - 1];
-                      final article = articles[realIdx];
+            final article = articles[realIdx];
                       final translated = (translations != null &&
                               translations.length > realIdx)
                           ? translations[realIdx]

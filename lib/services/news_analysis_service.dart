@@ -23,7 +23,7 @@ class NewsAnalysisService {
     final isEnglish = _isProbablyEnglish(content);
 
     // 感情分析（簡易版）
-    String mood = 'neutral';
+  String mood = 'neutral';
     if (isEnglish) {
       if (content.contains(RegExp(
           r'success|achieve|victory|discover|innovation|hope|positive|progress|agreement|collaboration|breakthrough',
@@ -37,6 +37,10 @@ class NewsAnalysisService {
           r'surprise|shock|radical|revolution|explosive|dramatic|urgent|emergency|breaking',
           caseSensitive: false))) {
         mood = 'exciting';
+      } else if (content.contains(RegExp(
+          r'concern|warn|caution|uncertain|risk|tension',
+          caseSensitive: false))) {
+        mood = 'cautious';
       }
     } else {
       if (content.contains(RegExp(r'成功|達成|勝利|発見|革新|期待|前進|合意|協力|進展'))) {
@@ -45,6 +49,8 @@ class NewsAnalysisService {
         mood = 'negative';
       } else if (content.contains(RegExp(r'驚き|衝撃|急進|革命|爆発的|劇的|緊急|速報'))) {
         mood = 'exciting';
+      } else if (content.contains(RegExp(r'懸念|警告|注意|不透明|リスク|緊張'))) {
+        mood = 'cautious';
       }
     }
 
@@ -150,33 +156,40 @@ class NewsAnalysisService {
 
   // 未読記事の重要度を計算（0-1の範囲、1が最も重要）
   double calculateImportance(NewsInsight news) {
-    if (news.analysis == null) return 0.5; // 分析なしは中程度
+    if (news.analysis == null) return 0.45; // 分析なしはやや低め
 
     double score = 0.0;
 
-    // ムードに基づくスコア
-    switch (news.analysis!.mood) {
+    // ムード（より細分化）
+    switch (news.analysis!.mood.toLowerCase()) {
       case 'exciting':
-        score += 0.4;
+        score += 0.25;
         break;
       case 'positive':
       case 'negative':
-        score += 0.3;
+        score += 0.18;
+        break;
+      case 'cautious':
+        score += 0.14;
         break;
       default:
-        score += 0.2;
+        score += 0.1;
     }
 
-    // キーワード数に基づくスコア
-    score += (news.analysis!.keywords.length * 0.08).clamp(0.0, 0.4);
+    // キーワード
+    score += (news.analysis!.keywords.length * 0.05).clamp(0.0, 0.25);
 
-    // 新しさによるボーナス（24時間以内）
-    final hoursAgo =
-        DateTime.now().difference(news.analysis!.analyzedAt).inHours;
+    // 画像の有無（視認性や注目度）
+    if ((news.urlToImage ?? '').isNotEmpty) score += 0.05;
+
+    // 新しさ（最大0.12）
+    final hoursAgo = DateTime.now().difference(news.analysis!.analyzedAt).inHours;
     if (hoursAgo < 24) {
-      score += (24 - hoursAgo) * 0.01; // 最大0.24
+      score += (24 - hoursAgo) * 0.005; // 最大約0.12
     }
 
-    return score.clamp(0.0, 1.0);
+    // 正規化（全体を少し圧縮して「重要」ばかりになるのを防ぐ）
+    score = (score * 0.85).clamp(0.0, 1.0);
+    return score;
   }
 }

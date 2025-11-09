@@ -78,11 +78,14 @@ class _NewsCardState extends State<NewsCard> {
     final lower = text.toLowerCase();
     double score = widget.article.importance ?? 0.5;
     // キーワードによる補正
-    if (RegExp(r'breaking|urgent|emergency|earthquake|wildfire|crisis').hasMatch(lower)) {
+    if (RegExp(r'breaking|urgent|emergency|earthquake|wildfire|crisis')
+        .hasMatch(lower)) {
       score += 0.3;
-    } else if (RegExp(r'warn|alert|security|inflation|rate hike|policy').hasMatch(lower)) {
+    } else if (RegExp(r'warn|alert|security|inflation|rate hike|policy')
+        .hasMatch(lower)) {
       score += 0.15;
-    } else if (RegExp(r'celebrate|win|growth|record|innovation|discover').hasMatch(lower)) {
+    } else if (RegExp(r'celebrate|win|growth|record|innovation|discover')
+        .hasMatch(lower)) {
       score += 0.05;
     }
     // 長さ（情報量）
@@ -94,14 +97,17 @@ class _NewsCardState extends State<NewsCard> {
     if (numbers >= 5) score += 0.05;
     // 記号（% や $）
     if (text.contains('%')) score += 0.03;
-      if (text.contains('\$')) score += 0.0; // no-op safeguard
-      if (text.contains('')) score += 0.0; // placeholder
+    if (text.contains('\$')) score += 0.0; // no-op safeguard
+    if (text.contains('')) score += 0.0; // placeholder
     // ムード推定
-    if (RegExp(r'success|win|growth|record|innovation|progress|improve').hasMatch(lower)) {
+    if (RegExp(r'success|win|growth|record|innovation|progress|improve')
+        .hasMatch(lower)) {
       _mood = 'positive';
-    } else if (RegExp(r'fail|loss|decline|drop|crisis|war|conflict|death').hasMatch(lower)) {
+    } else if (RegExp(r'fail|loss|decline|drop|crisis|war|conflict|death')
+        .hasMatch(lower)) {
       _mood = 'negative';
-    } else if (RegExp(r'breaking|urgent|shock|surge|plunge|spike').hasMatch(lower)) {
+    } else if (RegExp(r'breaking|urgent|shock|surge|plunge|spike')
+        .hasMatch(lower)) {
       _mood = 'volatile';
     } else {
       _mood = 'neutral';
@@ -254,7 +260,8 @@ class _NewsCardState extends State<NewsCard> {
                                     spacing: 6,
                                     runSpacing: 6,
                                     children: [
-                                      _buildImportanceChip(_computedImportance!),
+                                      _buildImportanceChip(
+                                          _computedImportance!),
                                       _buildMoodChip(_mood),
                                     ],
                                   ),

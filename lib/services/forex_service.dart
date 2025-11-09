@@ -5,7 +5,8 @@ class ForexService {
   // 無料API（CORSの都合でWebでは失敗する可能性あり）。失敗時はnullを返す。
   static Future<double?> getUsdJpy() async {
     try {
-      final uri = Uri.parse('https://api.exchangerate.host/latest?base=USD&symbols=JPY');
+      final uri = Uri.parse(
+          'https://api.exchangerate.host/latest?base=USD&symbols=JPY');
       final res = await http.get(uri);
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;

@@ -4,19 +4,24 @@ class FxTicker extends StatefulWidget {
   final Widget child;
   final Duration duration;
 
-  const FxTicker({super.key, required this.child, this.duration = const Duration(seconds: 10)});
+  const FxTicker(
+      {super.key,
+      required this.child,
+      this.duration = const Duration(seconds: 10)});
 
   @override
   State<FxTicker> createState() => _FxTickerState();
 }
 
-class _FxTickerState extends State<FxTicker> with SingleTickerProviderStateMixin {
+class _FxTickerState extends State<FxTicker>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration)..repeat();
+    _controller = AnimationController(vsync: this, duration: widget.duration)
+      ..repeat();
   }
 
   @override
@@ -37,7 +42,10 @@ class _FxTickerState extends State<FxTicker> with SingleTickerProviderStateMixin
             final dx = -width + (2 * width) * _controller.value;
             return Transform.translate(
               offset: Offset(dx, 0),
-              child: SizedBox(width: width * 2, child: Align(alignment: Alignment.centerLeft, child: widget.child)),
+              child: SizedBox(
+                  width: width * 2,
+                  child: Align(
+                      alignment: Alignment.centerLeft, child: widget.child)),
             );
           },
         );

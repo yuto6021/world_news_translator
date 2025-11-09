@@ -75,9 +75,9 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
   void _prepareEnhancements(List<Article> articles) {
     if (articles.isEmpty) return;
     // トップ記事に対する関連記事抽出とトップキーワード抽出
-  // final first = articles.first; // 関連記事算出を削除したため未使用
-  // final related = <int>[]; // 関連記事は非表示化
-  // 関連記事機能を削除したため firstTokens/firstSet は不要
+    // final first = articles.first; // 関連記事算出を削除したため未使用
+    // final related = <int>[]; // 関連記事は非表示化
+    // 関連記事機能を削除したため firstTokens/firstSet は不要
 
     final freq = <String, int>{};
     for (int i = 0; i < articles.length; i++) {
@@ -326,8 +326,9 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                                               label: const Text('クリア'),
                                             )
                                           : null,
-                                      childrenPadding: const EdgeInsets.fromLTRB(
-                                          16, 0, 16, 16),
+                                      childrenPadding:
+                                          const EdgeInsets.fromLTRB(
+                                              16, 0, 16, 16),
                                       children: [
                                         Wrap(
                                           spacing: 8,
@@ -353,7 +354,7 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
 
                       // 通常のニュースカード（フィルタ適用後）
                       final realIdx = visibleIdx[index - 1];
-            final article = articles[realIdx];
+                      final article = articles[realIdx];
                       final translated = (translations != null &&
                               translations.length > realIdx)
                           ? translations[realIdx]

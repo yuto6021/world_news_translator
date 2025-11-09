@@ -23,7 +23,7 @@ class NewsAnalysisService {
     final isEnglish = _isProbablyEnglish(content);
 
     // 感情分析（簡易版）
-  String mood = 'neutral';
+    String mood = 'neutral';
     if (isEnglish) {
       if (content.contains(RegExp(
           r'success|achieve|victory|discover|innovation|hope|positive|progress|agreement|collaboration|breakthrough',
@@ -183,7 +183,8 @@ class NewsAnalysisService {
     if ((news.urlToImage ?? '').isNotEmpty) score += 0.05;
 
     // 新しさ（最大0.12）
-    final hoursAgo = DateTime.now().difference(news.analysis!.analyzedAt).inHours;
+    final hoursAgo =
+        DateTime.now().difference(news.analysis!.analyzedAt).inHours;
     if (hoursAgo < 24) {
       score += (24 - hoursAgo) * 0.005; // 最大約0.12
     }

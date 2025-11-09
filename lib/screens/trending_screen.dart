@@ -161,23 +161,24 @@ class _TrendingScreenState extends State<TrendingScreen> {
   }
 
   Widget _buildImportanceBadge(double importance) {
+    // しきい値を調整して分布を広げる
     Color color;
     String label;
-    if (importance >= 0.8) {
-      color = Colors.red.shade600;
+    if (importance >= 0.9) {
+      color = Colors.red.shade700;
+      label = '緊急';
+    } else if (importance >= 0.7) {
+      color = Colors.orange.shade700;
       label = '重要';
-    } else if (importance >= 0.6) {
-      color = Colors.orange.shade600;
+    } else if (importance >= 0.55) {
+      color = Colors.amber.shade700;
       label = '注目';
-    } else if (importance >= 0.4) {
-      color = Colors.blue.shade600;
+    } else if (importance >= 0.35) {
+      color = Colors.blue.shade700;
       label = '一般';
-    } else if (importance >= 0.2) {
-      color = Colors.green.shade600;
-      label = '参考';
     } else {
-      color = Colors.grey.shade600;
-      label = 'その他';
+      color = Colors.green.shade700;
+      label = '参考';
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -188,6 +189,22 @@ class _TrendingScreenState extends State<TrendingScreen> {
       ),
       child: Text(label, style: TextStyle(color: color, fontSize: 12)),
     );
+  }
+
+  String _localizedMood(String? mood) {
+    switch ((mood ?? '').toLowerCase()) {
+      case 'positive':
+        return '好調';
+      case 'negative':
+        return '不調';
+      case 'exciting':
+        return '速報';
+      case 'cautious':
+        return '警戒';
+      case 'neutral':
+      default:
+        return '中立';
+    }
   }
 
   @override
@@ -356,7 +373,7 @@ class _TrendingScreenState extends State<TrendingScreen> {
                             _buildImportanceBadge(entry.importance),
                             const SizedBox(width: 8),
                             Text(
-                                'ムード: ${entry.insight.analysis?.mood ?? 'N/A'}',
+                                'ムード: ${_localizedMood(entry.insight.analysis?.mood)}',
                                 style: const TextStyle(fontSize: 12)),
                             const Spacer(),
                             Text('${(entry.importance * 100).round()}%',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +16,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
   List<ArticleComment> _comments = [];
   bool _loading = true;
   final TextEditingController _newCommentController = TextEditingController();
+  DateTime? _replyTo; // 返信対象の createdAt
 
   @override
   void initState() {
@@ -47,9 +49,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
       comment: text,
       createdAt: DateTime.now(),
       articleImage: null,
+      parentCreatedAt: _replyTo,
     );
     await CommentsService.addComment(comment);
     _newCommentController.clear();
+    setState(() => _replyTo = null);
     await _loadComments();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -110,9 +114,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('記事コメント'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           if (_comments.isNotEmpty)
             IconButton(
@@ -144,7 +152,10 @@ class _CommentsScreenState extends State<CommentsScreen> {
             ),
         ],
       ),
-      body: _loading
+      body: Stack(
+        children: [
+          _BackgroundLayer(isDark: isDark),
+          _loading
           ? const Center(child: CircularProgressIndicator())
           : _comments.isEmpty
               ? Center(
@@ -173,16 +184,28 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     ],
                   ),
                 )
-              : ListView.builder(
+        : ListView.builder(
                   itemCount: _comments.length,
                   itemBuilder: (context, index) {
                     final comment = _comments[index];
+                    final isReply = comment.parentCreatedAt != null;
                     return Card(
                       margin: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (isReply)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 12, top: 8),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.reply, size: 14, color: Colors.grey.shade600),
+                                  const SizedBox(width: 4),
+                                  Text('返信', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                ],
+                              ),
+                            ),
                           // 記事情報
                           if (comment.articleUrl.isNotEmpty) ...[
                             InkWell(
@@ -318,6 +341,17 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                           tooltip: '編集',
                                         ),
                                         IconButton(
+                                          icon: const Icon(Icons.reply, size: 20),
+                                          onPressed: () {
+                                            setState(() => _replyTo = comment.createdAt);
+                                            _newCommentController.text = '@返信: ';
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('返信先をセットしました。下の入力欄から投稿できます')),
+                                            );
+                                          },
+                                          tooltip: '返信',
+                                        ),
+                                        IconButton(
                                           icon: const Icon(Icons.delete,
                                               size: 20),
                                           onPressed: () async {
@@ -366,6 +400,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                   },
                 ),
       // 画面下に新規コメント入力欄
+      ],
+      ),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -375,7 +411,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 child: TextField(
                   controller: _newCommentController,
                   decoration: InputDecoration(
-                    hintText: 'コメントを入力...',
+                    hintText: _replyTo == null ? 'コメントを入力...' : '返信を入力...',
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surfaceVariant,
                     border: OutlineInputBorder(
@@ -384,6 +420,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
+                    suffixIcon: _replyTo != null
+                        ? IconButton(
+                            icon: const Icon(Icons.close),
+                            tooltip: '返信を解除',
+                            onPressed: () => setState(() => _replyTo = null),
+                          )
+                        : null,
                   ),
                   minLines: 1,
                   maxLines: 4,

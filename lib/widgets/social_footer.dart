@@ -24,17 +24,18 @@ class SocialFooter extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
           decoration: BoxDecoration(
+            // ヘッダーの flexibleSpace と色味を合わせる
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      Colors.black.withOpacity(0.55),
-                      Colors.indigo.shade900.withOpacity(0.45),
+                      Colors.black.withOpacity(0.7),
+                      Colors.indigo.shade900.withOpacity(0.6),
                     ]
                   : [
-                      Colors.white.withOpacity(0.70),
-                      Colors.indigo.shade50.withOpacity(0.55),
+                      Colors.white.withOpacity(0.8),
+                      Colors.indigo.shade50.withOpacity(0.7),
                     ],
             ),
             border: Border(
@@ -74,44 +75,7 @@ class SocialFooter extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color:
-                      (isDark ? Colors.black : Colors.white).withOpacity(0.35),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: (isDark
-                            ? Colors.indigo.shade300
-                            : Colors.indigo.shade200)
-                        .withOpacity(0.5),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.public,
-                        size: 18,
-                        color: isDark
-                            ? Colors.indigo.shade100
-                            : Colors.indigo.shade700),
-                    const SizedBox(width: 6),
-                    Text(
-                      '翻訳で広がる視野 – 世界を読む',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.4,
-                        color: isDark
-                            ? Colors.grey.shade100
-                            : Colors.indigo.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // タグラインはユーザー要望により削除
             ],
           ),
         ),

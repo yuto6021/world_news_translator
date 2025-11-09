@@ -8,6 +8,7 @@ class ArticleComment {
   final String comment; // ユーザーのコメント
   final DateTime createdAt;
   final String? articleImage;
+  final DateTime? parentCreatedAt; // 返信対象コメントの createdAt （スレッド紐付け）
 
   ArticleComment({
     required this.articleUrl,
@@ -16,6 +17,7 @@ class ArticleComment {
     required this.comment,
     required this.createdAt,
     this.articleImage,
+    this.parentCreatedAt,
   });
 
   Map<String, dynamic> toJson() => {
@@ -25,6 +27,7 @@ class ArticleComment {
         'comment': comment,
         'createdAt': createdAt.toIso8601String(),
         'articleImage': articleImage,
+    'parentCreatedAt': parentCreatedAt?.toIso8601String(),
       };
 
   factory ArticleComment.fromJson(Map<String, dynamic> json) => ArticleComment(
@@ -34,6 +37,9 @@ class ArticleComment {
         comment: json['comment'] as String,
         createdAt: DateTime.parse(json['createdAt'] as String),
         articleImage: json['articleImage'] as String?,
+        parentCreatedAt: json['parentCreatedAt'] != null
+            ? DateTime.parse(json['parentCreatedAt'])
+            : null,
       );
 }
 

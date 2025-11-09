@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../models/news_insight.dart';
 import '../services/time_capsule_service.dart';
 import '../widgets/news_insight_card.dart';
@@ -21,11 +22,15 @@ class TimeCapsuleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
           title: const Text('タイムカプセル'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           bottom: const TabBar(
             tabs: [
               Tab(icon: Icon(Icons.lock_open), text: '公開済み'),
@@ -33,7 +38,10 @@ class TimeCapsuleScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: ValueListenableBuilder<Map<String, NewsInsight>>(
+        body: Stack(
+          children: [
+            _BackgroundLayer(isDark: isDark),
+            ValueListenableBuilder<Map<String, NewsInsight>>(
           valueListenable: TimeCapsuleService.instance.capsules,
           builder: (context, capsules, _) {
             final unlockedNews = TimeCapsuleService.instance.getUnlockedNews();
@@ -125,7 +133,61 @@ class TimeCapsuleScreen extends StatelessWidget {
             );
           },
         ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _BackgroundLayer extends StatelessWidget {
+  final bool isDark;
+  const _BackgroundLayer({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          'assets/images/background.jpg',
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [const Color(0xFF0B1020), const Color(0xFF101a3a)]
+                    : [const Color(0xFFE8ECFF), const Color(0xFFDDE7FF)],
+              ),
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isDark
+                  ? [
+                      Colors.black.withOpacity(0.6),
+                      Colors.black.withOpacity(0.4),
+                      Colors.black.withOpacity(0.5),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.75),
+                      Colors.white.withOpacity(0.55),
+                      Colors.white.withOpacity(0.65),
+                    ],
+            ),
+          ),
+        ),
+        BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+          child: const SizedBox.expand(),
+        ),
+      ],
     );
   }
 }

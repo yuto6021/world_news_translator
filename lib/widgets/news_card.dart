@@ -28,19 +28,19 @@ class _NewsCardState extends State<NewsCard> {
   String? _mood; // 簡易ムード
 
   Color _getImportanceColor(double importance) {
-    if (importance >= 0.8) return Colors.red.shade700;
-    if (importance >= 0.6) return Colors.orange.shade700;
-    if (importance >= 0.4) return Colors.blue.shade700;
-    if (importance >= 0.2) return Colors.green.shade700;
-    return Colors.grey.shade700;
+    if (importance >= 0.9) return Colors.red.shade700; // 緊急
+    if (importance >= 0.7) return Colors.orange.shade700; // 重要
+    if (importance >= 0.55) return Colors.amber.shade700; // 注目
+    if (importance >= 0.35) return Colors.blue.shade700; // 一般
+    return Colors.green.shade700; // 参考
   }
 
   String _getImportanceLabel(double importance) {
-    if (importance >= 0.8) return "重要";
-    if (importance >= 0.6) return "注目";
-    if (importance >= 0.4) return "一般";
-    if (importance >= 0.2) return "参考";
-    return "その他";
+    if (importance >= 0.9) return "緊急";
+    if (importance >= 0.7) return "重要";
+    if (importance >= 0.55) return "注目";
+    if (importance >= 0.35) return "一般";
+    return "参考";
   }
 
   @override
@@ -522,12 +522,12 @@ class _NewsCardState extends State<NewsCard> {
     String label;
     if (importance >= 0.9) {
       label = '緊急';
-    } else if (importance >= 0.75) {
-      label = '高';
+    } else if (importance >= 0.7) {
+      label = '重要';
     } else if (importance >= 0.55) {
-      label = '中';
+      label = '注目';
     } else if (importance >= 0.35) {
-      label = '低';
+      label = '一般';
     } else {
       label = '参考';
     }

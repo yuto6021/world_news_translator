@@ -4,8 +4,8 @@ import '../services/translation_service.dart';
 import '../services/offline_service.dart';
 import '../widgets/news_card.dart';
 // import '../widgets/headline_banner.dart'; // ユーザー要望により削除
-import '../services/forex_service.dart';
 import '../widgets/fx_ticker.dart';
+import '../services/market_data_service.dart';
 import '../widgets/news_card_skeleton.dart';
 import '../models/article.dart';
 import '../services/wikipedia_service.dart';
@@ -213,59 +213,71 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                     itemCount: 1 + visibleIdx.length,
                     itemBuilder: (context, index) {
                       if (index == 0) {
-                        // 先頭: ドル円ティッカー +（USのみ）概要 + 関連トピック
+                        // 先頭: マルチティッカー + ヒーロー記事 +（USのみ）概要 + 関連トピック
+                        final firstArticle = articles.first;
+                        final firstTranslation =
+                            (translations != null && translations.isNotEmpty)
+                                ? translations.first
+                                : (tSnapshot.connectionState ==
+                                        ConnectionState.waiting
+                                    ? '翻訳中...'
+                                    : '（翻訳なし）');
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // ティッカー
-                              FutureBuilder<double?>(
-                                future: ForexService.getUsdJpy(),
-                                builder: (context, fx) {
-                                  final rate = fx.data;
-                                  final text = rate != null
-                                      ? 'USD/JPY: ${rate.toStringAsFixed(3)}'
-                                      : 'USD/JPY: 取得失敗';
+                              // マルチティッカー (USD/JPY + BTC)
+                              FutureBuilder<List<String>>(
+                                future: MarketDataService.instance.fetchTickerItems(),
+                                builder: (context, snap) {
+                                  final items = snap.data ?? const ['読み込み中...'];
                                   return Container(
-                                    height: 38,
+                                    height: 44,
                                     margin: const EdgeInsets.symmetric(
                                         horizontal: 12, vertical: 4),
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(24),
-                                      color: Colors.indigo.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(26),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.indigo.shade50,
+                                          Colors.indigo.shade100,
+                                        ],
+                                      ),
                                       border: Border.all(
                                           color: Colors.indigo.shade300
-                                              .withOpacity(0.5)),
+                                              .withOpacity(0.6)),
                                     ),
                                     clipBehavior: Clip.antiAlias,
                                     child: FxTicker(
-                                      duration: const Duration(seconds: 12),
+                                      duration: const Duration(seconds: 14),
                                       child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
                                         children: [
-                                          const SizedBox(width: 16),
+                                          const SizedBox(width: 18),
                                           Icon(Icons.trending_flat,
-                                              color: Colors.indigo.shade700),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            text,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                letterSpacing: 0.5),
-                                          ),
-                                          const SizedBox(width: 32),
-                                          Text(
-                                            '為替レート (exchangerate.host) | 更新毎回取得',
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.indigo.shade700),
-                                          ),
+                                              color: Colors.indigo.shade600),
+                                          const SizedBox(width: 12),
+                                          ...items.expand((e) => [
+                                                Text(
+                                                  e,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    letterSpacing: 0.5,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 32),
+                                              ]),
+                                          const SizedBox(width: 18),
                                         ],
                                       ),
                                     ),
                                   );
                                 },
                               ),
+                              // ヒーロー記事
+                              _buildHeroArticle(firstArticle, firstTranslation),
                               // US概要カード
                               if (widget.countryCode.toLowerCase() == 'us' &&
                                   _countrySummaryFuture != null)
@@ -371,6 +383,125 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
             },
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildHeroArticle(Article a, String translation) {
+    final imageUrl = a.urlToImage;
+    return Container(
+      height: 300,
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imageUrl != null && imageUrl.isNotEmpty)
+              Image.network(imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, e, s) => Container(
+                        color: Colors.grey.shade300,
+                        child: const Center(child: Icon(Icons.broken_image)),
+                      ))
+            else
+              Container(
+                color: Colors.grey.shade300,
+                child: const Center(child: Icon(Icons.image, size: 64)),
+              ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.5),
+                    Colors.black.withOpacity(0.85),
+                  ],
+                  stops: const [0.3, 0.6, 1.0],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 20,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.indigo.shade600,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.star, color: Colors.white, size: 16),
+                        SizedBox(width: 6),
+                        Text('注目',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    a.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black54,
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    translation,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      height: 1.4,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black38,
+                          blurRadius: 4,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -22,7 +22,7 @@ class SocialFooter extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
           decoration: BoxDecoration(
             // ヘッダーの flexibleSpace と色味を合わせる
             gradient: LinearGradient(
@@ -58,14 +58,14 @@ class SocialFooter extends StatelessWidget {
                     onPressed: () => _launchUrl('https://facebook.com/'),
                     tooltip: 'Facebook',
                   ),
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 20),
                   IconButton(
                     icon:
                         const FaIcon(FontAwesomeIcons.twitter, size: iconSize),
                     onPressed: () => _launchUrl('https://twitter.com/'),
                     tooltip: 'Twitter',
                   ),
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 20),
                   IconButton(
                     icon: const FaIcon(FontAwesomeIcons.instagram,
                         size: iconSize),
@@ -74,7 +74,7 @@ class SocialFooter extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               // タグラインはユーザー要望により削除
             ],
           ),

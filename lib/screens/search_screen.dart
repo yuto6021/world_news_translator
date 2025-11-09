@@ -86,100 +86,136 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(title: const Text('ニュース検索')),
-      body: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      labelText: 'キーワードで検索',
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (_) => _doSearch(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(onPressed: _doSearch, child: const Text('検索')),
-              ],
+      body: Stack(
+        children: [
+          // 背景画像
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.jpg',
+              fit: BoxFit.cover,
             ),
-            const SizedBox(height: 12),
-
-            // 履歴表示
-            if (_history.isNotEmpty)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('検索履歴',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  TextButton(
-                      onPressed: _clearHistory, child: const Text('履歴を消去')),
-                ],
-              ),
-            if (_history.isNotEmpty)
-              SizedBox(
-                height: 48,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _history.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (context, idx) {
-                    final s = _history[idx];
-                    return ActionChip(
-                      label: Text(s),
-                      onPressed: () => _doSearch(s),
-                    );
-                  },
+          ),
+          // オーバーレイ
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: isDark
+                      ? [
+                          Colors.black.withOpacity(0.7),
+                          Colors.black.withOpacity(0.85),
+                        ]
+                      : [
+                          Colors.white.withOpacity(0.86),
+                          Colors.white.withOpacity(0.78),
+                        ],
                 ),
               ),
+            ),
+          ),
+          // コンテンツ
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        decoration: const InputDecoration(
+                          labelText: 'キーワードで検索',
+                          border: OutlineInputBorder(),
+                        ),
+                        onSubmitted: (_) => _doSearch(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                        onPressed: _doSearch, child: const Text('検索')),
+                  ],
+                ),
+                const SizedBox(height: 12),
 
-            const SizedBox(height: 12),
-            Expanded(
-              child: _results == null
-                  ? const Center(child: Text('検索ワードを入力してください'))
-                  : FutureBuilder<List<Article>>(
-                      future: _results,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState != ConnectionState.done) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        }
-                        final articles = snapshot.data ?? [];
-                        if (articles.isEmpty) {
-                          return const Center(child: Text('該当する記事はありません'));
-                        }
-                        return RefreshIndicator(
-                          onRefresh: () async {
-                            // 再検索
-                            if (_controller.text.trim().isNotEmpty) {
-                              setState(() => _results =
-                                  NewsApiService.searchArticles(
-                                      _controller.text.trim()));
-                              await _results;
-                            }
-                          },
-                          child: ListView.separated(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            itemCount: articles.length,
-                            separatorBuilder: (_, __) =>
-                                const Divider(height: 1),
-                            itemBuilder: (context, idx) {
-                              final article = articles[idx];
-                              // 翻訳は記事詳細で遅延取得するシンプルなフローにする
-                              return NewsCard(article: article);
-                            },
-                          ),
+                // 履歴表示
+                if (_history.isNotEmpty)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('検索履歴',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      TextButton(
+                          onPressed: _clearHistory, child: const Text('履歴を消去')),
+                    ],
+                  ),
+                if (_history.isNotEmpty)
+                  SizedBox(
+                    height: 48,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _history.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (context, idx) {
+                        final s = _history[idx];
+                        return ActionChip(
+                          label: Text(s),
+                          onPressed: () => _doSearch(s),
                         );
                       },
                     ),
-            ),
-          ],
-        ),
+                  ),
+
+                const SizedBox(height: 12),
+                Expanded(
+                  child: _results == null
+                      ? const Center(child: Text('検索ワードを入力してください'))
+                      : FutureBuilder<List<Article>>(
+                          future: _results,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState !=
+                                ConnectionState.done) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
+                            final articles = snapshot.data ?? [];
+                            if (articles.isEmpty) {
+                              return const Center(child: Text('該当する記事はありません'));
+                            }
+                            return RefreshIndicator(
+                              onRefresh: () async {
+                                // 再検索
+                                if (_controller.text.trim().isNotEmpty) {
+                                  setState(() => _results =
+                                      NewsApiService.searchArticles(
+                                          _controller.text.trim()));
+                                  await _results;
+                                }
+                              },
+                              child: ListView.separated(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                itemCount: articles.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (context, idx) {
+                                  final article = articles[idx];
+                                  // 翻訳は記事詳細で遅延取得するシンプルなフローにする
+                                  return NewsCard(article: article);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ), // end Column
+          ), // end Padding
+        ],
       ),
     );
   }

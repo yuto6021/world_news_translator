@@ -10,8 +10,10 @@ import 'settings_screen.dart';
 import 'search_screen.dart';
 import 'wikipedia_search_screen.dart';
 import 'markets_screen.dart';
+import 'map_news_screen.dart';
 import '../widgets/country_tab.dart';
 import '../widgets/social_footer.dart';
+import '../widgets/breaking_news_banner.dart';
 
 class _TabInfo {
   final IconData icon;
@@ -34,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen>
     _TabInfo(Icons.newspaper, 'ニュース', 'トレンドニュース一覧'),
     _TabInfo(Icons.language, '国別', '国別ニュース'),
     _TabInfo(Icons.show_chart, 'マーケット', '為替・暗号資産の簡易チャート'),
+    _TabInfo(Icons.public, '地図', '地域グリッドから国別ニュースへ'),
     _TabInfo(Icons.wb_sunny, '天気', '世界の天気情報'),
     _TabInfo(Icons.favorite, 'お気に入り', 'お気に入り記事一覧'),
     _TabInfo(Icons.chat, 'コメント', 'コメント一覧'),
@@ -356,142 +359,159 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
             ],
-            body: TabBarView(
-              controller: _tabController,
+            body: Column(
               children: [
-                const TrendingScreen(),
-                Scrollbar(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                // 速報バナー
+                const BreakingNewsBanner(),
+                // タブコンテンツ
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    // _tabs: ニュース, 国別, マーケット, 地図, 天気, お気に入り, コメント, Wikipedia, タイムカプセル
                     children: [
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.language,
-                                    color: Theme.of(context).primaryColor,
-                                    size: 28,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    '国別ニュース',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
+                      // ニュース
+                      const TrendingScreen(),
+                      // 国別
+                      Scrollbar(
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                          children: [
+                            Card(
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.language,
+                                          color: Theme.of(context).primaryColor,
+                                          size: 28,
                                         ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                              Column(
-                                children: [
-                                  for (var i = 0; i < 5; i++)
-                                    Padding(
-                                      padding:
-                                          const EdgeInsets.only(bottom: 16),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8),
-                                              child: SizedBox(
-                                                height: 80,
-                                                child: Semantics(
-                                                  label: [
-                                                        '日本',
-                                                        'イギリス',
-                                                        'ドイツ',
-                                                        '韓国',
-                                                        'オーストラリア'
-                                                      ][i] +
-                                                      'のニュース',
-                                                  child: CountryTab(
-                                                    name: [
-                                                      '日本',
-                                                      'イギリス',
-                                                      'ドイツ',
-                                                      '韓国',
-                                                      'オーストラリア'
-                                                    ][i],
-                                                    code: [
-                                                      'jp',
-                                                      'gb',
-                                                      'de',
-                                                      'kr',
-                                                      'au'
-                                                    ][i],
-                                                  ),
-                                                ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          '国別ニュース',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineSmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
                                               ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 8),
-                                              child: SizedBox(
-                                                height: 80,
-                                                child: Semantics(
-                                                  label: [
-                                                        'アメリカ',
-                                                        'フランス',
-                                                        '中国',
-                                                        'インド',
-                                                        'ブラジル'
-                                                      ][i] +
-                                                      'のニュース',
-                                                  child: CountryTab(
-                                                    name: [
-                                                      'アメリカ',
-                                                      'フランス',
-                                                      '中国',
-                                                      'インド',
-                                                      'ブラジル'
-                                                    ][i],
-                                                    code: [
-                                                      'us',
-                                                      'fr',
-                                                      'cn',
-                                                      'in',
-                                                      'br'
-                                                    ][i],
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
-                                ],
+                                    const SizedBox(height: 24),
+                                    Column(
+                                      children: [
+                                        for (var i = 0; i < 5; i++)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 16),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            right: 8),
+                                                    child: SizedBox(
+                                                      height: 80,
+                                                      child: Semantics(
+                                                        label: [
+                                                              '日本',
+                                                              'イギリス',
+                                                              'ドイツ',
+                                                              '韓国',
+                                                              'オーストラリア'
+                                                            ][i] +
+                                                            'のニュース',
+                                                        child: CountryTab(
+                                                          name: [
+                                                            '日本',
+                                                            'イギリス',
+                                                            'ドイツ',
+                                                            '韓国',
+                                                            'オーストラリア'
+                                                          ][i],
+                                                          code: [
+                                                            'jp',
+                                                            'gb',
+                                                            'de',
+                                                            'kr',
+                                                            'au'
+                                                          ][i],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 8),
+                                                    child: SizedBox(
+                                                      height: 80,
+                                                      child: Semantics(
+                                                        label: [
+                                                              'アメリカ',
+                                                              'フランス',
+                                                              '中国',
+                                                              'インド',
+                                                              'ブラジル'
+                                                            ][i] +
+                                                            'のニュース',
+                                                        child: CountryTab(
+                                                          name: [
+                                                            'アメリカ',
+                                                            'フランス',
+                                                            '中国',
+                                                            'インド',
+                                                            'ブラジル'
+                                                          ][i],
+                                                          code: [
+                                                            'us',
+                                                            'fr',
+                                                            'cn',
+                                                            'in',
+                                                            'br'
+                                                          ][i],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
+                      // マーケット
+                      const MarketsScreen(),
+                      // 地図
+                      const MapNewsScreen(),
+                      // 天気
+                      const WeatherScreen(),
+                      const FavoritesScreen(),
+                      const CommentsScreen(),
+                      const WikipediaSearchScreen(),
+                      const TimeCapsuleScreen(),
                     ],
                   ),
                 ),
-                // マーケット
-                const MarketsScreen(),
-                const WeatherScreen(),
-                const FavoritesScreen(),
-                const CommentsScreen(),
-                const WikipediaSearchScreen(),
-                const TimeCapsuleScreen(),
               ],
             ),
           ),

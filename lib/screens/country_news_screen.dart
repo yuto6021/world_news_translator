@@ -38,7 +38,6 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
   // ティッカー定期更新用
   Timer? _tickerTimer;
   List<String> _tickerItems = ['読み込み中...'];
-  final GlobalKey _tickerKey = GlobalKey();
 
   @override
   void initState() {
@@ -293,29 +292,30 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                                               .withOpacity(0.6)),
                                     ),
                                     clipBehavior: Clip.antiAlias,
-                                    child: FxTicker(
-                                      duration: const Duration(seconds: 14),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          const SizedBox(width: 18),
-                                          Icon(Icons.trending_flat,
-                                              color: Colors.indigo.shade600),
-                                          const SizedBox(width: 12),
-                                          ..._tickerItems.expand((e) => [
-                                                Text(
-                                                  e,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    letterSpacing: 0.5,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 32),
-                                              ]),
-                                          const SizedBox(width: 18),
-                                        ],
-                                      ),
+                                    child: Row(
+                                      children: [
+                                        const SizedBox(width: 18),
+                                        Icon(Icons.trending_flat,
+                                            color: Colors.indigo.shade600),
+                                        const SizedBox(width: 12),
+                                        // 横幅はExpandedで確保し、内部はテキスト1本に連結してスクロール
+                                        Expanded(
+                                          child: FxTicker(
+                                            duration:
+                                                const Duration(seconds: 14),
+                                            child: Text(
+                                              _tickerItems.join('     '),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.clip,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 18),
+                                      ],
                                     ),
                                   ),
                                 ),

@@ -20,7 +20,6 @@ class FxTicker extends StatefulWidget {
 class _FxTickerState extends State<FxTicker>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  bool _hovered = false;
 
   @override
   void initState() {
@@ -43,15 +42,23 @@ class _FxTickerState extends State<FxTicker>
         return AnimatedBuilder(
           animation: _controller,
           builder: (context, _) {
-            final dx = (-_controller.value * width);
-            return Transform.translate(
-              offset: Offset(dx, 0),
-              child: Row(
-                children: [
-                  SizedBox(width: width, child: widget.child),
-                  SizedBox(width: width, child: widget.child),
-                ],
-              ),
+            final shift = _controller.value * width;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: -shift,
+                  top: 0,
+                  width: width,
+                  child: widget.child,
+                ),
+                Positioned(
+                  left: -shift + width,
+                  top: 0,
+                  width: width,
+                  child: widget.child,
+                ),
+              ],
             );
           },
         );
@@ -60,14 +67,8 @@ class _FxTickerState extends State<FxTicker>
 
     if (!widget.pauseOnHover) return ClipRect(child: ticker);
     return MouseRegion(
-      onEnter: (_) {
-        setState(() => _hovered = true);
-        _controller.stop();
-      },
-      onExit: (_) {
-        setState(() => _hovered = false);
-        _controller.repeat();
-      },
+      onEnter: (_) => _controller.stop(),
+      onExit: (_) => _controller.repeat(),
       child: ClipRect(child: ticker),
     );
   }

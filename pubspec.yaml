@@ -76,6 +76,7 @@ flutter:
     - .env
     - assets/translation_dict.json
     - assets/images/background.jpg
+    - assets/images/background_market.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

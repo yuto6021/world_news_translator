@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'dart:ui';
 import 'trending_screen.dart';
 import 'favorites_screen.dart';
@@ -8,6 +9,7 @@ import 'weather_screen.dart';
 import 'settings_screen.dart';
 import 'search_screen.dart';
 import 'wikipedia_search_screen.dart';
+import 'markets_screen.dart';
 import '../widgets/country_tab.dart';
 import '../widgets/social_footer.dart';
 
@@ -31,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen>
   static const _tabs = [
     _TabInfo(Icons.newspaper, 'ニュース', 'トレンドニュース一覧'),
     _TabInfo(Icons.language, '国別', '国別ニュース'),
+    _TabInfo(Icons.show_chart, 'マーケット', '為替・暗号資産の簡易チャート'),
     _TabInfo(Icons.wb_sunny, '天気', '世界の天気情報'),
     _TabInfo(Icons.favorite, 'お気に入り', 'お気に入り記事一覧'),
     _TabInfo(Icons.chat, 'コメント', 'コメント一覧'),
@@ -40,11 +43,21 @@ class _HomeScreenState extends State<HomeScreen>
 
   late final TabController _tabController;
   final ScrollController _scrollController = ScrollController();
+  bool _showTopFab = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _scrollController.addListener(() {
+      if (!_scrollController.hasClients) return;
+      final dir = _scrollController.position.userScrollDirection;
+      final offset = _scrollController.offset;
+      final shouldShow = offset > 600 && dir == ScrollDirection.forward;
+      if (shouldShow != _showTopFab) {
+        setState(() => _showTopFab = shouldShow);
+      }
+    });
   }
 
   @override
@@ -253,14 +266,49 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 centerTitle: true,
                 actions: [
-                  IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SearchScreen()),
+                  // より目立つ検索ボタン（サイズ＋背景色）
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                    child: Material(
+                      color: isDark
+                          ? Colors.indigo.shade700.withOpacity(0.3)
+                          : Colors.indigo.shade100.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const SearchScreen()),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.search,
+                                  size: 22,
+                                  color: isDark
+                                      ? Colors.white
+                                      : Colors.indigo.shade700),
+                              const SizedBox(width: 6),
+                              Text(
+                                '検索',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? Colors.white
+                                      : Colors.indigo.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    tooltip: '検索',
                   ),
                   IconButton(
                     icon: const Icon(Icons.settings),
@@ -437,6 +485,8 @@ class _HomeScreenState extends State<HomeScreen>
                     ],
                   ),
                 ),
+                // マーケット
+                const MarketsScreen(),
                 const WeatherScreen(),
                 const FavoritesScreen(),
                 const CommentsScreen(),
@@ -450,6 +500,29 @@ class _HomeScreenState extends State<HomeScreen>
             right: 0,
             bottom: 0,
             child: SocialFooter(),
+          ),
+          // 先頭へ戻る FAB（スクロール方向が forward かつ一定オフセット以上で表示）
+          Positioned(
+            right: 16,
+            bottom: 90,
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 220),
+              offset: _showTopFab ? Offset.zero : const Offset(0, 0.6),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 220),
+                opacity: _showTopFab ? 1 : 0,
+                child: FloatingActionButton(
+                  heroTag: 'toTopFab',
+                  tooltip: '先頭へ',
+                  onPressed: () {
+                    _scrollController.animateTo(0,
+                        duration: const Duration(milliseconds: 380),
+                        curve: Curves.easeOut);
+                  },
+                  child: const Icon(Icons.vertical_align_top),
+                ),
+              ),
+            ),
           ),
         ],
       ),

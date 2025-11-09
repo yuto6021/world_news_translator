@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../services/news_api_service.dart';
 import '../services/translation_service.dart';
 import '../services/offline_service.dart';
@@ -34,10 +35,32 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
   // List<int> _relatedIdx = [];
   Future<String?>? _countrySummaryFuture;
 
+  // ティッカー定期更新用
+  Timer? _tickerTimer;
+  List<String> _tickerItems = ['読み込み中...'];
+  final GlobalKey _tickerKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     _loadArticles();
+    _refreshTicker();
+    _tickerTimer =
+        Timer.periodic(const Duration(minutes: 2), (_) => _refreshTicker());
+  }
+
+  @override
+  void dispose() {
+    _tickerTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshTicker() async {
+    final items =
+        await MarketDataService.instance.fetchTickerItems(forceRefresh: true);
+    if (mounted) {
+      setState(() => _tickerItems = items);
+    }
   }
 
   void _loadArticles() {
@@ -227,13 +250,33 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // マルチティッカー (USD/JPY + BTC)
-                              FutureBuilder<List<String>>(
-                                future: MarketDataService.instance
-                                    .fetchTickerItems(),
-                                builder: (context, snap) {
-                                  final items = snap.data ?? const ['読み込み中...'];
-                                  return Container(
+                              // マルチティッカー (USD/JPY + BTC) - タップで手動更新 + 自動2分更新
+                              GestureDetector(
+                                onTap: () {
+                                  _refreshTicker();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('ティッカーを更新しました'),
+                                      duration: Duration(seconds: 1),
+                                    ),
+                                  );
+                                },
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 400),
+                                  transitionBuilder: (child, animation) {
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: SlideTransition(
+                                        position: Tween<Offset>(
+                                          begin: const Offset(0, 0.15),
+                                          end: Offset.zero,
+                                        ).animate(animation),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    key: ValueKey(_tickerItems.join()),
                                     height: 44,
                                     margin: const EdgeInsets.symmetric(
                                         horizontal: 12, vertical: 4),
@@ -260,7 +303,7 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                                           Icon(Icons.trending_flat,
                                               color: Colors.indigo.shade600),
                                           const SizedBox(width: 12),
-                                          ...items.expand((e) => [
+                                          ..._tickerItems.expand((e) => [
                                                 Text(
                                                   e,
                                                   style: const TextStyle(
@@ -274,8 +317,8 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                                         ],
                                       ),
                                     ),
-                                  );
-                                },
+                                  ),
+                                ),
                               ),
                               // ヒーロー記事
                               _buildHeroArticle(firstArticle, firstTranslation),

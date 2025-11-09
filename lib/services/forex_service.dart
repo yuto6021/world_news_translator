@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ForexService {
@@ -7,6 +8,11 @@ class ForexService {
   static Future<double?> getUsdJpy() async {
     final alphaKey = dotenv.env['ALPHAVANTAGE_KEY'];
     final twelveKey = dotenv.env['TWELVEDATA_KEY'];
+    double? lastOk;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      lastOk = prefs.getDouble('last_usd_jpy');
+    } catch (_) {}
 
     // 1. Alpha Vantage (FX_INTRADAY は1分足; ここでは CURRENCY_EXCHANGE_RATE を簡易利用)
     if (alphaKey != null && alphaKey.isNotEmpty) {
@@ -40,7 +46,7 @@ class ForexService {
       } catch (_) {}
     }
 
-    // 3. exchangerate.host（最終フォールバック）
+    // 3. exchangerate.host（最終フォールバック1）
     try {
       final uri = Uri.parse(
           'https://api.exchangerate.host/latest?base=USD&symbols=JPY');
@@ -49,9 +55,36 @@ class ForexService {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
         final rates = data['rates'] as Map<String, dynamic>;
         final jpy = (rates['JPY'] as num?)?.toDouble();
-        return jpy;
+        if (jpy != null) {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setDouble('last_usd_jpy', jpy);
+          } catch (_) {}
+          return jpy;
+        }
       }
     } catch (_) {}
+
+    // 4. open.er-api.com（CORS 対応の無料API）
+    try {
+      final uri = Uri.parse('https://open.er-api.com/v6/latest/USD');
+      final res = await http.get(uri);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final rates = data['rates'] as Map<String, dynamic>?;
+        final jpy = (rates?['JPY'] as num?)?.toDouble();
+        if (jpy != null) {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setDouble('last_usd_jpy', jpy);
+          } catch (_) {}
+          return jpy;
+        }
+      }
+    } catch (_) {}
+
+    // 失敗時は最後に成功した値を返して UI の『取得失敗』を回避
+    if (lastOk != null) return lastOk;
     return null;
   }
 }

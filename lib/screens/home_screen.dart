@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'trending_screen.dart';
 import 'favorites_screen.dart';
 import 'comments_screen.dart';
@@ -6,6 +7,7 @@ import 'time_capsule_screen.dart';
 import 'weather_screen.dart';
 import 'settings_screen.dart';
 import 'search_screen.dart';
+import 'wikipedia_search_screen.dart';
 import '../widgets/country_tab.dart';
 import '../widgets/social_footer.dart';
 
@@ -32,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen>
     _TabInfo(Icons.wb_sunny, '天気', '世界の天気情報'),
     _TabInfo(Icons.favorite, 'お気に入り', 'お気に入り記事一覧'),
     _TabInfo(Icons.chat, 'コメント', 'コメント一覧'),
+    _TabInfo(Icons.book, 'Wikipedia', 'Wikipedia検索'),
     _TabInfo(Icons.hourglass_bottom, 'タイムカプセル', 'タイムカプセル一覧'),
   ];
 
@@ -52,8 +55,170 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildBackground(bool isDark) {
-    // 背景はシンプルに白/ダークの無地に戻す（視認性優先）。
-    return Container(color: isDark ? Colors.black : Colors.white);
+    // assets/images/background.jpg を背景に使用、視認性のためにグラデーションオーバーレイを追加
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          'assets/images/background.jpg',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // 画像読み込みエラー時はグラデーション背景へフォールバック
+            final colors = isDark
+                ? [
+                    const Color(0xFF0B1020),
+                    const Color(0xFF101a3a),
+                    const Color(0xFF0b1020),
+                  ]
+                : [
+                    const Color(0xFFE8ECFF),
+                    const Color(0xFFDDE7FF),
+                    const Color(0xFFF5F7FF),
+                  ];
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: colors,
+                ),
+              ),
+            );
+          },
+        ),
+        // 視認性確保のためのグラデーションオーバーレイ
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isDark
+                  ? [
+                      Colors.black.withOpacity(0.65),
+                      Colors.black.withOpacity(0.45),
+                      Colors.black.withOpacity(0.55),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.75),
+                      Colors.white.withOpacity(0.55),
+                      Colors.white.withOpacity(0.65),
+                    ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFlexibleSpace(bool scrolled, bool isDark) {
+    // スクロール位置に応じて装飾とサブタイトルの表示/非表示を制御
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: scrolled ? 10 : 0,
+          sigmaY: scrolled ? 10 : 0,
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 背景グラデーション
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [
+                          Colors.black.withOpacity(scrolled ? 0.7 : 0.3),
+                          Colors.indigo.shade900
+                              .withOpacity(scrolled ? 0.6 : 0.2),
+                        ]
+                      : [
+                          Colors.white.withOpacity(scrolled ? 0.8 : 0.4),
+                          Colors.indigo.shade50
+                              .withOpacity(scrolled ? 0.7 : 0.3),
+                        ],
+                ),
+              ),
+            ),
+            // 装飾: 斜めに配置された半透明シェイプ群
+            Positioned(
+              top: -40,
+              left: -30,
+              child: Transform.rotate(
+                angle: 0.35,
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(32),
+                    gradient: LinearGradient(
+                      colors: [
+                        (isDark ? Colors.indigo : Colors.indigoAccent)
+                            .withOpacity(0.25),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 20,
+              right: -50,
+              child: Transform.rotate(
+                angle: -0.5,
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        (isDark
+                                ? Colors.indigo.shade700
+                                : Colors.indigo.shade200)
+                            .withOpacity(0.30),
+                        Colors.transparent,
+                      ],
+                      radius: 0.85,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -30,
+              left: -60,
+              child: Transform.rotate(
+                angle: 0.15,
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(48),
+                    gradient: LinearGradient(
+                      colors: [
+                        (isDark
+                                ? Colors.indigo.shade800
+                                : Colors.indigo.shade300)
+                            .withOpacity(0.18),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // キャッチコピーはヘッダーから除去（Footerで表示）
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -68,17 +233,22 @@ class _HomeScreenState extends State<HomeScreen>
             controller: _scrollController,
             headerSliverBuilder: (context, innerBoxIsScrolled) => [
               SliverAppBar(
-                expandedHeight: 120,
+                expandedHeight: 160,
                 floating: false,
                 pinned: true,
-                elevation: innerBoxIsScrolled ? 2 : 0,
+                elevation: 0,
                 backgroundColor: Colors.transparent,
-                title: Text(
-                  '世界のニュース',
-                  style: TextStyle(
-                    color: isDark ? Colors.grey.shade100 : Colors.indigo,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22,
+                flexibleSpace: _buildFlexibleSpace(innerBoxIsScrolled, isDark),
+                title: AnimatedOpacity(
+                  opacity: innerBoxIsScrolled ? 1.0 : 0.9,
+                  duration: const Duration(milliseconds: 200),
+                  child: Text(
+                    '世界のニュース',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey.shade100 : Colors.indigo,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                    ),
                   ),
                 ),
                 centerTitle: true,
@@ -106,20 +276,35 @@ class _HomeScreenState extends State<HomeScreen>
                 bottom: TabBar(
                   controller: _tabController,
                   indicatorColor: isDark ? Colors.grey.shade100 : Colors.indigo,
+                  indicatorWeight: 3,
                   labelColor: isDark ? Colors.grey.shade100 : Colors.indigo,
                   unselectedLabelColor:
                       isDark ? Colors.grey.shade400 : Colors.grey.shade700,
                   isScrollable: true,
                   tabAlignment: TabAlignment.center,
-                  tabs: _tabs
-                      .map((tab) => Tooltip(
+                  tabs: _tabs.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final tab = entry.value;
+                    return AnimatedBuilder(
+                      animation: _tabController,
+                      builder: (context, child) {
+                        final isSelected = _tabController.index == idx;
+                        return Transform.scale(
+                          scale: isSelected ? 1.1 : 1.0,
+                          child: Tooltip(
                             message: tab.semanticLabel,
                             child: Tab(
-                              icon: Icon(tab.icon),
+                              icon: Icon(
+                                tab.icon,
+                                size: isSelected ? 26 : 22,
+                              ),
                               text: tab.label,
                             ),
-                          ))
-                      .toList(),
+                          ),
+                        );
+                      },
+                    );
+                  }).toList(),
                 ),
               ),
             ],
@@ -255,6 +440,7 @@ class _HomeScreenState extends State<HomeScreen>
                 const WeatherScreen(),
                 const FavoritesScreen(),
                 const CommentsScreen(),
+                const WikipediaSearchScreen(),
                 const TimeCapsuleScreen(),
               ],
             ),

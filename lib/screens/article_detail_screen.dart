@@ -8,6 +8,8 @@ import '../services/translation_service.dart';
 import '../services/app_settings_service.dart';
 import '../services/time_capsule_service.dart';
 import '../services/wikipedia_service.dart';
+import '../services/wikipedia_history_service.dart';
+import '../services/comments_service.dart';
 import '../models/news_insight.dart';
 
 class ArticleDetailScreen extends StatefulWidget {
@@ -58,6 +60,12 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
 
   void _showWikipediaSearch(String query) async {
     if (query.trim().isEmpty) return;
+
+    // まず要約を取得
+    final summary = await WikipediaService.getSummary(query);
+
+    // 要約付きで検索履歴に追加
+    await WikipediaHistoryService.addToHistory(query, summary);
 
     showModalBottomSheet(
       context: context,
@@ -342,6 +350,16 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                 icon: const Icon(Icons.hourglass_bottom),
                 label: const Text('タイムカプセルに保存'),
               ),
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                onPressed: () => _showCommentDialog(),
+                icon: const Icon(Icons.comment),
+                label: const Text('記事にコメント'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+              ),
             ],
           ),
         ),
@@ -350,6 +368,88 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
         onPressed: () => launchUrl(Uri.parse(widget.article.url)),
         child: const Icon(Icons.open_in_new),
         tooltip: '原文をブラウザで開く',
+      ),
+    );
+  }
+
+  void _showCommentDialog() {
+    final quoteController = TextEditingController();
+    final commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('記事にコメント'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.article.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: quoteController,
+                decoration: const InputDecoration(
+                  labelText: '引用部分（任意）',
+                  hintText: '記事から引用したい部分を入力',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: commentController,
+                decoration: const InputDecoration(
+                  labelText: 'コメント *',
+                  hintText: 'あなたの考えや感想を入力',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 5,
+                autofocus: true,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (commentController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('コメントを入力してください')),
+                );
+                return;
+              }
+
+              final comment = ArticleComment(
+                articleUrl: widget.article.url,
+                articleTitle: widget.article.title,
+                quote: quoteController.text.trim(),
+                comment: commentController.text.trim(),
+                createdAt: DateTime.now(),
+                articleImage: widget.article.urlToImage,
+              );
+
+              await CommentsService.addComment(comment);
+
+              if (!mounted) return;
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('コメントを保存しました')),
+              );
+            },
+            child: const Text('保存'),
+          ),
+        ],
       ),
     );
   }

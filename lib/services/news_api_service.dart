@@ -12,6 +12,12 @@ class NewsApiService {
     final response = await http.get(Uri.parse(
         '$baseUrl?country=$countryCode&apiKey=$apiKey&pageSize=$pageSize&page=$page'));
     final data = jsonDecode(response.body);
+
+    // エラーチェック
+    if (data['status'] == 'error') {
+      throw Exception('NewsAPI Error: ${data['code']} - ${data['message']}');
+    }
+
     return (data['articles'] as List).map((e) => Article.fromJson(e)).toList();
   }
 
@@ -25,6 +31,12 @@ class NewsApiService {
         : '$baseUrl?category=general&apiKey=$apiKey&pageSize=$pageSize&page=$page';
     final response = await http.get(Uri.parse(uriStr));
     final data = jsonDecode(response.body);
+
+    // エラーチェック
+    if (data['status'] == 'error') {
+      throw Exception('NewsAPI Error: ${data['code']} - ${data['message']}');
+    }
+
     return (data['articles'] as List).map((e) => Article.fromJson(e)).toList();
   }
 

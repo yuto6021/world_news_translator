@@ -134,76 +134,67 @@ class _NewsCardState extends State<NewsCard> {
                   child: ValueListenableBuilder<String>(
                     valueListenable: UIService.instance.cardMode,
                     builder: (context, cardMode, _) {
-                      final hasImage = widget.article.urlToImage != null;
+                      final hasImage = widget.article.urlToImage != null &&
+                          widget.article.urlToImage!.isNotEmpty;
                       return Row(
                         children: [
                           if (hasImage)
-                            // 画像を大きく表示
+                            // 画像をより大きく表示。オーバーレイ表示モードのときのみタイトルを画像上に重ねる。
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Stack(
-                                children: [
-                                  CachedNetworkImage(
-                                    imageUrl: widget.article.urlToImage!,
-                                    width: 160,
-                                    height: 120,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                        width: 140,
-                                        height: 100,
-                                        color: Colors.grey.shade200),
-                                    errorWidget: (context, url, error) =>
-                                        Container(
-                                      width: 140,
-                                      height: 100,
-                                      color: Colors.grey.shade200,
-                                      child: const Icon(Icons.broken_image),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 140,
-                                    height: 100,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Colors.transparent,
-                                          Colors.black.withOpacity(0.45)
-                                        ],
+                              child: SizedBox(
+                                width: 200,
+                                height: 130,
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    CachedNetworkImage(
+                                      imageUrl: widget.article.urlToImage!,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Container(
+                                          color: Colors.grey.shade200),
+                                      errorWidget: (context, url, error) =>
+                                          Container(
+                                        color: Colors.grey.shade200,
+                                        child: const Icon(Icons.broken_image),
                                       ),
                                     ),
-                                  ),
-                                  Positioned(
-                                    left: 8,
-                                    right: 8,
-                                    bottom: 8,
-                                    child: Text(
-                                      widget.article.title,
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  )
-                                ],
-                              ),
-                            )
-                          else if (hasImage)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: CachedNetworkImage(
-                                imageUrl: widget.article.urlToImage!,
-                                width: 110,
-                                height: 80,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                    width: 110, color: Colors.grey.shade200),
-                                errorWidget: (context, url, error) => Container(
-                                  width: 110,
-                                  color: Colors.grey.shade200,
-                                  child: const Icon(Icons.broken_image),
+                                    if (cardMode == 'overlay') ...[
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              Colors.black.withOpacity(0.55),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        left: 10,
+                                        right: 10,
+                                        bottom: 10,
+                                        child: Text(
+                                          widget.article.title,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            shadows: [
+                                              Shadow(
+                                                  color: Colors.black54,
+                                                  blurRadius: 3,
+                                                  offset: Offset(0, 1)),
+                                            ],
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                             ),

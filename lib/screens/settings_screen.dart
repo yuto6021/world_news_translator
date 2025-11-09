@@ -5,6 +5,7 @@ import '../services/favorites_service.dart';
 import '../services/translation_service.dart';
 import '../services/app_settings_service.dart';
 import 'guide_screen.dart';
+import 'wikipedia_history_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -197,6 +198,18 @@ class SettingsScreen extends StatelessWidget {
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const GuideScreen())),
             ),
+
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('Wikipedia検索履歴'),
+              subtitle: const Text('過去に検索した単語を確認・再検索'),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const WikipediaHistoryScreen())),
+            ),
+
+            const SizedBox(height: 8),
 
             // お気に入りのクリア
             ElevatedButton.icon(

@@ -12,7 +12,6 @@ class DigestScreen extends StatefulWidget {
 
 class _DigestScreenState extends State<DigestScreen> {
   final _newsService = NewsApiService();
-  final _translationService = TranslationService();
   List<Article>? _topArticles;
   String? _digest;
   bool _loading = true;

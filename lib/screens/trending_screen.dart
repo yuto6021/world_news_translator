@@ -37,6 +37,7 @@ class _TrendingScreenState extends State<TrendingScreen> {
   bool _loadingMore = false;
   bool _endReached = false;
   bool _refreshing = false;
+  String? _errorMessage; // エラーメッセージ保存用
 
   @override
   void initState() {
@@ -61,7 +62,10 @@ class _TrendingScreenState extends State<TrendingScreen> {
   }
 
   Future<void> _loadInitial() async {
-    setState(() => _initialLoading = true);
+    setState(() {
+      _initialLoading = true;
+      _errorMessage = null;
+    });
     try {
       final articles =
           await NewsApiService.fetchTrendingArticles(null, _currentPage);
@@ -70,6 +74,9 @@ class _TrendingScreenState extends State<TrendingScreen> {
       await _processAndAppend(articles);
       if (articles.length < NewsApiService.pageSize) _endReached = true;
     } catch (e) {
+      // エラーメッセージを保存
+      setState(() => _errorMessage = e.toString());
+
       // ネットワーク失敗時はローカルキャッシュから復元
       final cached = await OfflineService.instance.getArticles(limit: 20);
       if (cached.isNotEmpty) {
@@ -191,38 +198,100 @@ class _TrendingScreenState extends State<TrendingScreen> {
         itemBuilder: (_, __) => const NewsCardSkeleton(),
       );
     }
+
+    // トップ記事を分離してヒーローセクション化（スクロール内に組み込み）
+    final topEntry = _entries.isNotEmpty ? _entries.first : null;
+    final restEntries =
+        _entries.length > 1 ? _entries.sublist(1) : <_TrendingEntry>[];
+
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            children: [
-              const Icon(Icons.public),
-              const SizedBox(width: 8),
-              const Text('Global trending'),
-              const Spacer(),
-              if (_refreshing)
-                const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2)),
-            ],
+        // エラーメッセージ表示
+        if (_errorMessage != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            color: Colors.red.shade100,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red.shade700),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'ニュース取得エラー',
+                        style: TextStyle(
+                          color: Colors.red.shade900,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _errorMessage!,
+                  style: TextStyle(color: Colors.red.shade800, fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                if (_entries.isNotEmpty)
+                  Text(
+                    'キャッシュから ${_entries.length} 件の記事を表示中',
+                    style:
+                        TextStyle(color: Colors.orange.shade700, fontSize: 11),
+                  ),
+              ],
+            ),
           ),
-        ),
+
         Expanded(
           child: RefreshIndicator(
             onRefresh: _refresh,
             child: ListView.builder(
               controller: _scrollController,
-              itemCount: _entries.length + (_loadingMore ? 1 : 0),
+              itemCount: 1 + restEntries.length + (_loadingMore ? 1 : 0),
               itemBuilder: (context, idx) {
-                if (idx >= _entries.length) {
+                // トップ記事ヒーローセクション（インデックス0）
+                if (idx == 0) {
+                  if (topEntry == null) return const SizedBox.shrink();
+                  return Column(
+                    children: [
+                      _buildHeroSection(topEntry),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 12),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.newspaper, size: 20),
+                            const SizedBox(width: 8),
+                            Text('最新ニュース',
+                                style: Theme.of(context).textTheme.titleMedium),
+                            const Spacer(),
+                            if (_refreshing)
+                              const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                // ローディングインジケータ
+                if (idx > restEntries.length) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
-                final entry = _entries[idx];
+
+                // 通常の記事カード
+                final entry = restEntries[idx - 1];
                 final article = entry.article;
                 return GestureDetector(
                   onTap: () => Navigator.push(
@@ -307,5 +376,157 @@ class _TrendingScreenState extends State<TrendingScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildHeroSection(_TrendingEntry entry) {
+    final article = entry.article;
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ArticleDetailScreen(article: article),
+        ),
+      ),
+      child: Container(
+        height: 380,
+        width: double.infinity,
+        margin: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (article.urlToImage != null && article.urlToImage!.isNotEmpty)
+                CachedNetworkImage(
+                  imageUrl: article.urlToImage!,
+                  fit: BoxFit.cover,
+                  placeholder: (c, u) => Container(color: Colors.grey.shade300),
+                  errorWidget: (c, u, e) => Container(
+                    color: Colors.grey.shade300,
+                    child:
+                        const Center(child: Icon(Icons.broken_image, size: 64)),
+                  ),
+                )
+              else
+                Container(
+                  color: Colors.grey.shade300,
+                  child: const Center(child: Icon(Icons.image, size: 64)),
+                ),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.5),
+                      Colors.black.withOpacity(0.85),
+                    ],
+                    stops: const [0.3, 0.6, 1.0],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 20,
+                right: 20,
+                bottom: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _getImportanceColor(entry.importance),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.trending_up,
+                              color: Colors.white, size: 16),
+                          const SizedBox(width: 6),
+                          Text(
+                            _getImportanceLabel(entry.importance),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      article.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black54,
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      entry.translation,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        height: 1.4,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black38,
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getImportanceColor(double importance) {
+    if (importance >= 0.8) return Colors.red.shade700;
+    if (importance >= 0.6) return Colors.orange.shade700;
+    if (importance >= 0.4) return Colors.blue.shade700;
+    if (importance >= 0.2) return Colors.green.shade700;
+    return Colors.grey.shade700;
+  }
+
+  String _getImportanceLabel(double importance) {
+    if (importance >= 0.8) return "重要";
+    if (importance >= 0.6) return "注目";
+    if (importance >= 0.4) return "一般";
+    if (importance >= 0.2) return "参考";
+    return "その他";
   }
 }

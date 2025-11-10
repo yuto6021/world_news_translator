@@ -11,7 +11,6 @@ class KnowledgeBaseScreen extends StatefulWidget {
 }
 
 class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> {
-  final _newsService = NewsApiService();
   final Map<String, String> _wikiCache = {};
   bool _loading = true;
   List<Article> _articles = [];
@@ -26,7 +25,7 @@ class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> {
   Future<void> _loadContent() async {
     setState(() => _loading = true);
     try {
-      _articles = await _newsService.getTopHeadlines();
+      _articles = await NewsApiService.getTopHeadlines();
       for (final article in _articles) {
         final entities = await WikipediaService.extractEntities(article.title);
         if (entities.isNotEmpty) {

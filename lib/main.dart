@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/home_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/theme_service.dart';
+import 'widgets/konami_code_detector.dart';
 
 Future<void> main() async {
   // .envファイルの読み込み（APIキーなど）
@@ -74,7 +75,9 @@ class WorldNewsApp extends StatelessWidget {
               elevation: 0,
             ),
           ),
-          home: const HomeScreen(),
+          home: const KonamiCodeDetector(
+            child: HomeScreen(),
+          ),
         );
       },
     );

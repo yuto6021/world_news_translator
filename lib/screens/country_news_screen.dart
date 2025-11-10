@@ -39,6 +39,10 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
   Timer? _tickerTimer;
   List<String> _tickerItems = ['読み込み中...'];
 
+  // 先頭へボタン用
+  final ScrollController _scrollController = ScrollController();
+  bool _showTopFab = false;
+
   @override
   void initState() {
     super.initState();
@@ -46,11 +50,20 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
     _refreshTicker();
     _tickerTimer =
         Timer.periodic(const Duration(minutes: 2), (_) => _refreshTicker());
+    _scrollController.addListener(() {
+      if (!_scrollController.hasClients) return;
+      final offset = _scrollController.offset;
+      final shouldShow = offset > 300;
+      if (shouldShow != _showTopFab) {
+        setState(() => _showTopFab = shouldShow);
+      }
+    });
   }
 
   @override
   void dispose() {
     _tickerTimer?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -232,6 +245,7 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
                   }
 
                   return ListView.builder(
+                    controller: _scrollController, // ScrollControllerを追加
                     itemCount: 1 + visibleIdx.length,
                     itemBuilder: (context, index) {
                       if (index == 0) {
@@ -428,6 +442,19 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
           );
         },
       ),
+      floatingActionButton: _showTopFab
+          ? FloatingActionButton(
+              heroTag: 'countryTopFab',
+              tooltip: '先頭へ',
+              elevation: 8,
+              onPressed: () {
+                _scrollController.animateTo(0,
+                    duration: const Duration(milliseconds: 380),
+                    curve: Curves.easeOut);
+              },
+              child: const Icon(Icons.vertical_align_top),
+            )
+          : null,
     );
   }
 

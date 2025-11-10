@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/article.dart';
 import '../services/translation_service.dart';
 import '../services/app_settings_service.dart';
@@ -28,6 +29,8 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // 記事閲覧を記録（実績解除用）
+    _recordArticleRead();
     // 自動翻訳が有効な場合のみ翻訳を行う
     if (AppSettingsService.instance.autoTranslate.value) {
       _fetchTranslation();
@@ -40,6 +43,164 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
           _fetchTranslation();
         }
       });
+    }
+  }
+
+  Future<void> _recordArticleRead() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final now = DateTime.now();
+
+      // 読んだ記事数をカウント
+      final count = prefs.getInt('articles_read_count') ?? 0;
+      await prefs.setInt('articles_read_count', count + 1);
+
+      // 読んだ記事URLリストを保存（最新1000件まで）
+      final readList = prefs.getStringList('articles_read_list') ?? [];
+      if (!readList.contains(widget.article.url)) {
+        readList.add(widget.article.url);
+        await prefs.setStringList(
+            'articles_read_list', readList.take(1000).toList());
+      }
+
+      // 国別記事カウント（世界を知る者実績用）
+      await _trackCountryRead(prefs);
+
+      // 1日の記事数カウント（スピードリーダー実績用）
+      await _trackDailyReads(prefs, now);
+
+      // カテゴリトラッキング（カラフル実績用）
+      await _trackCategory(prefs);
+
+      // 時間帯別記事カウント（ムーンウォーカー実績用）
+      if (now.hour >= 0 && now.hour < 5) {
+        final nightCount = prefs.getInt('night_reads_count') ?? 0;
+        await prefs.setInt('night_reads_count', nightCount + 1);
+      }
+
+      // 連続日数を計算・更新
+      await _updateConsecutiveDays(prefs);
+
+      // 最終閲覧日時を記録
+      await prefs.setString('last_read_time', now.toIso8601String());
+    } catch (e) {
+      // エラーは無視（実績記録は補助機能なので失敗してもアプリは動く）
+    }
+  }
+
+  Future<void> _trackCountryRead(SharedPreferences prefs) async {
+    // 記事URLから国を推測（簡易実装）
+    final countriesRead = prefs.getStringList('countries_read') ?? [];
+    // URLホストから国を推測する簡易ロジック
+    final host = Uri.parse(widget.article.url).host.toLowerCase();
+    String? country;
+    if (host.contains('.jp'))
+      country = 'jp';
+    else if (host.contains('.uk') || host.contains('.co.uk'))
+      country = 'gb';
+    else if (host.contains('.de'))
+      country = 'de';
+    else if (host.contains('.fr'))
+      country = 'fr';
+    else if (host.contains('.cn'))
+      country = 'cn';
+    else if (host.contains('.kr'))
+      country = 'kr';
+    else if (host.contains('.in'))
+      country = 'in';
+    else if (host.contains('.br'))
+      country = 'br';
+    else if (host.contains('.au'))
+      country = 'au';
+    else
+      country = 'us'; // デフォルト
+
+    if (!countriesRead.contains(country)) {
+      countriesRead.add(country);
+      await prefs.setStringList('countries_read', countriesRead);
+    }
+  }
+
+  Future<void> _trackDailyReads(SharedPreferences prefs, DateTime now) async {
+    final today = DateTime(now.year, now.month, now.day).toIso8601String();
+    final dailyDate = prefs.getString('daily_reads_date');
+
+    if (dailyDate == today) {
+      final dailyCount = prefs.getInt('daily_reads_count') ?? 0;
+      await prefs.setInt('daily_reads_count', dailyCount + 1);
+    } else {
+      // 新しい日
+      await prefs.setString('daily_reads_date', today);
+      await prefs.setInt('daily_reads_count', 1);
+
+      // 最大値を記録
+      final maxDaily = prefs.getInt('max_daily_reads') ?? 0;
+      final currentDaily = prefs.getInt('daily_reads_count') ?? 0;
+      if (currentDaily > maxDaily) {
+        await prefs.setInt('max_daily_reads', currentDaily);
+      }
+    }
+  }
+
+  Future<void> _trackCategory(SharedPreferences prefs) async {
+    // 記事のカテゴリを推測（簡易実装：タイトルキーワードから）
+    final title = widget.article.title.toLowerCase();
+    String? category;
+    if (title.contains('business') ||
+        title.contains('economy') ||
+        title.contains('market')) {
+      category = 'business';
+    } else if (title.contains('tech') ||
+        title.contains('ai') ||
+        title.contains('software')) {
+      category = 'tech';
+    } else if (title.contains('sport') || title.contains('game')) {
+      category = 'sports';
+    } else if (title.contains('entertain') ||
+        title.contains('movie') ||
+        title.contains('music')) {
+      category = 'entertainment';
+    } else if (title.contains('health') || title.contains('medical')) {
+      category = 'health';
+    } else {
+      category = 'general';
+    }
+
+    final categoriesRead = prefs.getStringList('categories_read') ?? [];
+    if (!categoriesRead.contains(category)) {
+      categoriesRead.add(category);
+      await prefs.setStringList('categories_read', categoriesRead);
+    }
+  }
+
+  Future<void> _updateConsecutiveDays(SharedPreferences prefs) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final lastReadStr = prefs.getString('last_read_date');
+    if (lastReadStr == null) {
+      // 初回
+      await prefs.setString('last_read_date', today.toIso8601String());
+      await prefs.setInt('consecutive_days', 1);
+      return;
+    }
+
+    final lastRead = DateTime.parse(lastReadStr);
+    final lastReadDay = DateTime(lastRead.year, lastRead.month, lastRead.day);
+    final daysDiff = today.difference(lastReadDay).inDays;
+
+    if (daysDiff == 0) {
+      // 同じ日
+      return;
+    } else if (daysDiff == 1) {
+      // 連続
+      final current = prefs.getInt('consecutive_days') ?? 1;
+      await prefs.setInt('consecutive_days', current + 1);
+      await prefs.setString('last_read_date', today.toIso8601String());
+    } else {
+      // 途切れた
+      await prefs.setInt('consecutive_days', 1);
+      await prefs.setString('last_read_date', today.toIso8601String());
     }
   }
 

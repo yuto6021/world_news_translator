@@ -52,5 +52,17 @@ class FavoritesService {
     }
     favorites.value = map;
     _saveToPrefs();
+
+    // お気に入り数を常に更新（追加・削除両方）
+    _recordFavoriteCount();
+  }
+
+  Future<void> _recordFavoriteCount() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('favorites_count', favorites.value.length);
+    } catch (_) {
+      // エラー無視
+    }
   }
 }

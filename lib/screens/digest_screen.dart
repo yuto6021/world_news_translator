@@ -10,7 +10,6 @@ class DigestScreen extends StatefulWidget {
 }
 
 class _DigestScreenState extends State<DigestScreen> {
-  final _newsService = NewsApiService();
   List<Article>? _topArticles;
   String? _digest;
   bool _loading = true;
@@ -27,7 +26,7 @@ class _DigestScreenState extends State<DigestScreen> {
 
     try {
       // トップニュースを取得
-      final articles = await _newsService.getTopHeadlines();
+      final articles = await NewsApiService.getTopHeadlines();
       if (!mounted) return;
       setState(() => _topArticles = articles);
 

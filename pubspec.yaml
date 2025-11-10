@@ -76,7 +76,9 @@ flutter:
     - .env
     - assets/translation_dict.json
     - assets/images/background.jpg
-    - assets/images/background_market.jpg
+    # 世界地図画像（提供予定）。縦横比 2:1 推奨。dark/light 版があれば両方追加可。
+    - assets/images/world_map.png
+    # - assets/images/world_map_dark.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

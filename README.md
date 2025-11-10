@@ -31,9 +31,9 @@ Flutter製の世界ニュース翻訳アプリです。NewsAPI v2 から英語�
 実装ファイル: `lib/screens/map_news_screen.dart`
 
 ### 2) 背景画像（Markets/Search）
-- Markets 画面: Stack + `Image.asset` + overlay。背景 `assets/images/background_market.jpg`。
+- Markets 画面: Stack + `Image.asset` + overlay。背景 `assets/images/background.jpg`（エラー時はグラデーション）。
 - Search 画面: Stack + `Image.asset` + overlay。背景 `assets/images/background.jpg`。
-- pubspec の assets に登録済み（背景の追加時は assets に追記が必要）。
+- pubspec の assets に登録済み。
 
 ### 3) ティッカー改善（`widgets/fx_ticker.dart`）
 - 小さいテキスト幅の場合はアニメーション停止。
@@ -106,15 +106,12 @@ flutter analyze
 
 ```yaml
 flutter:
-	uses-material-design: true
-	assets:
-		- .env
-		- assets/translation_dict.json
-		- assets/images/background.jpg
-		- assets/images/background_market.jpg
-```
-
-## 既知の注意点
+  uses-material-design: true
+  assets:
+    - .env
+    - assets/translation_dict.json
+    - assets/images/background.jpg
+```## 既知の注意点
 
 - `NewsApiService` の API キー直書きは開発用。必ず `.env` に移行すること。
 - `flutter analyze` の一部 info は改善余地（use_build_context_synchronously など）。必要に応じて `mounted` チェックと呼び出しタイミングを見直す。

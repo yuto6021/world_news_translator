@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'trending_screen.dart';
 import 'favorites_screen.dart';
 import 'comments_screen.dart';
@@ -11,6 +12,11 @@ import 'search_screen.dart';
 import 'wikipedia_search_screen.dart';
 import 'markets_screen.dart';
 import 'map_news_screen.dart';
+import 'swipe_news_screen.dart';
+import 'stats_screen.dart';
+import 'game_screen.dart';
+import '../models/country.dart';
+import '../services/availability_service.dart';
 import '../widgets/country_tab.dart';
 import '../widgets/social_footer.dart';
 import '../widgets/breaking_news_banner.dart';
@@ -35,6 +41,9 @@ class _HomeScreenState extends State<HomeScreen>
   static const _tabs = [
     _TabInfo(Icons.newspaper, 'ニュース', 'トレンドニュース一覧'),
     _TabInfo(Icons.language, '国別', '国別ニュース'),
+    _TabInfo(Icons.swipe, 'スワイプ', 'スワイプ可能ニュースカード'),
+    _TabInfo(Icons.analytics, '統計', '読書統計ダッシュボード'),
+    _TabInfo(Icons.videogame_asset, 'ゲーム', 'ミニゲームで暇つぶし'),
     _TabInfo(Icons.show_chart, 'マーケット', '為替・暗号資産の簡易チャート'),
     _TabInfo(Icons.public, '地図', '地域グリッドから国別ニュースへ'),
     _TabInfo(Icons.wb_sunny, '天気', '世界の天気情報'),
@@ -47,20 +56,42 @@ class _HomeScreenState extends State<HomeScreen>
   late final TabController _tabController;
   final ScrollController _scrollController = ScrollController();
   bool _showTopFab = false;
+  List<Country> _availableCountries = const [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    // タブ変更を監視して訪問記録
+    _tabController.addListener(_onTabChanged);
+    // 利用可能な国リストをロード
+    AvailabilityService.getAvailableCountries(includeJapan: true).then((list) {
+      if (mounted) setState(() => _availableCountries = list);
+    });
     _scrollController.addListener(() {
       if (!_scrollController.hasClients) return;
-      final dir = _scrollController.position.userScrollDirection;
       final offset = _scrollController.offset;
-      final shouldShow = offset > 600 && dir == ScrollDirection.forward;
+      final shouldShow = offset > 300; // スクロール方向関係なく300px以上で表示
       if (shouldShow != _showTopFab) {
         setState(() => _showTopFab = shouldShow);
       }
     });
+  }
+
+  void _onTabChanged() async {
+    if (!_tabController.indexIsChanging) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tabIndex = _tabController.index;
+      final visitedTabs = prefs.getStringList('visited_tabs') ?? [];
+      final tabKey = 'tab_$tabIndex';
+      if (!visitedTabs.contains(tabKey)) {
+        visitedTabs.add(tabKey);
+        await prefs.setStringList('visited_tabs', visitedTabs);
+      }
+    } catch (_) {
+      // エラー無視
+    }
   }
 
   @override
@@ -367,7 +398,7 @@ class _HomeScreenState extends State<HomeScreen>
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
-                    // _tabs: ニュース, 国別, マーケット, 地図, 天気, お気に入り, コメント, Wikipedia, タイムカプセル
+                    // _tabs: ニュース, 国別, スワイプ, 統計, マーケット, 地図, 天気, お気に入り, コメント, Wikipedia, タイムカプセル
                     children: [
                       // ニュース
                       const TrendingScreen(),
@@ -407,91 +438,26 @@ class _HomeScreenState extends State<HomeScreen>
                                       ],
                                     ),
                                     const SizedBox(height: 24),
-                                    Column(
-                                      children: [
-                                        for (var i = 0; i < 5; i++)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 16),
-                                            child: Row(
-                                              children: [
-                                                Expanded(
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            right: 8),
-                                                    child: SizedBox(
-                                                      height: 80,
-                                                      child: Semantics(
-                                                        label: [
-                                                              '日本',
-                                                              'イギリス',
-                                                              'ドイツ',
-                                                              '韓国',
-                                                              'オーストラリア'
-                                                            ][i] +
-                                                            'のニュース',
-                                                        child: CountryTab(
-                                                          name: [
-                                                            '日本',
-                                                            'イギリス',
-                                                            'ドイツ',
-                                                            '韓国',
-                                                            'オーストラリア'
-                                                          ][i],
-                                                          code: [
-                                                            'jp',
-                                                            'gb',
-                                                            'de',
-                                                            'kr',
-                                                            'au'
-                                                          ][i],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            left: 8),
-                                                    child: SizedBox(
-                                                      height: 80,
-                                                      child: Semantics(
-                                                        label: [
-                                                              'アメリカ',
-                                                              'フランス',
-                                                              '中国',
-                                                              'インド',
-                                                              'ブラジル'
-                                                            ][i] +
-                                                            'のニュース',
-                                                        child: CountryTab(
-                                                          name: [
-                                                            'アメリカ',
-                                                            'フランス',
-                                                            '中国',
-                                                            'インド',
-                                                            'ブラジル'
-                                                          ][i],
-                                                          code: [
-                                                            'us',
-                                                            'fr',
-                                                            'cn',
-                                                            'in',
-                                                            'br'
-                                                          ][i],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
+                                    _availableCountries.isEmpty
+                                        ? const Center(
+                                            child: Padding(
+                                              padding: EdgeInsets.all(16.0),
+                                              child:
+                                                  CircularProgressIndicator(),
                                             ),
+                                          )
+                                        : Wrap(
+                                            spacing: 16,
+                                            runSpacing: 16,
+                                            children: _availableCountries
+                                                .map((c) => SizedBox(
+                                                      height: 80,
+                                                      child: CountryTab(
+                                                          name: c.name,
+                                                          code: c.code),
+                                                    ))
+                                                .toList(),
                                           ),
-                                      ],
-                                    ),
                                   ],
                                 ),
                               ),
@@ -499,6 +465,12 @@ class _HomeScreenState extends State<HomeScreen>
                           ],
                         ),
                       ),
+                      // スワイプ
+                      const SwipeNewsScreen(),
+                      // 統計
+                      const StatsScreen(),
+                      // ゲーム
+                      const GameScreen(),
                       // マーケット
                       const MarketsScreen(),
                       // 地図
@@ -522,28 +494,22 @@ class _HomeScreenState extends State<HomeScreen>
             child: SocialFooter(),
           ),
           // 先頭へ戻る FAB（スクロール方向が forward かつ一定オフセット以上で表示）
-          Positioned(
-            right: 16,
-            bottom: 90,
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 220),
-              offset: _showTopFab ? Offset.zero : const Offset(0, 0.6),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 220),
-                opacity: _showTopFab ? 1 : 0,
-                child: FloatingActionButton(
-                  heroTag: 'toTopFab',
-                  tooltip: '先頭へ',
-                  onPressed: () {
-                    _scrollController.animateTo(0,
-                        duration: const Duration(milliseconds: 380),
-                        curve: Curves.easeOut);
-                  },
-                  child: const Icon(Icons.vertical_align_top),
-                ),
+          if (_showTopFab)
+            Positioned(
+              right: 16,
+              bottom: 90,
+              child: FloatingActionButton(
+                heroTag: 'toTopFab',
+                tooltip: '先頭へ',
+                elevation: 8,
+                onPressed: () {
+                  _scrollController.animateTo(0,
+                      duration: const Duration(milliseconds: 380),
+                      curve: Curves.easeOut);
+                },
+                child: const Icon(Icons.vertical_align_top),
               ),
             ),
-          ),
         ],
       ),
     );

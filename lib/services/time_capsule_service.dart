@@ -29,6 +29,18 @@ class TimeCapsuleService {
     map[news.url] = newsWithDate;
     capsules.value = map;
     await _saveCapsules();
+
+    // タイムカプセル使用実績を記録
+    await _recordTimeCapsuleUsed();
+  }
+
+  Future<void> _recordTimeCapsuleUsed() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('time_capsule_used', true);
+    } catch (_) {
+      // エラー無視
+    }
   }
 
   // 指定したURLの記事をタイムカプセルから削除

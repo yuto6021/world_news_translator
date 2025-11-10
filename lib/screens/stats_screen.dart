@@ -96,7 +96,7 @@ class _StatsScreenState extends State<StatsScreen>
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -478,8 +478,20 @@ class _BadgeGridState extends State<_BadgeGrid> {
   bool _timeCapsuleUsed = false;
   int _nightReadsCount = 0;
   bool _konamiCodeUnlocked = false;
+  bool _konamiDoubleUnlocked = false;
   bool _fastTapperUnlocked = false;
+  bool _fastTapGodUnlocked = false;
   bool _nightOwlSecretUnlocked = false;
+  bool _memoryMasterUnlocked = false;
+  bool _memoryPerfectUnlocked = false; // 新規
+  bool _petLv5Unlocked = false;
+  bool _petLv10Unlocked = false;
+  bool _petHappyUnlocked = false;
+  bool _petOverfeedUnlocked = false; // 新規
+  bool _petOverplayUnlocked = false; // 新規
+  bool _playTime30Unlocked = false; // 新規
+  bool _playTime60Unlocked = false; // 新規
+  bool _playTime180Unlocked = false; // 新規
 
   @override
   void initState() {
@@ -491,9 +503,22 @@ class _BadgeGridState extends State<_BadgeGrid> {
     final prefs = await SharedPreferences.getInstance();
     final secretUnlocked = await AchievementService.isSecretButtonUnlocked();
     final konamiUnlocked = await AchievementService.isKonamiCodeUnlocked();
+    final konamiDouble = await AchievementService.isKonamiDoubleUnlocked();
     final fastTapUnlocked = await AchievementService.isFastTapperUnlocked();
+    final fastTapGod = await AchievementService.isFastTapGodUnlocked();
+    final memoryMaster = await AchievementService.isMemoryMasterUnlocked();
+    final memoryPerfect =
+        await AchievementService.isMemoryPerfectUnlocked(); // 新規
     final nightOwlUnlocked =
         await AchievementService.isNightOwlSecretUnlocked();
+    final petLv5 = await AchievementService.isPetLevel5Unlocked();
+    final petLv10 = await AchievementService.isPetLevel10Unlocked();
+    final petHappy = await AchievementService.isPetHappy100Unlocked();
+    final petOverfeed = await AchievementService.isPetOverfeedUnlocked(); // 新規
+    final petOverplay = await AchievementService.isPetOverplayUnlocked(); // 新規
+    final playTime30 = await AchievementService.isPlayTime30Unlocked(); // 新規
+    final playTime60 = await AchievementService.isPlayTime60Unlocked(); // 新規
+    final playTime180 = await AchievementService.isPlayTime180Unlocked(); // 新規
     final maxDaily = prefs.getInt('max_daily_reads') ?? 0;
     final countries = prefs.getStringList('countries_read') ?? [];
     final categories = prefs.getStringList('categories_read') ?? [];
@@ -506,7 +531,19 @@ class _BadgeGridState extends State<_BadgeGrid> {
       setState(() {
         _secretButtonUnlocked = secretUnlocked;
         _konamiCodeUnlocked = konamiUnlocked;
+        _konamiDoubleUnlocked = konamiDouble;
         _fastTapperUnlocked = fastTapUnlocked;
+        _fastTapGodUnlocked = fastTapGod;
+        _memoryMasterUnlocked = memoryMaster;
+        _memoryPerfectUnlocked = memoryPerfect; // 新規
+        _petLv5Unlocked = petLv5;
+        _petLv10Unlocked = petLv10;
+        _petHappyUnlocked = petHappy;
+        _petOverfeedUnlocked = petOverfeed; // 新規
+        _petOverplayUnlocked = petOverplay; // 新規
+        _playTime30Unlocked = playTime30; // 新規
+        _playTime60Unlocked = playTime60; // 新規
+        _playTime180Unlocked = playTime180; // 新規
         _nightOwlSecretUnlocked = nightOwlUnlocked;
         _maxDailyReads = maxDaily;
         _countriesReadCount = countries.length;
@@ -690,10 +727,22 @@ class _BadgeGridState extends State<_BadgeGrid> {
         unlocked: _konamiCodeUnlocked,
       ),
       _Badge(
+        icon: '🎮',
+        name: '二連コナミ',
+        description: 'コマンドを2回決める',
+        unlocked: _konamiDoubleUnlocked,
+      ),
+      _Badge(
         icon: '👆',
         name: 'ゴッドハンド',
         description: 'タップチャレンジで50回以上',
         unlocked: _fastTapperUnlocked,
+      ),
+      _Badge(
+        icon: '👆',
+        name: '早撃ち神',
+        description: 'タップチャレンジで80回以上',
+        unlocked: _fastTapGodUnlocked,
       ),
       _Badge(
         icon: '🦉',
@@ -702,18 +751,75 @@ class _BadgeGridState extends State<_BadgeGrid> {
         unlocked: _nightOwlSecretUnlocked,
       ),
       _Badge(
-        icon: '🎁',
-        name: 'サプライズ',
-        description: 'ランダム実績解除',
-        unlocked:
-            widget.totalArticlesRead >= 50 && DateTime.now().second % 10 == 0,
+        icon: '🧠',
+        name: '記憶王',
+        description: '記憶ゲームでベスト12手以内',
+        unlocked: _memoryMasterUnlocked,
+      ),
+      _Badge(
+        icon: '🐾',
+        name: '育成Lv5',
+        description: 'ペットLv5到達',
+        unlocked: _petLv5Unlocked,
+      ),
+      _Badge(
+        icon: '🐲',
+        name: '育成Lv10',
+        description: 'ペットLv10到達',
+        unlocked: _petLv10Unlocked,
+      ),
+      _Badge(
+        icon: '🥳',
+        name: 'ごきげんMAX',
+        description: 'ペット幸福度100',
+        unlocked: _petHappyUnlocked,
+      ),
+      // 新規実績
+      _Badge(
+        icon: '🕐',
+        name: '30分プレイ',
+        description: 'ゲーム合計30分以上プレイ',
+        unlocked: _playTime30Unlocked,
+      ),
+      _Badge(
+        icon: '⏰',
+        name: '1時間プレイ',
+        description: 'ゲーム合計1時間以上プレイ',
+        unlocked: _playTime60Unlocked,
+      ),
+      _Badge(
+        icon: '⌛',
+        name: '3時間プレイ',
+        description: 'ゲーム合計3時間以上プレイ',
+        unlocked: _playTime180Unlocked,
+      ),
+      _Badge(
+        icon: '🎯',
+        name: '完璧主義者',
+        description: '記憶ゲームをノーミスでクリア',
+        unlocked: _memoryPerfectUnlocked,
+      ),
+      _Badge(
+        icon: '🍔',
+        name: '食べ過ぎ注意',
+        description: 'ペットに連続3回ごはん',
+        unlocked: _petOverfeedUnlocked,
+      ),
+      _Badge(
+        icon: '😵',
+        name: '体力の限界',
+        description: 'ペットと連続5回遊ぶ',
+        unlocked: _petOverplayUnlocked,
       ),
     ];
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: badges.map((badge) => _BadgeCard(badge: badge)).toList(),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 120), // フッターに隠れない余白
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: badges.map((badge) => _BadgeCard(badge: badge)).toList(),
+      ),
     );
   }
 }

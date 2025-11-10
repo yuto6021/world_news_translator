@@ -79,13 +79,15 @@ class _KonamiCodeDetectorState extends State<KonamiCodeDetector> {
 
   void _onKonamiCodeSuccess() async {
     await AchievementService.unlockKonamiCode();
+    final isDouble = await AchievementService.registerKonamiInput();
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎮 実績「コナミコマンド」を解除しました！'),
-          duration: Duration(seconds: 3),
-          backgroundColor: Colors.purple,
+        SnackBar(
+          content: Text(
+              isDouble ? '🎮 実績「コナミ2連」を解除しました！' : '🎮 実績「コナミコマンド」を解除しました！'),
+          duration: const Duration(seconds: 3),
+          backgroundColor: isDouble ? Colors.deepPurple : Colors.purple,
         ),
       );
     }

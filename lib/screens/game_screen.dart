@@ -1015,11 +1015,14 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
               const SizedBox(height: 8),
               const Text(
                 '50コインで1回引けます\n'
-                '• 40%: 20-50コイン\n'
-                '• 30%: 30-80経験値\n'
-                '• 15%: 50-100コイン\n'
-                '• 10%: 幸福+20/元気+20\n'
-                '• 5%: 100-200コイン+50経験値',
+                'レア度システム（5段階）：\n'
+                '⚪ コモン (50%): 小報酬\n'
+                '🔵 レア (25%): 中報酬\n'
+                '🟣 スーパーレア (15%): 大報酬\n'
+                '🟠 ウルトラレア (7%): 超報酬\n'
+                '🟡 レジェンド (3%): 究極報酬\n\n'
+                '報酬内容30種類以上！\n'
+                'コイン/経験値/幸福/元気/親密度',
                 style: TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 16),
@@ -1549,55 +1552,236 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       _coins -= 50;
     });
 
-    // ガチャの結果を決定（確率）
+    // レア度判定（確率）
     final random = Random().nextDouble();
-    String result;
-    int coinReward = 0;
-    int expReward = 0;
+    String rarity;
+    Color rarityColor;
+    String rarityEmoji;
 
-    if (random < 0.4) {
-      // 40% - 小当たり
-      coinReward = Random().nextInt(31) + 20; // 20-50コイン
-      result = '💰 $coinRewardコイン獲得！';
-    } else if (random < 0.7) {
-      // 30% - 経験値
-      expReward = Random().nextInt(51) + 30; // 30-80経験値
-      result = '✨ $expReward経験値獲得！';
-    } else if (random < 0.85) {
-      // 15% - 中当たり
-      coinReward = Random().nextInt(51) + 50; // 50-100コイン
-      result = '🎉 $coinRewardコイン獲得！';
-    } else if (random < 0.95) {
-      // 10% - ハッピー＋エナジー
-      setState(() {
-        _happiness = (_happiness + 20).clamp(0, 100);
-        _energy = (_energy + 20).clamp(0, 100);
-      });
-      result = '💖 幸福+20 元気+20！';
+    if (random < 0.50) {
+      // 50% - コモン (Common)
+      rarity = 'コモン';
+      rarityColor = Colors.grey;
+      rarityEmoji = '⚪';
+    } else if (random < 0.75) {
+      // 25% - レア (Rare)
+      rarity = 'レア';
+      rarityColor = Colors.blue;
+      rarityEmoji = '🔵';
+    } else if (random < 0.90) {
+      // 15% - スーパーレア (Super Rare)
+      rarity = 'スーパーレア';
+      rarityColor = Colors.purple;
+      rarityEmoji = '🟣';
+    } else if (random < 0.97) {
+      // 7% - ウルトラレア (Ultra Rare)
+      rarity = 'ウルトラレア';
+      rarityColor = Colors.orange;
+      rarityEmoji = '🟠';
     } else {
-      // 5% - 大当たり
-      coinReward = Random().nextInt(101) + 100; // 100-200コイン
-      expReward = 50;
-      result = '🌟 大当たり！ ${coinReward}コイン + ${expReward}経験値！';
+      // 3% - レジェンド (Legend)
+      rarity = 'レジェンド';
+      rarityColor = Colors.amber;
+      rarityEmoji = '🟡';
     }
 
+    // レア度別の報酬テーブル
+    final rewardRandom = Random().nextInt(100);
+    String result;
+    String rewardEmoji;
+    int coinReward = 0;
+    int expReward = 0;
+    int happinessReward = 0;
+    int energyReward = 0;
+    int affectionReward = 0;
+
+    if (rarity == 'コモン') {
+      // コモン報酬（10種類）
+      if (rewardRandom < 25) {
+        coinReward = Random().nextInt(21) + 10; // 10-30コイン
+        rewardEmoji = '💰';
+        result = '$coinRewardコイン';
+      } else if (rewardRandom < 50) {
+        expReward = Random().nextInt(21) + 20; // 20-40経験値
+        rewardEmoji = '✨';
+        result = '$expReward経験値';
+      } else if (rewardRandom < 65) {
+        happinessReward = Random().nextInt(6) + 5; // 5-10幸福
+        rewardEmoji = '💕';
+        result = '幸福+$happinessReward';
+      } else if (rewardRandom < 80) {
+        energyReward = Random().nextInt(6) + 5; // 5-10元気
+        rewardEmoji = '⚡';
+        result = '元気+$energyReward';
+      } else {
+        affectionReward = Random().nextInt(6) + 5; // 5-10親密度
+        rewardEmoji = '💖';
+        result = '親密度+$affectionReward';
+      }
+    } else if (rarity == 'レア') {
+      // レア報酬（8種類）
+      if (rewardRandom < 20) {
+        coinReward = Random().nextInt(31) + 40; // 40-70コイン
+        rewardEmoji = '💰';
+        result = '$coinRewardコイン';
+      } else if (rewardRandom < 40) {
+        expReward = Random().nextInt(41) + 50; // 50-90経験値
+        rewardEmoji = '✨';
+        result = '$expReward経験値';
+      } else if (rewardRandom < 55) {
+        coinReward = Random().nextInt(16) + 20; // 20-35コイン
+        expReward = Random().nextInt(21) + 30; // 30-50経験値
+        rewardEmoji = '🎁';
+        result = '$coinRewardコイン + $expReward経験値';
+      } else if (rewardRandom < 70) {
+        happinessReward = Random().nextInt(11) + 15; // 15-25幸福
+        rewardEmoji = '💕';
+        result = '幸福+$happinessReward';
+      } else if (rewardRandom < 85) {
+        energyReward = Random().nextInt(11) + 15; // 15-25元気
+        rewardEmoji = '⚡';
+        result = '元気+$energyReward';
+      } else {
+        affectionReward = Random().nextInt(16) + 15; // 15-30親密度
+        rewardEmoji = '💖';
+        result = '親密度+$affectionReward';
+      }
+    } else if (rarity == 'スーパーレア') {
+      // スーパーレア報酬（6種類）
+      if (rewardRandom < 20) {
+        coinReward = Random().nextInt(51) + 80; // 80-130コイン
+        rewardEmoji = '💰';
+        result = '$coinRewardコイン';
+      } else if (rewardRandom < 40) {
+        expReward = Random().nextInt(61) + 100; // 100-160経験値
+        rewardEmoji = '✨';
+        result = '$expReward経験値';
+      } else if (rewardRandom < 60) {
+        coinReward = Random().nextInt(31) + 50; // 50-80コイン
+        expReward = Random().nextInt(51) + 60; // 60-110経験値
+        rewardEmoji = '🎁';
+        result = '$coinRewardコイン + $expReward経験値';
+      } else if (rewardRandom < 75) {
+        happinessReward = Random().nextInt(16) + 30; // 30-45幸福
+        energyReward = Random().nextInt(16) + 30; // 30-45元気
+        rewardEmoji = '💫';
+        result = '幸福+$happinessReward 元気+$energyReward';
+      } else {
+        affectionReward = Random().nextInt(31) + 40; // 40-70親密度
+        coinReward = Random().nextInt(21) + 30; // 30-50コイン
+        rewardEmoji = '💝';
+        result = '親密度+$affectionReward コイン+$coinReward';
+      }
+    } else if (rarity == 'ウルトラレア') {
+      // ウルトラレア報酬（5種類）
+      if (rewardRandom < 25) {
+        coinReward = Random().nextInt(101) + 150; // 150-250コイン
+        rewardEmoji = '💎';
+        result = '$coinRewardコイン';
+      } else if (rewardRandom < 50) {
+        expReward = Random().nextInt(101) + 200; // 200-300経験値
+        rewardEmoji = '🌟';
+        result = '$expReward経験値';
+      } else if (rewardRandom < 70) {
+        coinReward = Random().nextInt(81) + 100; // 100-180コイン
+        expReward = Random().nextInt(101) + 120; // 120-220経験値
+        rewardEmoji = '🎊';
+        result = '$coinRewardコイン + $expReward経験値';
+      } else if (rewardRandom < 85) {
+        happinessReward = 50;
+        energyReward = 50;
+        affectionReward = Random().nextInt(51) + 50; // 50-100親密度
+        rewardEmoji = '🌈';
+        result = '幸福MAX 元気MAX 親密度+$affectionReward';
+      } else {
+        // 全ステータス大幅アップ
+        coinReward = Random().nextInt(51) + 80; // 80-130コイン
+        expReward = Random().nextInt(81) + 100; // 100-180経験値
+        happinessReward = Random().nextInt(21) + 30; // 30-50幸福
+        energyReward = Random().nextInt(21) + 30; // 30-50元気
+        affectionReward = Random().nextInt(31) + 40; // 40-70親密度
+        rewardEmoji = '🎇';
+        result = '全ステータスUP！';
+      }
+    } else {
+      // レジェンド報酬（4種類）超豪華
+      if (rewardRandom < 30) {
+        coinReward = Random().nextInt(201) + 300; // 300-500コイン
+        rewardEmoji = '👑';
+        result = '$coinRewardコイン（超大量）';
+      } else if (rewardRandom < 60) {
+        expReward = Random().nextInt(301) + 400; // 400-700経験値
+        rewardEmoji = '⭐';
+        result = '$expReward経験値（超大量）';
+      } else if (rewardRandom < 85) {
+        coinReward = Random().nextInt(151) + 200; // 200-350コイン
+        expReward = Random().nextInt(201) + 300; // 300-500経験値
+        affectionReward = Random().nextInt(101) + 100; // 100-200親密度
+        rewardEmoji = '🏆';
+        result = '超豪華セット！';
+      } else {
+        // 究極報酬：全てMAX
+        coinReward = Random().nextInt(101) + 250; // 250-350コイン
+        expReward = Random().nextInt(151) + 350; // 350-500経験値
+        happinessReward = 100;
+        energyReward = 100;
+        affectionReward = Random().nextInt(151) + 150; // 150-300親密度
+        rewardEmoji = '✨';
+        result = '🎉究極の大当たり🎉\n全能力MAX＋超ボーナス！';
+      }
+    }
+
+    // 報酬を適用
     setState(() {
       _coins += coinReward;
+      _happiness = (_happiness + happinessReward).clamp(0, 100);
+      _energy = (_energy + energyReward).clamp(0, 100);
+      _affection = (_affection + affectionReward).clamp(0, 1000);
     });
     if (expReward > 0) {
       _gainExp(expReward);
     }
     _saveState();
 
-    // 結果表示
+    // 結果表示（レア度に応じた演出）
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('🎰 ガチャ結果'),
-        content: Text(
-          result,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
+        backgroundColor: rarityColor.withOpacity(0.1),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(rarityEmoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 8),
+            Text(
+              rarity,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: rarityColor,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(rarityEmoji, style: const TextStyle(fontSize: 24)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              rewardEmoji,
+              style: const TextStyle(fontSize: 64),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              result,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -1611,7 +1795,8 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
                 _playGacha();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
+                backgroundColor: rarityColor,
+                foregroundColor: Colors.white,
               ),
               child: const Text('もう1回'),
             ),

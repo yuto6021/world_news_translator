@@ -139,6 +139,7 @@ class _NewsCardState extends State<NewsCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ValueListenableBuilder<bool>(
       valueListenable: UIService.instance.hoverEnabled,
       builder: (context, hoverEnabled, _) {

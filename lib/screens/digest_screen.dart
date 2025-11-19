@@ -67,60 +67,64 @@ $topics
       return const Center(child: CircularProgressIndicator());
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Card(
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '今日のダイジェスト',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: _loadDigest,
-                      ),
-                    ],
-                  ),
-                  const Divider(),
-                  Text(
-                    _digest ?? 'データを読み込めませんでした',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
+    return RefreshIndicator(
+      onRefresh: _loadDigest,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '今日のダイジェスト',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.refresh),
+                          onPressed: _loadDigest,
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    Text(
+                      _digest ?? 'データを読み込めませんでした',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          if (_topArticles != null) ...[
-            const SizedBox(height: 24),
-            Text(
-              '関連ニュース',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            ..._topArticles!.take(5).map((article) => Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    title: Text(article.title),
-                    subtitle: Text(article.description ?? ''),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {
-                      // 記事詳細への遷移
-                    },
-                  ),
-                )),
+            if (_topArticles != null) ...[
+              const SizedBox(height: 24),
+              Text(
+                '関連ニュース',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              ..._topArticles!.take(5).map((article) => Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      title: Text(article.title),
+                      subtitle: Text(article.description ?? ''),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () {
+                        // 記事詳細への遷移
+                      },
+                    ),
+                  )),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

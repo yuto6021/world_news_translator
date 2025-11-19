@@ -1746,61 +1746,112 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
     // 結果表示（レア度に応じた演出）
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: rarityColor.withOpacity(0.1),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(rarityEmoji, style: const TextStyle(fontSize: 24)),
-            const SizedBox(width: 8),
-            Text(
-              rarity,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: rarityColor,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: rarityColor,
+              width: 3,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: rarityColor.withOpacity(0.5),
+                blurRadius: 20,
+                spreadRadius: 5,
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(rarityEmoji, style: const TextStyle(fontSize: 24)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              rewardEmoji,
-              style: const TextStyle(fontSize: 64),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              result,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            ],
           ),
-          if (_coins >= 50)
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _playGacha();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: rarityColor,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('もう1回'),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(rarityEmoji, style: const TextStyle(fontSize: 24)),
+                    const SizedBox(width: 8),
+                    Text(
+                      rarity,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: rarityColor,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(rarityEmoji, style: const TextStyle(fontSize: 24)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black.withOpacity(0.3)
+                        : Colors.white.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        rewardEmoji,
+                        style: const TextStyle(fontSize: 64),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        result,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('OK'),
+                    ),
+                    if (_coins >= 50)
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _playGacha();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: rarityColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                        ),
+                        child: const Text('もう1回！'),
+                      ),
+                  ],
+                ),
+              ],
             ),
-        ],
+          ),
+        ),
       ),
     );
   }

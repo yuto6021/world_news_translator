@@ -48,17 +48,23 @@ class _SwipeNewsScreenState extends State<SwipeNewsScreen>
   }
 
   Future<void> _loadArticles() async {
+    setState(() => _loading = true);
     try {
       final articles = await NewsApiService.fetchTrendingArticles();
       if (!mounted) return;
       setState(() {
         _articles = articles;
+        _currentIndex = 0;
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
     }
+  }
+
+  Future<void> _refresh() async {
+    await _loadArticles();
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -157,31 +163,69 @@ class _SwipeNewsScreenState extends State<SwipeNewsScreen>
       return const Center(child: CircularProgressIndicator());
     }
     if (_articles.isEmpty) {
-      return const Center(child: Text('ニュースがありません'));
+      return RefreshIndicator(
+        onRefresh: _refresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 200,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.article_outlined,
+                      size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text('ニュースがありません'),
+                  const SizedBox(height: 8),
+                  const Text('下に引っ張って更新', style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadArticles,
+                    child: const Text('再読み込み'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
     }
     if (_currentIndex >= _articles.length) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_circle_outline,
-                size: 80, color: Colors.green),
-            const SizedBox(height: 16),
-            const Text('すべてのカードを見ました！',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() {
-                  _currentIndex = 0;
-                  _loading = true;
-                });
-                _loadArticles();
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('もう一度読み込む'),
+      return RefreshIndicator(
+        onRefresh: _refresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 200,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_circle_outline,
+                      size: 80, color: Colors.green),
+                  const SizedBox(height: 16),
+                  const Text('すべてのカードを見ました！',
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  const Text('下に引っ張って更新', style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _currentIndex = 0;
+                        _loading = true;
+                      });
+                      _loadArticles();
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('もう一度読み込む'),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       );
     }

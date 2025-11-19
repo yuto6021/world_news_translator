@@ -58,7 +58,7 @@ class _MapNewsScreenState extends State<MapNewsScreen> {
       'kr':
           _Region('韓国', 'kr', 36.0, 128.0, pixelOffset: const Offset(-10, -6)),
       'jp':
-          _Region('日本', 'jp', 36.0, 138.0, pixelOffset: const Offset(-12, -6)),
+          _Region('日本', 'jp', 20.0, -20, pixelOffset: const Offset(-12, -6)),
       'id':
           _Region('インドネシア', 'id', -2.0, 118.0, pixelOffset: const Offset(0, 4)),
       // オセアニア

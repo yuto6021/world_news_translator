@@ -29,43 +29,43 @@ class _MapNewsScreenState extends State<MapNewsScreen> {
     // 緯度経度 + pixelOffset テンプレート
     final Map<String, _Region> template = {
       // 北米
-      'us': _Region('アメリカ', 'us', 17.0, 85.0, pixelOffset: const Offset(8, -6)),
+      'us': _Region('アメリカ', 'us', 17.0, 89.0, pixelOffset: const Offset(8, -6)),
       'ca':
-          _Region('カナダ', 'ca', 20.0, 68.0, pixelOffset: const Offset(10, -10)),
-      'mx': _Region('メキシコ', 'mx', 11.0, 70.0, pixelOffset: const Offset(-8, 6)),
+          _Region('カナダ', 'ca', 22.0, 68.0, pixelOffset: const Offset(10, -10)),
+      'mx': _Region('メキシコ', 'mx', 7.0, 75.0, pixelOffset: const Offset(-8, 6)),
       // 中南米
       'br': _Region('ブラジル', 'br', -32.0, 115.0,
           pixelOffset: const Offset(12, 14)),
       // 欧州
       'gb':
-          _Region('イギリス', 'gb', 40.0, -183.0, pixelOffset: const Offset(0, -6)),
+          _Region('イギリス', 'gb', 38.0, -178.0, pixelOffset: const Offset(0, -6)),
       'fr':
-          _Region('フランス', 'fr', 26.0, -185.0, pixelOffset: const Offset(8, -2)),
+          _Region('フランス', 'fr', 26.0, -175.0, pixelOffset: const Offset(8, -2)),
       'de':
-          _Region('ドイツ', 'de', 28.0, -180.0, pixelOffset: const Offset(10, -8)),
+          _Region('ドイツ', 'de', 28.0, -170.0, pixelOffset: const Offset(10, -8)),
       'es':
-          _Region('スペイン', 'es', 18.0, -190.0, pixelOffset: const Offset(-4, 0)),
+          _Region('スペイン', 'es', 18.0, -180.0, pixelOffset: const Offset(-4, 0)),
       'ru': _Region('ロシア', 'ru', 50.0, -80.0, pixelOffset: const Offset(0, -8)),
       // 中東
       'eg':
-          _Region('エジプト', 'eg', -2.0, -160.0, pixelOffset: const Offset(6, -4)),
-      'ae': _Region('UAE', 'ae', -11.0, -124.0,
-          pixelOffset: const Offset(-6, -2)),
-      'sa': _Region('サウジアラビア', 'sa', -5.0, -130.0,
+          _Region('エジプト', 'eg', -2.0, -155.0, pixelOffset: const Offset(6, -4)),
+      'ae':
+          _Region('UAE', 'ae', -6.0, -120.0, pixelOffset: const Offset(-6, -2)),
+      'sa': _Region('サウジアラビア', 'sa', -5.0, -125.0,
           pixelOffset: const Offset(2, -2)),
       // アフリカ
       'za': _Region('南アフリカ', 'za', -12.0, -159.0,
           pixelOffset: const Offset(0, 6)),
       // アジア
       'in':
-          _Region('インド', 'in', -12.0, -90.0, pixelOffset: const Offset(-6, -4)),
+          _Region('インド', 'in', -12.0, -93.0, pixelOffset: const Offset(-6, -4)),
       'cn': _Region('中国', 'cn', 32.0, -50.0, pixelOffset: const Offset(-6, -6)),
-      'kr': _Region('韓国', 'kr', 10.0, -50, pixelOffset: const Offset(-10, -6)),
-      'jp': _Region('日本', 'jp', 10.0, -35, pixelOffset: const Offset(-12, -6)),
-      'id': _Region('インドネシア', 'id', -21.0, -60.0,
+      'kr': _Region('韓国', 'kr', 15.0, -47, pixelOffset: const Offset(-10, -6)),
+      'jp': _Region('日本', 'jp', 10.0, -33, pixelOffset: const Offset(-12, -6)),
+      'id': _Region('インドネシア', 'id', -24.0, -55.0,
           pixelOffset: const Offset(0, 4)),
       // オセアニア
-      'au': _Region('オーストラリア', 'au', -59.0, -52.0,
+      'au': _Region('オーストラリア', 'au', -58.0, -45.0,
           pixelOffset: const Offset(8, -6)),
     };
     _regions =

@@ -28,6 +28,7 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
   // 翻訳済みテキストの Future（並列で取得）
   Future<List<String>>? _translationsFuture;
   bool _isOffline = false;
+  String? _apiErrorMessage; // APIエラー/レート制限表示用
 
   // 追加UI用の状態
   String? _topicFilter;
@@ -81,11 +82,13 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
       // オフラインキャッシュへ保存
       await OfflineService.instance.upsertArticles(articles);
       _isOffline = false;
+      _apiErrorMessage = null;
       _prepareEnhancements(articles);
       return articles;
     }).catchError((error) async {
       // ネット失敗時はローカルキャッシュから復元
       _isOffline = true;
+      _apiErrorMessage = error.toString();
       final cached = await OfflineService.instance.getArticles(limit: 20);
       _prepareEnhancements(cached);
       return cached;
@@ -211,7 +214,72 @@ class _CountryNewsScreenState extends State<CountryNewsScreen> {
             );
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('記事が見つかりませんでした'));
+            final status = NewsApiService.configStatus();
+            final bool allKeysMissing = !status['gnews']! &&
+                !status['currents']! &&
+                !status['mediastack']!;
+            String hint = '記事が見つかりませんでした';
+            if (_apiErrorMessage != null) {
+              hint = _apiErrorMessage!;
+            } else if (allKeysMissing) {
+              hint = 'APIキーが未設定です (.env を確認してください)';
+            }
+            return RefreshIndicator(
+              onRefresh: () async {
+                _loadArticles();
+                await _articles;
+              },
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  const SizedBox(height: 120),
+                  Icon(
+                    Icons.newspaper,
+                    size: 72,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    hint,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  if (allKeysMissing)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        '例:\nGNEWS_API_KEY=...\nCURRENTS_API_KEY=...\nMEDIASTACK_API_KEY=...',
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                    ),
+                  if (_apiErrorMessage != null &&
+                      _apiErrorMessage!.contains('レート制限'))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        'レート制限に達しました。しばらく待ってから再度お試しください。',
+                        style:
+                            TextStyle(fontSize: 13, color: Colors.red.shade700),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _loadArticles();
+                        setState(() {});
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('再読み込み'),
+                    ),
+                  ),
+                  const SizedBox(height: 200),
+                ],
+              ),
+            );
           }
 
           final articles = snapshot.data!;

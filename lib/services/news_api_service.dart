@@ -19,37 +19,60 @@ class NewsApiService {
   static const String _mediaStackBaseUrl = 'http://api.mediastack.com/v1/news';
 
   static const int pageSize = 20;
+  // レート制限管理
+  static final Map<String, DateTime> _rateLimitedUntil = {};
+  static final Map<String, DateTime> _lastLogTime = {};
+  static const Duration _rateLimitSilence = Duration(minutes: 10);
+  static const Duration _logThrottle = Duration(seconds: 30);
+
+  static bool _isRateLimited(String provider) {
+    final until = _rateLimitedUntil[provider];
+    return until != null && DateTime.now().isBefore(until);
+  }
+
+  static void _markRateLimited(String provider) {
+    _rateLimitedUntil[provider] = DateTime.now().add(_rateLimitSilence);
+  }
+
+  static void _logOnce(String provider, String message) {
+    final now = DateTime.now();
+    final last = _lastLogTime[provider];
+    if (last == null || now.difference(last) > _logThrottle) {
+      print(message); // 一時的デバッグログ（後で削除可）
+      _lastLogTime[provider] = now;
+    }
+  }
 
   static Future<List<Article>> fetchArticlesByCountry(String countryCode,
       {int page = 1}) async {
-    // GNews API を優先
-    if (_gNewsApiKey.isNotEmpty) {
+    // 優先順で試行（レート制限中はスキップ）
+    if (_gNewsApiKey.isNotEmpty && !_isRateLimited('gnews')) {
       try {
         return await _fetchFromGNews(countryCode, page);
       } catch (e) {
-        print('GNews API failed: $e, trying Currents...');
+        _logOnce('gnews', 'GNews API failed: $e');
       }
     }
-
-    // Currents API へフォールバック
-    if (_currentsApiKey.isNotEmpty) {
+    if (_currentsApiKey.isNotEmpty && !_isRateLimited('currents')) {
       try {
         return await _fetchFromCurrents(countryCode, page);
       } catch (e) {
-        print('Currents API failed: $e, trying MediaStack...');
+        _logOnce('currents', 'Currents API failed: $e');
       }
     }
-
-    // MediaStack API へフォールバック
-    if (_mediaStackApiKey.isNotEmpty) {
+    if (_mediaStackApiKey.isNotEmpty && !_isRateLimited('mediastack')) {
       try {
         return await _fetchFromMediaStack(countryCode, page);
       } catch (e) {
-        print('MediaStack API failed: $e');
+        _logOnce('mediastack', 'MediaStack API failed: $e');
       }
     }
-
-    throw Exception('All news APIs failed or no API keys configured');
+    if (_isRateLimited('gnews') ||
+        _isRateLimited('currents') ||
+        _isRateLimited('mediastack')) {
+      throw Exception('全APIレート制限中。しばらく待機してください。');
+    }
+    throw Exception('全API失敗 または APIキー未設定');
   }
 
   // GNews API からニュース取得
@@ -58,6 +81,12 @@ class NewsApiService {
     final url =
         '$_gNewsBaseUrl?country=$countryCode&apikey=$_gNewsApiKey&max=$pageSize&page=$page&lang=en';
     final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 429) {
+      _markRateLimited('gnews');
+      _logOnce('gnews',
+          'GNews rate-limited (429) backoff ${_rateLimitSilence.inMinutes}m');
+      throw Exception('APIレート制限: GNews (429)');
+    }
     if (response.statusCode != 200) {
       throw Exception('GNews API error: ${response.statusCode}');
     }
@@ -72,6 +101,12 @@ class NewsApiService {
     final url =
         '$_currentsBaseUrl?country=$countryCode&apiKey=$_currentsApiKey&page_size=$pageSize&page_number=$page&language=en';
     final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 429) {
+      _markRateLimited('currents');
+      _logOnce('currents',
+          'Currents rate-limited (429) backoff ${_rateLimitSilence.inMinutes}m');
+      throw Exception('APIレート制限: Currents (429)');
+    }
     if (response.statusCode != 200) {
       throw Exception('Currents API error: ${response.statusCode}');
     }
@@ -87,6 +122,12 @@ class NewsApiService {
     final url =
         '$_mediaStackBaseUrl?access_key=$_mediaStackApiKey&countries=$countryCode&limit=$pageSize&offset=$offset&languages=en';
     final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 429) {
+      _markRateLimited('mediastack');
+      _logOnce('mediastack',
+          'MediaStack rate-limited (429) backoff ${_rateLimitSilence.inMinutes}m');
+      throw Exception('APIレート制限: MediaStack (429)');
+    }
     if (response.statusCode != 200) {
       throw Exception('MediaStack API error: ${response.statusCode}');
     }
@@ -132,15 +173,18 @@ class NewsApiService {
   static Future<List<Article>> fetchTrendingArticles(
       [String? countryCode, int page = 1]) async {
     // countryCode が null の場合はグローバル扱い (GNews は country 必須なのでフォールバック利用)
-    if (_gNewsApiKey.isNotEmpty) {
+    if (_gNewsApiKey.isNotEmpty && !_isRateLimited('gnews')) {
       try {
         final cc = countryCode ?? 'us'; // デフォルト米国
         return await _fetchFromGNews(cc, page);
       } catch (e) {
         print('Trending GNews failed: $e');
+        if (e.toString().contains('レート制限')) {
+          // レート制限時は即座に他APIへフォールバック
+        }
       }
     }
-    if (_currentsApiKey.isNotEmpty) {
+    if (_currentsApiKey.isNotEmpty && !_isRateLimited('currents')) {
       try {
         final cc = countryCode ?? 'us';
         return await _fetchFromCurrents(cc, page);
@@ -148,7 +192,7 @@ class NewsApiService {
         print('Trending Currents failed: $e');
       }
     }
-    if (_mediaStackApiKey.isNotEmpty) {
+    if (_mediaStackApiKey.isNotEmpty && !_isRateLimited('mediastack')) {
       try {
         final cc = countryCode ?? 'us';
         return await _fetchFromMediaStack(cc, page);
@@ -156,7 +200,31 @@ class NewsApiService {
         print('Trending MediaStack failed: $e');
       }
     }
+    if (_isRateLimited('gnews') ||
+        _isRateLimited('currents') ||
+        _isRateLimited('mediastack')) {
+      throw Exception('全APIレート制限中 (Trending)。待機後に再試行してください。');
+    }
     return [];
+  }
+
+  /// APIキー設定状況を確認する簡易メソッド（UIでの診断用）
+  static Map<String, bool> configStatus() {
+    return {
+      'gnews': _gNewsApiKey.isNotEmpty,
+      'currents': _currentsApiKey.isNotEmpty,
+      'mediastack': _mediaStackApiKey.isNotEmpty,
+    };
+  }
+
+  static Map<String, Duration> rateLimitRemaining() {
+    final now = DateTime.now();
+    final m = <String, Duration>{};
+    _rateLimitedUntil.forEach((key, until) {
+      final diff = until.difference(now);
+      if (diff.inMilliseconds > 0) m[key] = diff;
+    });
+    return m;
   }
 
   // keyword search across headlines (q parameter)

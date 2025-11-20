@@ -24,8 +24,9 @@ class OfflineService {
     final dbPath = p.join(dir.path, 'world_news.db');
     _db = await openDatabase(
       dbPath,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
+        // v1 schema
         await db.execute('''
           CREATE TABLE articles(
             url TEXT PRIMARY KEY,
@@ -38,6 +39,35 @@ class OfflineService {
         ''');
         await db.execute(
             'CREATE INDEX IF NOT EXISTS idx_savedAt ON articles(savedAt DESC);');
+        // v2 additions
+        await db.execute('''
+          CREATE TABLE users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            display_name TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            salt TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+          );
+        ''');
+        await db.execute(
+            'CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS users(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              email TEXT UNIQUE NOT NULL,
+              display_name TEXT NOT NULL,
+              password_hash TEXT NOT NULL,
+              salt TEXT NOT NULL,
+              created_at INTEGER NOT NULL
+            );
+          ''');
+          await db.execute(
+              'CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);');
+        }
       },
     );
     return _db!;

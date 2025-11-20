@@ -47,7 +47,8 @@ class WorldNewsApp extends StatelessWidget {
     final rm = ReadingModeService.instance;
     final baseFontScale = rm.fontScale.value;
     final lineHeight = rm.lineHeight.value;
-    final useAltFont = rm.dyslexicFont.value; // could later swap to different font package
+    final useAltFont =
+        rm.dyslexicFont.value; // could later swap to different font package
     final highContrast = rm.highContrast.value;
 
     final baseTextStyle = useAltFont
@@ -88,15 +89,17 @@ class WorldNewsApp extends StatelessWidget {
                   ))
             .copyWith(height: lineHeight),
         bodyMedium: baseTextStyle.copyWith(height: lineHeight),
-        bodySmall: baseTextStyle.copyWith(fontSize: 13 * baseFontScale, height: lineHeight),
+        bodySmall: baseTextStyle.copyWith(
+            fontSize: 13 * baseFontScale, height: lineHeight),
       ),
       appBarTheme: AppBarTheme(
         centerTitle: true,
         backgroundColor: brightness == Brightness.light
             ? Colors.white
             : const Color(0xFF242424),
-        foregroundColor:
-            brightness == Brightness.light ? Colors.indigo : Colors.grey.shade100,
+        foregroundColor: brightness == Brightness.light
+            ? Colors.indigo
+            : Colors.grey.shade100,
         elevation: 0,
       ),
       cardTheme: const CardTheme(

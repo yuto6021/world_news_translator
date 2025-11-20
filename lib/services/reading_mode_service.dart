@@ -32,21 +32,25 @@ class ReadingModeService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyEnabled, v);
   }
+
   Future<void> setFontScale(double v) async {
     fontScale.value = v;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_keyFontScale, v);
   }
+
   Future<void> setLineHeight(double v) async {
     lineHeight.value = v;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_keyLineHeight, v);
   }
+
   Future<void> setHighContrast(bool v) async {
     highContrast.value = v;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyHighContrast, v);
   }
+
   Future<void> setDyslexicFont(bool v) async {
     dyslexicFont.value = v;
     final prefs = await SharedPreferences.getInstance();

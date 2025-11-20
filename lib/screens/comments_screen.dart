@@ -50,6 +50,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
       createdAt: DateTime.now(),
       articleImage: null,
       parentCreatedAt: _replyTo,
+      reactions: {},
     );
     await CommentsService.addComment(comment);
     _newCommentController.clear();
@@ -115,6 +116,15 @@ class _CommentsScreenState extends State<CommentsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // スレッド構造を構築: 親コメント -> 子返信一覧
+    final Map<DateTime, List<ArticleComment>> childrenMap = {};
+    for (final c in _comments) {
+      if (c.parentCreatedAt != null) {
+        childrenMap.putIfAbsent(c.parentCreatedAt!, () => []).add(c);
+      }
+    }
+    final roots = _comments.where((c) => c.parentCreatedAt == null).toList();
+    // 新しい順の並びを維持（_commentsは新しい順）→ roots もそのまま順序
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -185,233 +195,46 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       ),
                     )
                   : ListView.builder(
-                      itemCount: _comments.length,
+                      itemCount: roots.length,
                       itemBuilder: (context, index) {
-                        final comment = _comments[index];
-                        final isReply = comment.parentCreatedAt != null;
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (isReply)
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(left: 12, top: 8),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.reply,
-                                          size: 14,
-                                          color: Colors.grey.shade600),
-                                      const SizedBox(width: 4),
-                                      Text('返信',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey.shade600)),
-                                    ],
+                        final root = roots[index];
+                        final replies = childrenMap[root.createdAt] ?? [];
+                        return _ThreadCard(
+                          comment: root,
+                          replies: replies,
+                          formatDate: _formatDate,
+                          onReply: (c) {
+                            setState(() => _replyTo = c.createdAt);
+                            _newCommentController.text = '@返信: ';
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('返信先をセットしました。下の入力欄から投稿できます')),
+                            );
+                          },
+                          onEdit: _showEditDialog,
+                          onDelete: (c) async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('確認'),
+                                content: const Text('このコメントを削除しますか？(返信も含む)'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('キャンセル'),
                                   ),
-                                ),
-                              // 記事情報
-                              if (comment.articleUrl.isNotEmpty) ...[
-                                InkWell(
-                                  onTap: () =>
-                                      launchUrl(Uri.parse(comment.articleUrl)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Row(
-                                      children: [
-                                        if (comment.articleImage != null)
-                                          ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                            child: CachedNetworkImage(
-                                              imageUrl: comment.articleImage!,
-                                              width: 60,
-                                              height: 60,
-                                              fit: BoxFit.cover,
-                                              placeholder: (c, u) => Container(
-                                                width: 60,
-                                                height: 60,
-                                                color: Colors.grey.shade200,
-                                              ),
-                                              errorWidget: (c, u, e) =>
-                                                  Container(
-                                                width: 60,
-                                                height: 60,
-                                                color: Colors.grey.shade300,
-                                                child: const Icon(
-                                                    Icons.broken_image),
-                                              ),
-                                            ),
-                                          ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                comment.articleTitle,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 14,
-                                                ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              const Row(
-                                                children: [
-                                                  Icon(Icons.link, size: 12),
-                                                  SizedBox(width: 4),
-                                                  Text(
-                                                    '記事を開く',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.blue,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text('削除'),
                                   ),
-                                ),
-                                const Divider(height: 1),
-                              ],
-                              // 引用部分
-                              if (comment.quote.isNotEmpty)
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  color: Colors.grey.shade100,
-                                  width: double.infinity,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Row(
-                                        children: [
-                                          Icon(Icons.format_quote, size: 16),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            '引用',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        comment.quote,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontStyle: FontStyle.italic,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              // コメント本文
-                              Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      comment.comment,
-                                      style: const TextStyle(fontSize: 15),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          _formatDate(comment.createdAt),
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        Row(
-                                          children: [
-                                            IconButton(
-                                              icon: const Icon(Icons.edit,
-                                                  size: 20),
-                                              onPressed: () =>
-                                                  _showEditDialog(comment),
-                                              tooltip: '編集',
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.reply,
-                                                  size: 20),
-                                              onPressed: () {
-                                                setState(() => _replyTo =
-                                                    comment.createdAt);
-                                                _newCommentController.text =
-                                                    '@返信: ';
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  const SnackBar(
-                                                      content: Text(
-                                                          '返信先をセットしました。下の入力欄から投稿できます')),
-                                                );
-                                              },
-                                              tooltip: '返信',
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.delete,
-                                                  size: 20),
-                                              onPressed: () async {
-                                                final confirm =
-                                                    await showDialog<bool>(
-                                                  context: context,
-                                                  builder: (ctx) => AlertDialog(
-                                                    title: const Text('確認'),
-                                                    content: const Text(
-                                                        'このコメントを削除しますか？'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () =>
-                                                            Navigator.pop(
-                                                                ctx, false),
-                                                        child:
-                                                            const Text('キャンセル'),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () =>
-                                                            Navigator.pop(
-                                                                ctx, true),
-                                                        child: const Text('削除'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                                if (confirm == true) {
-                                                  await CommentsService
-                                                      .deleteComment(
-                                                          comment.createdAt);
-                                                  _loadComments();
-                                                }
-                                              },
-                                              tooltip: '削除',
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
+                            );
+                            if (confirm == true) {
+                              await CommentsService.deleteComment(c.createdAt);
+                              _loadComments();
+                            }
+                          },
                         );
                       },
                     ),
@@ -467,6 +290,261 @@ class _CommentsScreenState extends State<CommentsScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// スレッドカード: 親コメント + 返信一覧
+class _ThreadCard extends StatelessWidget {
+  final ArticleComment comment; // 親
+  final List<ArticleComment> replies; // 直接の子返信（新しい順想定）
+  final String Function(DateTime) formatDate;
+  final void Function(ArticleComment) onReply;
+  final void Function(ArticleComment) onEdit;
+  final void Function(ArticleComment) onDelete;
+
+  const _ThreadCard({
+    required this.comment,
+    required this.replies,
+    required this.formatDate,
+    required this.onReply,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  Widget _buildSingleComment(BuildContext context, ArticleComment c,
+      {bool isReply = false}) {
+    final quoteBlock = c.quote.isNotEmpty
+        ? Container(
+            padding: const EdgeInsets.all(12),
+            color: Colors.grey.shade100,
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.format_quote, size: 16),
+                    SizedBox(width: 4),
+                    Text(
+                      '引用',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  c.quote,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+              ],
+            ),
+          )
+        : const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: isReply ? 16 : 0,
+        right: 0,
+        top: isReply ? 4 : 0,
+        bottom: 4,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isReply)
+            Row(
+              children: [
+                Icon(Icons.reply, size: 14, color: Colors.grey.shade600),
+                const SizedBox(width: 4),
+                Text('返信',
+                    style:
+                        TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              ],
+            ),
+          if (c.articleUrl.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 4),
+              child: Text(
+                c.articleTitle,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          quoteBlock,
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              c.comment,
+              style: const TextStyle(fontSize: 15),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                formatDate(c.createdAt),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20),
+                    onPressed: () => onEdit(c),
+                    tooltip: '編集',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.reply, size: 20),
+                    onPressed: () => onReply(c),
+                    tooltip: '返信',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, size: 20),
+                    onPressed: () => onDelete(c),
+                    tooltip: '削除',
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // リアクションバー
+          const SizedBox(height: 4),
+          _ReactionBar(comment: c),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSingleComment(context, comment),
+            if (replies.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Container(
+                margin: const EdgeInsets.only(left: 8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    left: BorderSide(
+                      color: Colors.grey.shade300,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                child: Column(
+                  children: replies
+                      .map(
+                          (r) => _buildSingleComment(context, r, isReply: true))
+                      .toList(),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReactionBar extends StatefulWidget {
+  final ArticleComment comment;
+  const _ReactionBar({required this.comment});
+
+  @override
+  State<_ReactionBar> createState() => _ReactionBarState();
+}
+
+class _ReactionBarState extends State<_ReactionBar> {
+  static const defaultEmojis = ['👍', '❤️', '😂', '😮', '🤔'];
+  bool _expanded = false;
+
+  Future<void> _add(String emoji) async {
+    await CommentsService.addReaction(widget.comment.createdAt, emoji);
+    // 親の一覧再読込が理想だが簡易再構築のため setState + SnackBarで知らせる
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('リアクション $emoji を追加しました')),
+      );
+    }
+  }
+
+  Future<void> _remove(String emoji) async {
+    await CommentsService.decrementReaction(widget.comment.createdAt, emoji);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('リアクション $emoji を減らしました')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reactions = widget.comment.reactions;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: -4,
+          children: [
+            for (final entry in reactions.entries)
+              GestureDetector(
+                onTap: () => _add(entry.key), // 追加
+                onLongPress: () => _remove(entry.key), // 長押しで減算
+                child: Chip(
+                  label: Text('${entry.key} ${entry.value}'),
+                  padding: EdgeInsets.zero,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            if (_expanded)
+              for (final e in defaultEmojis)
+                if (!reactions.containsKey(e))
+                  GestureDetector(
+                    onTap: () => _add(e),
+                    child: Chip(
+                      label: Text(e),
+                      padding: EdgeInsets.zero,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+            GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Chip(
+                label: Text(_expanded ? '閉じる' : '＋'),
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text('タップで追加 / 長押しで減算',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+      ],
     );
   }
 }

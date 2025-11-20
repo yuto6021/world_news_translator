@@ -5,6 +5,7 @@ import '../services/favorites_service.dart';
 import '../services/translation_service.dart';
 import '../services/app_settings_service.dart';
 import 'guide_screen.dart';
+import '../services/reading_mode_service.dart';
 import 'wikipedia_history_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -110,6 +111,79 @@ class SettingsScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 12),
+
+              // 読書モード設定
+              ValueListenableBuilder<bool>(
+                valueListenable: ReadingModeService.instance.enabled,
+                builder: (context, enabled, _) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SwitchListTile(
+                        title: const Text('読書モードを有効にする'),
+                        subtitle: const Text('フォントサイズ / 行間 / ハイコントラスト / 代替フォント'),
+                        value: enabled,
+                        onChanged: (v) => ReadingModeService.instance.setEnabled(v),
+                      ),
+                      if (enabled) ...[
+                        ValueListenableBuilder<double>(
+                          valueListenable: ReadingModeService.instance.fontScale,
+                          builder: (context, scale, __) => Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('フォントサイズ (x${scale.toStringAsFixed(2)})'),
+                              Slider(
+                                value: scale,
+                                min: 0.9,
+                                max: 1.4,
+                                divisions: 10,
+                                label: scale.toStringAsFixed(2),
+                                onChanged: (v) => ReadingModeService.instance.setFontScale(v),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ValueListenableBuilder<double>(
+                          valueListenable: ReadingModeService.instance.lineHeight,
+                          builder: (context, lh, __) => Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('行間 (x${lh.toStringAsFixed(2)})'),
+                              Slider(
+                                value: lh,
+                                min: 1.0,
+                                max: 1.6,
+                                divisions: 12,
+                                label: lh.toStringAsFixed(2),
+                                onChanged: (v) => ReadingModeService.instance.setLineHeight(v),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ValueListenableBuilder<bool>(
+                          valueListenable: ReadingModeService.instance.highContrast,
+                          builder: (context, hc, __) => SwitchListTile(
+                            title: const Text('ハイコントラスト'),
+                            value: hc,
+                            onChanged: (v) => ReadingModeService.instance.setHighContrast(v),
+                          ),
+                        ),
+                        ValueListenableBuilder<bool>(
+                          valueListenable: ReadingModeService.instance.dyslexicFont,
+                          builder: (context, df, __) => SwitchListTile(
+                            title: const Text('代替フォント (可読性向上)'),
+                            value: df,
+                            onChanged: (v) => ReadingModeService.instance.setDyslexicFont(v),
+                          ),
+                        ),
+                        const Divider(),
+                      ],
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 12),
 
             // 自動翻訳トグル
             ValueListenableBuilder<bool>(

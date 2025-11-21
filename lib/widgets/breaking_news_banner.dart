@@ -30,7 +30,8 @@ class _BreakingNewsBannerState extends State<BreakingNewsBanner> {
         _loading = false;
       });
       if (articles.isEmpty) {
-        print('[BreakingNewsBanner] WARNING: fetchTrendingArticles returned empty');
+        print(
+            '[BreakingNewsBanner] WARNING: fetchTrendingArticles returned empty');
       }
     } catch (e) {
       print('[BreakingNewsBanner] ERROR: $e');

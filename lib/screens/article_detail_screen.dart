@@ -433,8 +433,8 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                             ...editableTextState.contextMenuButtonItems,
                             ContextMenuButtonItem(
                               onPressed: () {
-                                final selection =
-                                    editableTextState.textEditingValue.selection;
+                                final selection = editableTextState
+                                    .textEditingValue.selection;
                                 final selectedText = editableTextState
                                     .textEditingValue.text
                                     .substring(selection.start, selection.end);
@@ -472,7 +472,8 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                 ),
                 child: _translated != null
                     ? ValueListenableBuilder<bool>(
-                        valueListenable: AppSettingsService.instance.autoWikiLink,
+                        valueListenable:
+                            AppSettingsService.instance.autoWikiLink,
                         builder: (context, autoLink, _) {
                           if (autoLink) {
                             return AutoLinkText(

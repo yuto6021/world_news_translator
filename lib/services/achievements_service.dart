@@ -111,6 +111,35 @@ class AchievementsService {
           icon: '🎯',
           target: 1,
           rarity: AchievementRarity.rare),
+      // 実験実績（演出確認用）
+      Achievement(
+          id: 'test_common',
+          title: '実験コモン',
+          description: 'コモン演出テスト',
+          icon: '🧪',
+          target: 1,
+          rarity: AchievementRarity.common),
+      Achievement(
+          id: 'test_rare',
+          title: '実験レア',
+          description: 'レア演出テスト',
+          icon: '⚗️',
+          target: 1,
+          rarity: AchievementRarity.rare),
+      Achievement(
+          id: 'test_epic',
+          title: '実験エピック',
+          description: 'エピック演出テスト',
+          icon: '🔬',
+          target: 1,
+          rarity: AchievementRarity.epic),
+      Achievement(
+          id: 'test_legendary',
+          title: '実験レジェンダリー',
+          description: 'レジェンダリー演出テスト',
+          icon: '🏆',
+          target: 1,
+          rarity: AchievementRarity.legendary),
     ];
 
     final box = _box ?? await Hive.openBox<String>(_boxName);

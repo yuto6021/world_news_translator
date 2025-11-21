@@ -85,7 +85,6 @@ class GachaService {
     
     // 実績として記録
     final updatedChallenge = challenge.copyWith(
-      isUnlocked: true,
       progress: challenge.target,
       unlockedAt: DateTime.now(),
     );
@@ -156,7 +155,6 @@ class GachaService {
       target: target,
       rarity: rarity,
       progress: 0,
-      isUnlocked: false,
       unlockedAt: DateTime.now(), // チャレンジ開始時刻として使用
     );
   }

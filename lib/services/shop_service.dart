@@ -52,7 +52,15 @@ class ShopService {
   /// 実績ポイントを取得
   static Future<int> getPoints() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_pointsKey) ?? 0;
+    final points = prefs.getInt(_pointsKey);
+    
+    // 初回は1000pt付与（テスト用）
+    if (points == null) {
+      await prefs.setInt(_pointsKey, 1000);
+      return 1000;
+    }
+    
+    return points;
   }
 
   /// 実績ポイントを追加
@@ -124,6 +132,32 @@ class ShopService {
   static Future<String> getActiveTheme() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_activeThemeKey) ?? 'default';
+  }
+
+  /// アクティブなテーマの色を取得
+  static Future<Map<String, dynamic>> getActiveThemeColors() async {
+    final themeId = await getActiveTheme();
+    if (themeId == 'default') {
+      return {
+        'primary_color': '#3F51B5', // indigo
+        'accent_color': '#FF4081',
+      };
+    }
+    
+    final item = getAllItems().firstWhere(
+      (item) => item.id == themeId,
+      orElse: () => ShopItem(
+        id: 'default',
+        name: 'デフォルト',
+        description: '',
+        icon: '',
+        price: 0,
+        type: 'theme',
+        data: {'primary_color': '#3F51B5', 'accent_color': '#FF4081'},
+      ),
+    );
+    
+    return item.data ?? {'primary_color': '#3F51B5', 'accent_color': '#FF4081'};
   }
 
   /// ショップアイテム一覧を取得

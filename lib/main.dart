@@ -14,6 +14,7 @@ import 'services/comments_service.dart';
 import 'services/achievements_service.dart';
 import 'services/game_scores_service.dart';
 import 'services/reading_time_service.dart';
+import 'services/shop_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,8 +37,30 @@ Future<void> main() async {
   runApp(const WorldNewsApp());
 }
 
-class WorldNewsApp extends StatelessWidget {
+class WorldNewsApp extends StatefulWidget {
   const WorldNewsApp({super.key});
+
+  @override
+  State<WorldNewsApp> createState() => _WorldNewsAppState();
+}
+
+class _WorldNewsAppState extends State<WorldNewsApp> {
+  Color _primaryColor = Colors.indigo;
+  Color _accentColor = const Color(0xFFFF4081);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final colors = await ShopService.getActiveThemeColors();
+    setState(() {
+      _primaryColor = Color(int.parse(colors['primary_color'].replaceFirst('#', '0xFF')));
+      _accentColor = Color(int.parse(colors['accent_color'].replaceFirst('#', '0xFF')));
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +73,8 @@ class WorldNewsApp extends StatelessWidget {
           themeMode: mode,
           title: 'World News Translator',
           debugShowCheckedModeBanner: false,
-          theme: _buildTheme(Brightness.light),
-          darkTheme: _buildTheme(Brightness.dark),
+          theme: _buildTheme(Brightness.light, _primaryColor),
+          darkTheme: _buildTheme(Brightness.dark, _primaryColor),
           routes: {
             '/login': (_) => const LoginScreen(),
             '/profile': (_) => const ProfileScreen(),
@@ -62,7 +85,7 @@ class WorldNewsApp extends StatelessWidget {
     );
   }
 
-  ThemeData _buildTheme(Brightness brightness) {
+  ThemeData _buildTheme(Brightness brightness, Color primaryColor) {
     final rm = ReadingModeService.instance;
     final baseFontScale = rm.fontScale.value;
     final lineHeight = rm.lineHeight.value;
@@ -75,12 +98,12 @@ class WorldNewsApp extends StatelessWidget {
         : GoogleFonts.notoSans(fontSize: 15 * baseFontScale);
 
     ColorScheme colorScheme = brightness == Brightness.light
-        ? const ColorScheme.light(primary: Colors.indigo)
-        : const ColorScheme.dark(primary: Colors.indigo);
+        ? ColorScheme.light(primary: primaryColor)
+        : ColorScheme.dark(primary: primaryColor);
     if (highContrast) {
       colorScheme = brightness == Brightness.light
-          ? const ColorScheme.highContrastLight(primary: Colors.indigo)
-          : const ColorScheme.highContrastDark(primary: Colors.indigo);
+          ? ColorScheme.highContrastLight(primary: primaryColor)
+          : ColorScheme.highContrastDark(primary: primaryColor);
     }
     return ThemeData(
       brightness: brightness,

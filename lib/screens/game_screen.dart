@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:math' as math;
+import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/achievements_service.dart';
+import '../services/achievement_service.dart';
 import '../services/news_api_service.dart';
 import '../models/article.dart';
-import '../models/achievement.dart';
 import '../widgets/achievement_animation.dart';
 
-/// ミニゲーム画面�E�暇つぶし用�E�E
+/// ミニゲーム画面（暇つぶし用）
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
 
@@ -63,14 +62,14 @@ class _GameScreenState extends State<GameScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'ニュース征E��の暁E��ぶしに',
+              'ニュース待ちの暇つぶしに',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
             const SizedBox(height: 24),
 
-            // ゲーム選択タブ（横スクロール�E�E
+            // ゲーム選択タブ（横スクロール）
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -82,19 +81,19 @@ class _GameScreenState extends State<GameScreen>
                 child: Row(
                   children: [
                     _GameTab(
-                      label: '神経衰弱(国旁E',
+                      label: '神経衰弱(国旗)',
                       icon: Icons.flag,
                       isSelected: _selectedGame == 0,
                       onTap: () => setState(() => _selectedGame = 0),
                     ),
                     _GameTab(
-                      label: 'タチE�E',
+                      label: 'タップ',
                       icon: Icons.touch_app,
                       isSelected: _selectedGame == 1,
                       onTap: () => setState(() => _selectedGame = 1),
                     ),
                     _GameTab(
-                      label: '育戁E,
+                      label: '育成',
                       icon: Icons.pets,
                       isSelected: _selectedGame == 2,
                       onTap: () => setState(() => _selectedGame = 2),
@@ -112,7 +111,7 @@ class _GameScreenState extends State<GameScreen>
                       onTap: () => setState(() => _selectedGame = 4),
                     ),
                     _GameTab(
-                      label: 'スネ�Eク',
+                      label: 'スネーク',
                       icon: Icons.android,
                       isSelected: _selectedGame == 5,
                       onTap: () => setState(() => _selectedGame = 5),
@@ -133,7 +132,7 @@ class _GameScreenState extends State<GameScreen>
             ),
             const SizedBox(height: 24),
 
-            // ゲームコンチE��チE
+            // ゲームコンテンツ
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: _buildGameContent(),
@@ -259,7 +258,7 @@ class _FlagMemoryGameState extends State<_FlagMemoryGame> {
   int _moves = 0;
   int _bestScore = 0;
   bool _isChecking = false;
-  int _mismatches = 0; // めくり戻し回数�E�ノーミス判定用�E�E
+  int _mismatches = 0; // めくり戻し回数（ノーミス判定用）
   DateTime? _gameStartTime;
 
   @override
@@ -287,7 +286,7 @@ class _FlagMemoryGameState extends State<_FlagMemoryGame> {
   }
 
   void _initGame() {
-    final rng = math.Random();
+    final rng = Random();
     final pool = [..._flagCodes]..shuffle(rng);
     final pick = pool.take(8).toList();
     _cards = [...pick, ...pick]..shuffle(rng);
@@ -337,29 +336,29 @@ class _FlagMemoryGameState extends State<_FlagMemoryGame> {
         // プレイ時間記録
         if (_gameStartTime != null) {
           final elapsed = DateTime.now().difference(_gameStartTime!).inSeconds;
-          // AchievementService.addGamePlayTime(elapsed);
+          AchievementService.addGamePlayTime(elapsed);
         }
 
         _saveBestScore(_moves);
-        // 記�E王！E2手以冁E��E
+        // 記憶王（12手以内）
         if (_moves <= 12) {
-          // AchievementService.unlockMemoryMaster();
+          AchievementService.unlockMemoryMaster();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('🧠 実績「記�E王」を解除しました�E�E),
+                content: Text('🧠 実績「記憶王」を解除しました！'),
                 duration: Duration(seconds: 2),
               ),
             );
           }
         }
-        // ノ�Eミス�E�めくり戻ぁE�E�E
+        // ノーミス（めくり戻し0）
         if (_mismatches == 0) {
-          // AchievementService.unlockMemoryPerfect();
+          AchievementService.unlockMemoryPerfect();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('✨ 実績「完璧主義老E��を解除しました�E�E),
+                content: Text('✨ 実績「完璧主義者」を解除しました！'),
                 duration: Duration(seconds: 2),
               ),
             );
@@ -370,8 +369,8 @@ class _FlagMemoryGameState extends State<_FlagMemoryGame> {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('🎉 クリア�E�E),
-                content: Text('$_moves手でクリアしました�E�\nベスチE $_bestScore扁E),
+                title: const Text('🎉 クリア！'),
+                content: Text('$_moves手でクリアしました！\nベスト: $_bestScore手'),
                 actions: [
                   TextButton(
                     onPressed: () {
@@ -387,7 +386,7 @@ class _FlagMemoryGameState extends State<_FlagMemoryGame> {
         });
       }
     } else {
-      // ミスマッチ時にカウンチE
+      // ミスマッチ時にカウント
       _mismatches++;
       setState(() {
         _revealed[_firstCard!] = false;
@@ -414,13 +413,13 @@ class _FlagMemoryGameState extends State<_FlagMemoryGame> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             Text('手数: $_moves', style: theme.textTheme.titleMedium),
-            Text('ベスチE ${_bestScore == 999 ? "-" : _bestScore}扁E,
+            Text('ベスト: ${_bestScore == 999 ? "-" : _bestScore}手',
                 style: theme.textTheme.titleMedium),
           ],
         ),
         const SizedBox(height: 16),
 
-        // カードグリチE��
+        // カードグリッド
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -465,11 +464,11 @@ class _FlagMemoryGameState extends State<_FlagMemoryGame> {
         ),
         const SizedBox(height: 16),
 
-        // リセチE��ボタン
+        // リセットボタン
         ElevatedButton.icon(
           onPressed: () => setState(() => _initGame()),
           icon: const Icon(Icons.refresh),
-          label: const Text('リセチE��'),
+          label: const Text('リセット'),
           style: ElevatedButton.styleFrom(
             backgroundColor: isDark ? Colors.indigo[700] : Colors.indigo[400],
             foregroundColor: Colors.white,
@@ -480,7 +479,7 @@ class _FlagMemoryGameState extends State<_FlagMemoryGame> {
   }
 }
 
-// タチE�Eチャレンジゲーム�E�高速タチE�E�E�E
+// タップチャレンジゲーム（高速タップ）
 class _TapChallengeGame extends StatefulWidget {
   const _TapChallengeGame({super.key});
 
@@ -550,7 +549,7 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
     // プレイ時間記録
     if (_gameStartTime != null) {
       final elapsed = DateTime.now().difference(_gameStartTime!).inSeconds;
-      // AchievementService.addGamePlayTime(elapsed);
+      AchievementService.addGamePlayTime(elapsed);
     }
 
     setState(() {
@@ -558,52 +557,52 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
     });
     _saveBestScore(_tapCount);
 
-    // 高速タチE��ー実績チェチE���E�E0秒で50回以丁E/ 80回以上！E
+    // 高速タッパー実績チェック（10秒で50回以上 / 80回以上）
     if (_tapCount >= 50) {
-      // AchievementService.unlockFastTapper();
+      AchievementService.unlockFastTapper();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('⚡ 実績「ゴチE��ハンド」を解除しました�E�E),
+            content: Text('⚡ 実績「ゴッドハンド」を解除しました！'),
             duration: Duration(seconds: 2),
           ),
         );
       }
     }
     if (_tapCount >= 80) {
-      // AchievementService.unlockFastTapGod();
+      AchievementService.unlockFastTapGod();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('👑 実績「早撁E��神」を解除しました�E�E),
+            content: Text('👑 実績「早撃ち神」を解除しました！'),
             duration: Duration(seconds: 2),
           ),
         );
       }
     }
 
-    // スコアに応じた演�Eレベル決宁E
+    // スコアに応じた演出レベル決定
     GameResultLevel level;
     String? message;
     if (_tapCount >= 100) {
       level = GameResultLevel.perfect;
-      message = '神�E領域�E�E;
+      message = '神の領域！';
     } else if (_tapCount >= 80) {
       level = GameResultLevel.excellent;
-      message = 'すごぁE��E;
+      message = 'すごい！';
     } else if (_tapCount >= 60) {
       level = GameResultLevel.good;
-      message = '良ぁE��子！E;
+      message = '良い調子！';
     } else {
       level = GameResultLevel.normal;
       message = null;
     }
 
-    // 派手な演�Eで結果表示
+    // 派手な演出で結果表示
     if (mounted) {
       AchievementNotifier.showGameResult(
         context,
-        gameName: 'タチE�Eチャレンジ',
+        gameName: 'タップチャレンジ',
         score: _tapCount,
         bestScore: _bestScore,
         message: message,
@@ -619,7 +618,7 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
     if (_lastTapTime != null) {
       final diff = now.difference(_lastTapTime!).inMilliseconds;
       if (diff < 200) {
-        // 連続タチE�E判定！E00ms以冁E��E
+        // 連続タップ判定（200ms以内）
         _tapCount++;
       } else {
         _tapCount++;
@@ -642,13 +641,13 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
     return Column(
       children: [
         Text(
-          'ルール: 10秒間でできるだけ多くタチE�E�E�E,
+          'ルール: 10秒間でできるだけ多くタップ！',
           style: theme.textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
 
-        // タイマ�E�E�E��コア表示
+        // タイマー＆スコア表示
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -656,7 +655,7 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
               children: [
                 Text('残り時間', style: theme.textTheme.bodySmall),
                 Text(
-                  '$_timeLeft私E,
+                  '$_timeLeft秒',
                   style: theme.textTheme.headlineLarge?.copyWith(
                     color: _isPlaying ? Colors.red : Colors.grey,
                     fontWeight: FontWeight.bold,
@@ -666,7 +665,7 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
             ),
             Column(
               children: [
-                Text('タチE�E数', style: theme.textTheme.bodySmall),
+                Text('タップ数', style: theme.textTheme.bodySmall),
                 Text(
                   '$_tapCount',
                   style: theme.textTheme.headlineLarge?.copyWith(
@@ -680,12 +679,12 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
         ),
         const SizedBox(height: 24),
 
-        // タチE�Eエリア
+        // タップエリア
         GestureDetector(
           onTap: _onTap,
           child: Container(
             width: double.infinity,
-            height: 200,
+            height: 150,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: _isPlaying
@@ -714,7 +713,7 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isPlaying ? 'タチE�E�E�E : 'スタートを押してください',
+                    _isPlaying ? 'タップ！' : 'スタートを押してください',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -728,13 +727,13 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
         ),
         const SizedBox(height: 24),
 
-        // スタート�Eタン�E�E�Eストスコア
+        // スタートボタン＆ベストスコア
         Column(
           children: [
             ElevatedButton.icon(
               onPressed: _isPlaying ? null : _startGame,
               icon: const Icon(Icons.play_arrow),
-              label: const Text('スターチE),
+              label: const Text('スタート'),
               style: ElevatedButton.styleFrom(
                 backgroundColor:
                     isDark ? Colors.indigo[700] : Colors.indigo[400],
@@ -745,7 +744,7 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
             ),
             const SizedBox(height: 16),
             Text(
-              'ベストスコア: $_bestScore囁E,
+              'ベストスコア: $_bestScore回',
               style: theme.textTheme.titleMedium?.copyWith(
                 color: Colors.amber,
                 fontWeight: FontWeight.bold,
@@ -758,7 +757,7 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
   }
 }
 
-// 簡易�EチE��育成ゲーム
+// 簡易ペット育成ゲーム
 class _PetRaisingGame extends StatefulWidget {
   const _PetRaisingGame({super.key});
 
@@ -772,40 +771,40 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
   int _happiness = 50; // 0-100
   int _energy = 100; // 0-100
   int _bestLevel = 1;
-  int _evolutionStage = 0; // 進化段隁E 0=卵, 1=ひな, 2=子侁E 3=成佁E
+  int _evolutionStage = 0; // 進化段階: 0=卵, 1=ひな, 2=子供, 3=成体
   int _coins = 0; // コイン
-  List<String> _ownedItems = []; // 所有アイチE��
-  String? _equippedItem; // 裁E��中アイチE��
+  List<String> _ownedItems = []; // 所有アイテム
+  String? _equippedItem; // 装備中アイテム
   int _actionCount = 0; // アクション回数
   bool _loading = true;
   Timer? _decayTimer;
-  DateTime? _sessionStartTime; // セチE��ョン開始時刻
-  String _lastAction = ''; // 最後�Eアクション
-  int _consecutiveCount = 0; // 連続同一アクションカウンチE
+  DateTime? _sessionStartTime; // セッション開始時刻
+  String _lastAction = ''; // 最後のアクション
+  int _consecutiveCount = 0; // 連続同一アクションカウント
 
-  // クールダウンタイマ�E
+  // クールダウンタイマー
   DateTime? _lastFeedTime;
   DateTime? _lastPlayTime;
   DateTime? _lastRestTime;
-  static const _cooldownSeconds = 10; // 吁E��クションのクールダウン時間
+  static const _cooldownSeconds = 10; // 各アクションのクールダウン時間
 
-  // チE��リーログインボ�Eナス
+  // デイリーログインボーナス
   int _loginStreak = 0; // 連続ログイン日数
-  DateTime? _lastLoginDate; // 最後�Eログイン日
+  DateTime? _lastLoginDate; // 最後のログイン日
 
-  // 親寁E��シスチE��
-  int _affection = 0; // 親寁E�� (0-1000)
+  // 親密度システム
+  int _affection = 0; // 親密度 (0-1000)
 
-  // チE��リーミッション
+  // デイリーミッション
   int _dailyFeedCount = 0;
   int _dailyPlayCount = 0;
   int _dailyEventCount = 0;
   DateTime? _lastMissionResetDate;
 
   // ペットインタラクション
-  String _petReaction = ''; // ペット�E反応メチE��ージ
-  Timer? _reactionTimer; // 反応メチE��ージを消すタイマ�E
-  int _petTapCount = 0; // ペットタチE�E回数
+  String _petReaction = ''; // ペットの反応メッセージ
+  Timer? _reactionTimer; // 反応メッセージを消すタイマー
+  int _petTapCount = 0; // ペットタップ回数
 
   static const _expPerLevelBase = 50;
 
@@ -819,10 +818,10 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
 
   @override
   void dispose() {
-    // セチE��ョン終亁E��にプレイ時間記録
+    // セッション終了時にプレイ時間記録
     if (_sessionStartTime != null) {
       final elapsed = DateTime.now().difference(_sessionStartTime!).inSeconds;
-      // AchievementService.addGamePlayTime(elapsed);
+      AchievementService.addGamePlayTime(elapsed);
     }
     _decayTimer?.cancel();
     _reactionTimer?.cancel();
@@ -847,13 +846,13 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       _dailyPlayCount = prefs.getInt('pet_daily_play_count') ?? 0;
       _dailyEventCount = prefs.getInt('pet_daily_event_count') ?? 0;
 
-      // 最後�Eログイン日をチェチE��
+      // 最後のログイン日をチェック
       final lastLoginStr = prefs.getString('pet_last_login_date');
       if (lastLoginStr != null) {
         _lastLoginDate = DateTime.parse(lastLoginStr);
       }
 
-      // 最後�EミッションリセチE��日をチェチE��
+      // 最後のミッションリセット日をチェック
       final lastMissionResetStr =
           prefs.getString('pet_last_mission_reset_date');
       if (lastMissionResetStr != null) {
@@ -863,10 +862,10 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       _loading = false;
     });
 
-    // チE��リーミッションリセチE��チェチE��
+    // デイリーミッションリセットチェック
     _checkDailyMissionReset();
 
-    // ログインボ�EナスチェチE��
+    // ログインボーナスチェック
     _checkDailyLogin();
   }
 
@@ -927,7 +926,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
         _showDailyLoginBonus(_loginStreak, isNewStreak: false);
         _saveState();
       } else if (daysDiff > 1) {
-        // ストリーク途�EめE
+        // ストリーク途切れ
         setState(() {
           _loginStreak = 1;
           _lastLoginDate = today;
@@ -935,12 +934,12 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
         _showDailyLoginBonus(1, isNewStreak: true);
         _saveState();
       }
-      // daysDiff == 0 なら今日既にログイン済み�E�何もしなぁE��E
+      // daysDiff == 0 なら今日既にログイン済み（何もしない）
     }
   }
 
   void _showDailyLoginBonus(int streak, {required bool isNewStreak}) {
-    // ボ�Eナス計算（最大7日間�E累積�Eーナス�E�E
+    // ボーナス計算（最大7日間の累積ボーナス）
     final dayBonus = (streak <= 7) ? streak : 7;
     final coinBonus = 10 * dayBonus;
     final expBonus = 20 * dayBonus;
@@ -953,12 +952,12 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isNewStreak ? '🎁 チE��リーログイン�E�E : '🔥 連続ログイン $streak日目�E�E),
+        title: Text(isNewStreak ? '🎁 デイリーログイン！' : '🔥 連続ログイン $streak日目！'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isNewStreak ? 'ログインボ�EナスをゲチE���E�E : '連続ログイン中�E��EーナスアチE�E�E�E,
+              isNewStreak ? 'ログインボーナスをゲット！' : '連続ログイン中！ボーナスアップ！',
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 16),
@@ -971,7 +970,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
-                  '明日も来るとボ�Eナスが増えるよ�E�\n�E�最大7日間！E,
+                  '明日も来るとボーナスが増えるよ！\n（最大7日間）',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   textAlign: TextAlign.center,
                 ),
@@ -981,7 +980,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('めE��た！E),
+            child: const Text('やった！'),
           ),
         ],
       ),
@@ -993,7 +992,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
     final today = DateTime(now.year, now.month, now.day);
 
     if (_lastMissionResetDate == null) {
-      // 初回起勁E
+      // 初回起動
       setState(() {
         _lastMissionResetDate = today;
       });
@@ -1004,7 +1003,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       final daysDiff = today.difference(lastReset).inDays;
 
       if (daysDiff >= 1) {
-        // 日付が変わった�EでミッションリセチE��
+        // 日付が変わったのでミッションリセット
         setState(() {
           _dailyFeedCount = 0;
           _dailyPlayCount = 0;
@@ -1017,7 +1016,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
   }
 
   void _checkDailyMissions() {
-    // ミッション達�EチェチE��
+    // ミッション達成チェック
     final missions = [
       {'type': 'feed', 'goal': 5, 'current': _dailyFeedCount, 'reward': 30},
       {'type': 'play', 'goal': 5, 'current': _dailyPlayCount, 'reward': 40},
@@ -1026,14 +1025,14 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
 
     for (var mission in missions) {
       if (mission['current'] == mission['goal']) {
-        // ミッション達�E�E�E
+        // ミッション達成！
         final reward = mission['reward'] as int;
         setState(() {
           _coins += reward;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('🎯 チE��リーミッション達�E�E�E+${reward}コイン'),
+            content: Text('🎯 デイリーミッション達成！ +${reward}コイン'),
             duration: const Duration(seconds: 2),
             backgroundColor: Colors.green,
           ),
@@ -1046,44 +1045,44 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('📖 ゲームの遊�E方'),
+        title: const Text('📖 ゲームの遊び方'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '🎯 目樁E,
+                '🎯 目標',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
-                'ペットを育てて、レベル100・親寁E��1000を目持E��ぁE��E,
+                'ペットを育てて、レベル100・親密度1000を目指そう！',
                 style: TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 16),
               const Text(
-                '🎮 基本操佁E,
+                '🎮 基本操作',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
-                '• ご�Eん：�E氁E15/幸禁E3/EXP+8/コイン+2\n'
-                '• あそぶ�E�幸禁E10/允E��E10/EXP+12/コイン+3\n'
-                '• めE��む�E��E氁E25/幸禁E2/コイン+1\n'
-                '※吁E��クションは10秒�Eクールダウンあり',
+                '• ごはん：元気+15/幸福+3/EXP+8/コイン+2\n'
+                '• あそぶ：幸福+10/元気-10/EXP+12/コイン+3\n'
+                '• やすむ：元気+25/幸福-2/コイン+1\n'
+                '※各アクションは10秒のクールダウンあり',
                 style: TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 16),
               const Text(
-                '🐾 ペットとの触れ合ぁE,
+                '🐾 ペットとの触れ合い',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
-                'ペットをタチE�Eすると反応します！\n'
-                '• タチE�Eごとに幸禁E1、親寁E��+1\n'
-                '• 10タチE�Eごとに5コインボ�Eナス',
+                'ペットをタップすると反応します！\n'
+                '• タップごとに幸福+1、親密度+1\n'
+                '• 10タップごとに5コインボーナス',
                 style: TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 16),
@@ -1094,64 +1093,64 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
               const SizedBox(height: 8),
               const Text(
                 '50コインで1回引けます\n'
-                'レア度シスチE���E�E段階）：\n'
+                'レア度システム（5段階）：\n'
                 '⚪ コモン (50%): 小報酬\n'
                 '🔵 レア (25%): 中報酬\n'
-                '🟣 スーパ�Eレア (15%): 大報酬\n'
-                '🟠 ウルトラレア (7%): 趁E��酬\n'
-                '🟡 レジェンチE(3%): 究極報酬\n\n'
-                '報酬冁E��30種類以上！\n'
-                'コイン/経験値/幸禁E允E��E親寁E��',
+                '🟣 スーパーレア (15%): 大報酬\n'
+                '🟠 ウルトラレア (7%): 超報酬\n'
+                '🟡 レジェンド (3%): 究極報酬\n\n'
+                '報酬内容30種類以上！\n'
+                'コイン/経験値/幸福/元気/親密度',
                 style: TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 16),
               const Text(
-                '🛍�E�EショチE�E',
+                '🛍️ ショップ',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
-                'コインでアイチE��を購入・裁E��\n'
-                '• EXP獲得量アチE�E\n'
-                '• コイン獲得量アチE�E\n'
-                '• 幸禁E允E���E減衰を軽渁E,
+                'コインでアイテムを購入・装備\n'
+                '• EXP獲得量アップ\n'
+                '• コイン獲得量アップ\n'
+                '• 幸福/元気の減衰を軽減',
                 style: TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 16),
               const Text(
-                '🎯 チE��リーミッション',
+                '🎯 デイリーミッション',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
-                '毎日リセチE��・達�Eでコイン獲得\n'
-                '• ご�EめE囁E 30コイン\n'
-                '• あそぶ5囁E 40コイン\n'
-                '• イベンチE囁E 50コイン',
+                '毎日リセット・達成でコイン獲得\n'
+                '• ごはん5回: 30コイン\n'
+                '• あそぶ5回: 40コイン\n'
+                '• イベント3回: 50コイン',
                 style: TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 16),
               const Text(
-                '🎁 ログインボ�Eナス',
+                '🎁 ログインボーナス',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
-                '毎日ログインでボ�Eナス獲得\n'
-                '連続ログインで最大7日目まで報酬アチE�E�E�E,
+                '毎日ログインでボーナス獲得\n'
+                '連続ログインで最大7日目まで報酬アップ！',
                 style: TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 16),
               const Text(
-                '⚠�E�E注意事頁E,
+                '⚠️ 注意事項',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
-                '• 10秒ごとに幸福と允E��が減少\n'
-                '• 幸禁E允E��が0になると成長が遅くなる\n'
-                '• レベルが上がるほど忁E��経験値が増加\n'
-                '• レベル20/50で進化イベント発甁E,
+                '• 10秒ごとに幸福と元気が減少\n'
+                '• 幸福/元気が0になると成長が遅くなる\n'
+                '• レベルが上がるほど必要経験値が増加\n'
+                '• レベル20/50で進化イベント発生',
                 style: TextStyle(fontSize: 13),
               ),
             ],
@@ -1160,7 +1159,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('閉じめE),
+            child: const Text('閉じる'),
           ),
         ],
       ),
@@ -1170,22 +1169,22 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
   void _onPetTap() {
     _petTapCount++;
 
-    // タチE�E回数に応じた反忁E
+    // タップ回数に応じた反応
     final reactions = [
-      '�E なでなで...',
-      '💕 ぁE��しい�E�E,
+      '😊 なでなで...',
+      '💕 うれしい！',
       '✨ きゃっ',
-      '🎵 た�Eしい�E�E,
-      '💖 もっと�E�E,
+      '🎵 たのしい～',
+      '💖 もっと！',
       '🌟 えへへ',
       '🎀 くすぐったい',
-      '💫 めE��たぁ�E�E,
+      '💫 やったぁ！',
     ];
 
     // ランダムな反応を表示
     setState(() {
-      _petReaction = reactions[math.Random().nextInt(reactions.length)];
-      // 小さな幸福度上�E
+      _petReaction = reactions[Random().nextInt(reactions.length)];
+      // 小さな幸福度上昇
       _happiness = (_happiness + 1).clamp(0, 100);
       _affection = (_affection + 1).clamp(0, 1000);
     });
@@ -1200,15 +1199,15 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       }
     });
 
-    // 10回タチE�Eで小さなボ�Eナス
+    // 10回タップで小さなボーナス
     if (_petTapCount % 10 == 0) {
       setState(() {
         _coins += 5;
-        _petReaction = '🎁 +5コイン�E�E;
+        _petReaction = '🎁 +5コイン！';
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('💖 ペットが喜んでる！E+5コイン'),
+          content: Text('💖 ペットが喜んでる！ +5コイン'),
           duration: Duration(seconds: 1),
         ),
       );
@@ -1232,11 +1231,11 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
 
   int _expNeededForNext() {
     // レベル50まで: 基本成長
-    // レベル51以陁E 大幁E��忁E��経験値増加
+    // レベル51以降: 大幅に必要経験値増加
     if (_level <= 50) {
       return _expPerLevelBase + (_level - 1) * 30;
     } else {
-      // レベル50以降�E基本値の2倁E+ より急な増加
+      // レベル50以降は基本値の2倍 + より急な増加
       return (_expPerLevelBase * 2) + ((_level - 1) * 60);
     }
   }
@@ -1259,18 +1258,18 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
   }
 
   void _checkLevelAchievements() {
-    if (_level >= 5) // AchievementService.unlockPetLevel5();
-    if (_level >= 10) // AchievementService.unlockPetLevel10();
+    if (_level >= 5) AchievementService.unlockPetLevel5();
+    if (_level >= 10) AchievementService.unlockPetLevel10();
   }
 
   void _checkEvolution(int oldLevel) {
     int newStage = _evolutionStage;
 
-    // 進化条件チェチE��
+    // 進化条件チェック
     if (_level >= 15 && _evolutionStage < 3) {
-      newStage = 3; // 成佁E
+      newStage = 3; // 成体
     } else if (_level >= 10 && _evolutionStage < 2) {
-      newStage = 2; // 子侁E
+      newStage = 2; // 子供
     } else if (_level >= 5 && _evolutionStage < 1) {
       newStage = 1; // ひな
     }
@@ -1285,44 +1284,50 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
   }
 
   void _showEvolutionDialog(int stage) {
-    final stageNames = ['卵', 'ひな', '子侁E, '成佁E];
+    final stageNames = ['卵', 'ひな', '子供', '成体'];
+    final stageEmojis = ['🥚', '🐣', '🐥', '🐓'];
 
-    // レベルに応じた演�Eレベル
-    GameResultLevel level;
-    String message;
-    if (stage == 3) {
-      level = GameResultLevel.perfect;
-      message = '立派な成体に成長�E�E;
-    } else if (stage == 2) {
-      level = GameResultLevel.excellent;
-      message = '允E��いっぱぁE�E子供に�E�E;
-    } else {
-      level = GameResultLevel.good;
-      message = '可愛いひなになったよ�E�E;
-    }
-
-    // 画像パス
-    final imagePath = 'assets/images/pet_stage_$stage.png';
-
-    // 派手な演�Eで表示
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => _EvolutionAnimation(
-        stage: stage,
-        stageName: stageNames[stage],
-        imagePath: imagePath,
-        message: message,
-        level: level,
-        onComplete: () {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('🎉 実績、E{stageNames[stage]}進化」を解除しました�E�E),
-              duration: const Duration(seconds: 2),
+      builder: (context) => AlertDialog(
+        title: const Text('✨ 進化しました！'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              stageEmojis[stage],
+              style: const TextStyle(fontSize: 80),
             ),
-          );
-        },
+            const SizedBox(height: 16),
+            Text(
+              '「${stageNames[stage]}」に進化！',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              stage == 1
+                  ? '可愛いひなになったよ！'
+                  : stage == 2
+                      ? '元気いっぱいの子供になったよ！'
+                      : '立派な成体に成長したよ！',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('🎉 実績「${stageNames[stage]}進化」を解除しました！'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            child: const Text('すごい！'),
+          ),
+        ],
       ),
     );
   }
@@ -1330,13 +1335,13 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
   void _doFeed() {
     if (_energy >= 95) return;
 
-    // クールダウンチェチE��
+    // クールダウンチェック
     if (_lastFeedTime != null) {
       final elapsed = DateTime.now().difference(_lastFeedTime!).inSeconds;
       if (elapsed < _cooldownSeconds) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('⏰ あと${_cooldownSeconds - elapsed}秒征E��てね'),
+            content: Text('⏰ あと${_cooldownSeconds - elapsed}秒待ってね'),
             duration: const Duration(seconds: 1),
           ),
         );
@@ -1344,14 +1349,14 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       }
     }
 
-    // 連続アクションチェチE��
+    // 連続アクションチェック
     if (_lastAction == 'feed') {
       _consecutiveCount++;
       if (_consecutiveCount >= 3) {
-        // AchievementService.unlockPetOverfeed();
+        AchievementService.unlockPetOverfeed();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('🍔 実績「食べ過ぎ注意」を解除しました�E�E),
+            content: Text('🍔 実績「食べ過ぎ注意」を解除しました！'),
             duration: Duration(seconds: 2),
           ),
         );
@@ -1369,9 +1374,9 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       _energy = (_energy + 15).clamp(0, 100);
       _happiness = (_happiness + 3).clamp(0, 100);
       _coins += coinBonus;
-      _lastFeedTime = DateTime.now(); // クールダウン開姁E
-      _affection = (_affection + 1).clamp(0, 1000); // 親寁E��+1
-      _dailyFeedCount++; // ミッションカウンチE
+      _lastFeedTime = DateTime.now(); // クールダウン開始
+      _affection = (_affection + 1).clamp(0, 1000); // 親密度+1
+      _dailyFeedCount++; // ミッションカウント
     });
     _gainExp(expBonus);
     _checkRandomEvent();
@@ -1381,13 +1386,13 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
   void _doPlay() {
     if (_energy < 10) return;
 
-    // クールダウンチェチE��
+    // クールダウンチェック
     if (_lastPlayTime != null) {
       final elapsed = DateTime.now().difference(_lastPlayTime!).inSeconds;
       if (elapsed < _cooldownSeconds) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('⏰ あと${_cooldownSeconds - elapsed}秒征E��てね'),
+            content: Text('⏰ あと${_cooldownSeconds - elapsed}秒待ってね'),
             duration: const Duration(seconds: 1),
           ),
         );
@@ -1395,14 +1400,14 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       }
     }
 
-    // 連続アクションチェチE��
+    // 連続アクションチェック
     if (_lastAction == 'play') {
       _consecutiveCount++;
       if (_consecutiveCount >= 5) {
-        // AchievementService.unlockPetOverplay();
+        AchievementService.unlockPetOverplay();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('😵 実績「体力の限界」を解除しました�E�E),
+            content: Text('😵 実績「体力の限界」を解除しました！'),
             duration: Duration(seconds: 2),
           ),
         );
@@ -1420,15 +1425,15 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       _happiness = (_happiness + 10).clamp(0, 100);
       _energy = (_energy - 10).clamp(0, 100);
       _coins += coinBonus;
-      _lastPlayTime = DateTime.now(); // クールダウン開姁E
-      _affection = (_affection + 2).clamp(0, 1000); // 親寁E��+2
-      _dailyPlayCount++; // ミッションカウンチE
+      _lastPlayTime = DateTime.now(); // クールダウン開始
+      _affection = (_affection + 2).clamp(0, 1000); // 親密度+2
+      _dailyPlayCount++; // ミッションカウント
     });
     if (_happiness >= 100) {
-      // AchievementService.unlockPetHappy100();
+      AchievementService.unlockPetHappy100();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🐾 実績「ごきげんMAX」を解除�E�E),
+          content: Text('🐾 実績「ごきげんMAX」を解除！'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -1441,20 +1446,20 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
   void _doRest() {
     if (_energy >= 90) return;
 
-    // クールダウンチェチE��
+    // クールダウンチェック
     if (_lastRestTime != null) {
       final elapsed = DateTime.now().difference(_lastRestTime!).inSeconds;
       if (elapsed < _cooldownSeconds) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('⏰ あと${_cooldownSeconds - elapsed}秒征E��てね'),
+            content: Text('⏰ あと${_cooldownSeconds - elapsed}秒待ってね'),
             duration: const Duration(seconds: 1),
           ),
         );
         return;
       }
     }
-    // 休�Eは連続カウントをリセチE��
+    // 休憩は連続カウントをリセット
     _lastAction = 'rest';
     _consecutiveCount = 0;
 
@@ -1465,35 +1470,35 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       _energy = (_energy + 25).clamp(0, 100);
       _happiness = (_happiness - 2).clamp(0, 100);
       _coins += coinBonus;
-      _lastRestTime = DateTime.now(); // クールダウン開姁E
+      _lastRestTime = DateTime.now(); // クールダウン開始
     });
     _saveState();
   }
 
   String _petEmoji() {
-    // 進化段階に応じた絵斁E��E
+    // 進化段階に応じた絵文字
     final stageEmojis = [
-      '🥁E, // 卵 (Lv1-4)
+      '🥚', // 卵 (Lv1-4)
       '🐣', // ひな (Lv5-9)
-      '🐥', // 子侁E(Lv10-14)
-      '🐓', // 成佁E(Lv15+)
+      '🐥', // 子供 (Lv10-14)
+      '🐓', // 成体 (Lv15+)
     ];
 
-    // 幸福度に基づく表惁E��リエーション�E��Eな以降！E
+    // 幸福度に基づく表情バリエーション（ひな以降）
     if (_evolutionStage == 0) {
-      return stageEmojis[0]; // 卵は変化なぁE
+      return stageEmojis[0]; // 卵は変化なし
     } else if (_evolutionStage == 1) {
-      if (_happiness >= 80) return '�E�';
-      if (_happiness >= 50) return '�E�';
+      if (_happiness >= 80) return '�';
+      if (_happiness >= 50) return '�';
       return '🐥';
     } else if (_evolutionStage == 2) {
       if (_happiness >= 80) return '🐥';
-      if (_happiness >= 50) return '�E�';
-      return '�E�';
+      if (_happiness >= 50) return '�';
+      return '�';
     } else {
       if (_happiness >= 80) return '🐓';
-      if (_happiness >= 50) return '🦁E;
-      return '🦁E;
+      if (_happiness >= 50) return '🦃';
+      return '🦅';
     }
   }
 
@@ -1501,11 +1506,11 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
     const items = {
       'hat': '🎩',
       'ribbon': '🎀',
-      'glasses': '�E',
+      'glasses': '😎',
       'balloon': '🎈',
       'crown': '👑',
       'diamond': '💎',
-      'star': '⭁E,
+      'star': '⭐',
       'rainbow': '🌈',
       'galaxy': '🌌',
       'ultimate': '✨',
@@ -1520,22 +1525,22 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       'hat': {'exp': 1.1, 'coins': 1.0, 'decay': 1.0}, // EXP+10%
       'ribbon': {'exp': 1.0, 'coins': 1.2, 'decay': 1.0}, // コイン+20%
       'glasses': {'exp': 1.05, 'coins': 1.1, 'decay': 1.0}, // EXP+5% コイン+10%
-      'balloon': {'exp': 1.0, 'coins': 1.0, 'decay': 0.5}, // 減衰半渁E
+      'balloon': {'exp': 1.0, 'coins': 1.0, 'decay': 0.5}, // 減衰半減
       'crown': {
         'exp': 1.15,
         'coins': 1.25,
         'decay': 0.7
-      }, // EXP+15% コイン+25% 減衰30%軽渁E
-      // プレミアムアイチE��
+      }, // EXP+15% コイン+25% 減衰30%軽減
+      // プレミアムアイテム
       'diamond': {'exp': 1.25, 'coins': 1.35, 'decay': 1.0}, // EXP+25% コイン+35%
-      'star': {'exp': 1.3, 'coins': 1.0, 'decay': 0.4}, // EXP+30% 減衰60%軽渁E
-      'rainbow': {'exp': 1.0, 'coins': 1.5, 'decay': 0.6}, // コイン+50% 減衰40%軽渁E
+      'star': {'exp': 1.3, 'coins': 1.0, 'decay': 0.4}, // EXP+30% 減衰60%軽減
+      'rainbow': {'exp': 1.0, 'coins': 1.5, 'decay': 0.6}, // コイン+50% 減衰40%軽減
       'galaxy': {'exp': 1.4, 'coins': 1.4, 'decay': 1.0}, // EXP+40% コイン+40%
       'ultimate': {
         'exp': 1.5,
         'coins': 1.6,
         'decay': 0.3
-      }, // EXP+50% コイン+60% 減衰70%軽渁E
+      }, // EXP+50% コイン+60% 減衰70%軽減
     };
 
     return buffs[itemId] ?? {'exp': 1.0, 'coins': 1.0, 'decay': 1.0};
@@ -1558,7 +1563,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
             _saveState();
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${_getItemEmoji(itemId)} アイチE��を購入しました�E�E)),
+              SnackBar(content: Text('${_getItemEmoji(itemId)} アイテムを購入しました！')),
             );
           }
         },
@@ -1577,7 +1582,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
     if (_coins < 50) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('💰 コインが足りません�E�E��E0コイン忁E��E��E),
+          content: Text('💰 コインが足りません！（50コイン必要）'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -1625,8 +1630,8 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       _coins -= 50;
     });
 
-    // レア度判定（確玁E��E
-    final random = math.Random().nextDouble();
+    // レア度判定（確率）
+    final random = Random().nextDouble();
     String rarity;
     Color rarityColor;
     String rarityEmoji;
@@ -1642,8 +1647,8 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       rarityColor = Colors.blue;
       rarityEmoji = '🔵';
     } else if (random < 0.90) {
-      // 15% - スーパ�Eレア (Super Rare)
-      rarity = 'スーパ�Eレア';
+      // 15% - スーパーレア (Super Rare)
+      rarity = 'スーパーレア';
       rarityColor = Colors.purple;
       rarityEmoji = '🟣';
     } else if (random < 0.97) {
@@ -1652,14 +1657,14 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
       rarityColor = Colors.orange;
       rarityEmoji = '🟠';
     } else {
-      // 3% - レジェンチE(Legend)
-      rarity = 'レジェンチE;
+      // 3% - レジェンド (Legend)
+      rarity = 'レジェンド';
       rarityColor = Colors.amber;
       rarityEmoji = '🟡';
     }
 
-    // レア度別の報酬チE�Eブル
-    final rewardRandom = math.Random().nextInt(100);
+    // レア度別の報酬テーブル
+    final rewardRandom = Random().nextInt(100);
     String result;
     String rewardEmoji;
     int coinReward = 0;
@@ -1669,138 +1674,138 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
     int affectionReward = 0;
 
     if (rarity == 'コモン') {
-      // コモン報酬�E�E0種類！E
+      // コモン報酬（10種類）
       if (rewardRandom < 25) {
-        coinReward = math.Random().nextInt(21) + 10; // 10-30コイン
+        coinReward = Random().nextInt(21) + 10; // 10-30コイン
         rewardEmoji = '💰';
         result = '$coinRewardコイン';
       } else if (rewardRandom < 50) {
-        expReward = math.Random().nextInt(21) + 20; // 20-40経験値
+        expReward = Random().nextInt(21) + 20; // 20-40経験値
         rewardEmoji = '✨';
         result = '$expReward経験値';
       } else if (rewardRandom < 65) {
-        happinessReward = math.Random().nextInt(6) + 5; // 5-10幸禁E
+        happinessReward = Random().nextInt(6) + 5; // 5-10幸福
         rewardEmoji = '💕';
-        result = '幸禁E$happinessReward';
+        result = '幸福+$happinessReward';
       } else if (rewardRandom < 80) {
-        energyReward = math.Random().nextInt(6) + 5; // 5-10允E��E
+        energyReward = Random().nextInt(6) + 5; // 5-10元気
         rewardEmoji = '⚡';
-        result = '允E��E$energyReward';
+        result = '元気+$energyReward';
       } else {
-        affectionReward = math.Random().nextInt(6) + 5; // 5-10親寁E��
+        affectionReward = Random().nextInt(6) + 5; // 5-10親密度
         rewardEmoji = '💖';
-        result = '親寁E��+$affectionReward';
+        result = '親密度+$affectionReward';
       }
     } else if (rarity == 'レア') {
-      // レア報酬�E�E種類！E
+      // レア報酬（8種類）
       if (rewardRandom < 20) {
-        coinReward = math.Random().nextInt(31) + 40; // 40-70コイン
+        coinReward = Random().nextInt(31) + 40; // 40-70コイン
         rewardEmoji = '💰';
         result = '$coinRewardコイン';
       } else if (rewardRandom < 40) {
-        expReward = math.Random().nextInt(41) + 50; // 50-90経験値
+        expReward = Random().nextInt(41) + 50; // 50-90経験値
         rewardEmoji = '✨';
         result = '$expReward経験値';
       } else if (rewardRandom < 55) {
-        coinReward = math.Random().nextInt(16) + 20; // 20-35コイン
-        expReward = math.Random().nextInt(21) + 30; // 30-50経験値
+        coinReward = Random().nextInt(16) + 20; // 20-35コイン
+        expReward = Random().nextInt(21) + 30; // 30-50経験値
         rewardEmoji = '🎁';
         result = '$coinRewardコイン + $expReward経験値';
       } else if (rewardRandom < 70) {
-        happinessReward = math.Random().nextInt(11) + 15; // 15-25幸禁E
+        happinessReward = Random().nextInt(11) + 15; // 15-25幸福
         rewardEmoji = '💕';
-        result = '幸禁E$happinessReward';
+        result = '幸福+$happinessReward';
       } else if (rewardRandom < 85) {
-        energyReward = math.Random().nextInt(11) + 15; // 15-25允E��E
+        energyReward = Random().nextInt(11) + 15; // 15-25元気
         rewardEmoji = '⚡';
-        result = '允E��E$energyReward';
+        result = '元気+$energyReward';
       } else {
-        affectionReward = math.Random().nextInt(16) + 15; // 15-30親寁E��
+        affectionReward = Random().nextInt(16) + 15; // 15-30親密度
         rewardEmoji = '💖';
-        result = '親寁E��+$affectionReward';
+        result = '親密度+$affectionReward';
       }
-    } else if (rarity == 'スーパ�Eレア') {
-      // スーパ�Eレア報酬�E�E種類！E
+    } else if (rarity == 'スーパーレア') {
+      // スーパーレア報酬（6種類）
       if (rewardRandom < 20) {
-        coinReward = math.Random().nextInt(51) + 80; // 80-130コイン
+        coinReward = Random().nextInt(51) + 80; // 80-130コイン
         rewardEmoji = '💰';
         result = '$coinRewardコイン';
       } else if (rewardRandom < 40) {
-        expReward = math.Random().nextInt(61) + 100; // 100-160経験値
+        expReward = Random().nextInt(61) + 100; // 100-160経験値
         rewardEmoji = '✨';
         result = '$expReward経験値';
       } else if (rewardRandom < 60) {
-        coinReward = math.Random().nextInt(31) + 50; // 50-80コイン
-        expReward = math.Random().nextInt(51) + 60; // 60-110経験値
+        coinReward = Random().nextInt(31) + 50; // 50-80コイン
+        expReward = Random().nextInt(51) + 60; // 60-110経験値
         rewardEmoji = '🎁';
         result = '$coinRewardコイン + $expReward経験値';
       } else if (rewardRandom < 75) {
-        happinessReward = math.Random().nextInt(16) + 30; // 30-45幸禁E
-        energyReward = math.Random().nextInt(16) + 30; // 30-45允E��E
+        happinessReward = Random().nextInt(16) + 30; // 30-45幸福
+        energyReward = Random().nextInt(16) + 30; // 30-45元気
         rewardEmoji = '💫';
-        result = '幸禁E$happinessReward 允E��E$energyReward';
+        result = '幸福+$happinessReward 元気+$energyReward';
       } else {
-        affectionReward = math.Random().nextInt(31) + 40; // 40-70親寁E��
-        coinReward = math.Random().nextInt(21) + 30; // 30-50コイン
+        affectionReward = Random().nextInt(31) + 40; // 40-70親密度
+        coinReward = Random().nextInt(21) + 30; // 30-50コイン
         rewardEmoji = '💝';
-        result = '親寁E��+$affectionReward コイン+$coinReward';
+        result = '親密度+$affectionReward コイン+$coinReward';
       }
     } else if (rarity == 'ウルトラレア') {
-      // ウルトラレア報酬�E�E種類！E
+      // ウルトラレア報酬（5種類）
       if (rewardRandom < 25) {
-        coinReward = math.Random().nextInt(101) + 150; // 150-250コイン
+        coinReward = Random().nextInt(101) + 150; // 150-250コイン
         rewardEmoji = '💎';
         result = '$coinRewardコイン';
       } else if (rewardRandom < 50) {
-        expReward = math.Random().nextInt(101) + 200; // 200-300経験値
+        expReward = Random().nextInt(101) + 200; // 200-300経験値
         rewardEmoji = '🌟';
         result = '$expReward経験値';
       } else if (rewardRandom < 70) {
-        coinReward = math.Random().nextInt(81) + 100; // 100-180コイン
-        expReward = math.Random().nextInt(101) + 120; // 120-220経験値
+        coinReward = Random().nextInt(81) + 100; // 100-180コイン
+        expReward = Random().nextInt(101) + 120; // 120-220経験値
         rewardEmoji = '🎊';
         result = '$coinRewardコイン + $expReward経験値';
       } else if (rewardRandom < 85) {
         happinessReward = 50;
         energyReward = 50;
-        affectionReward = math.Random().nextInt(51) + 50; // 50-100親寁E��
+        affectionReward = Random().nextInt(51) + 50; // 50-100親密度
         rewardEmoji = '🌈';
-        result = '幸福MAX 允E��MAX 親寁E��+$affectionReward';
+        result = '幸福MAX 元気MAX 親密度+$affectionReward';
       } else {
-        // 全スチE�Eタス大幁E��チE�E
-        coinReward = math.Random().nextInt(51) + 80; // 80-130コイン
-        expReward = math.Random().nextInt(81) + 100; // 100-180経験値
-        happinessReward = math.Random().nextInt(21) + 30; // 30-50幸禁E
-        energyReward = math.Random().nextInt(21) + 30; // 30-50允E��E
-        affectionReward = math.Random().nextInt(31) + 40; // 40-70親寁E��
+        // 全ステータス大幅アップ
+        coinReward = Random().nextInt(51) + 80; // 80-130コイン
+        expReward = Random().nextInt(81) + 100; // 100-180経験値
+        happinessReward = Random().nextInt(21) + 30; // 30-50幸福
+        energyReward = Random().nextInt(21) + 30; // 30-50元気
+        affectionReward = Random().nextInt(31) + 40; // 40-70親密度
         rewardEmoji = '🎇';
-        result = '全スチE�EタスUP�E�E;
+        result = '全ステータスUP！';
       }
     } else {
-      // レジェンド報酬�E�E種類）趁E��華
+      // レジェンド報酬（4種類）超豪華
       if (rewardRandom < 30) {
-        coinReward = math.Random().nextInt(201) + 300; // 300-500コイン
+        coinReward = Random().nextInt(201) + 300; // 300-500コイン
         rewardEmoji = '👑';
-        result = '$coinRewardコイン�E�趁E��量！E;
+        result = '$coinRewardコイン（超大量）';
       } else if (rewardRandom < 60) {
-        expReward = math.Random().nextInt(301) + 400; // 400-700経験値
-        rewardEmoji = '⭁E;
-        result = '$expReward経験値�E�趁E��量！E;
+        expReward = Random().nextInt(301) + 400; // 400-700経験値
+        rewardEmoji = '⭐';
+        result = '$expReward経験値（超大量）';
       } else if (rewardRandom < 85) {
-        coinReward = math.Random().nextInt(151) + 200; // 200-350コイン
-        expReward = math.Random().nextInt(201) + 300; // 300-500経験値
-        affectionReward = math.Random().nextInt(101) + 100; // 100-200親寁E��
+        coinReward = Random().nextInt(151) + 200; // 200-350コイン
+        expReward = Random().nextInt(201) + 300; // 300-500経験値
+        affectionReward = Random().nextInt(101) + 100; // 100-200親密度
         rewardEmoji = '🏆';
-        result = '趁E��華セチE���E�E;
+        result = '超豪華セット！';
       } else {
-        // 究極報酬�E��EてMAX
-        coinReward = math.Random().nextInt(101) + 250; // 250-350コイン
-        expReward = math.Random().nextInt(151) + 350; // 350-500経験値
+        // 究極報酬：全てMAX
+        coinReward = Random().nextInt(101) + 250; // 250-350コイン
+        expReward = Random().nextInt(151) + 350; // 350-500経験値
         happinessReward = 100;
         energyReward = 100;
-        affectionReward = math.Random().nextInt(151) + 150; // 150-300親寁E��
+        affectionReward = Random().nextInt(151) + 150; // 150-300親密度
         rewardEmoji = '✨';
-        result = '🎉究極の大当たり🎉\n全能力MAX�E�趁E�Eーナス�E�E;
+        result = '🎉究極の大当たり🎉\n全能力MAX＋超ボーナス！';
       }
     }
 
@@ -1816,7 +1821,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
     }
     _saveState();
 
-    // 結果表示�E�レア度に応じた演�E�E�E
+    // 結果表示（レア度に応じた演出）
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1917,7 +1922,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
                             vertical: 12,
                           ),
                         ),
-                        child: const Text('もう1回！E),
+                        child: const Text('もう1回！'),
                       ),
                   ],
                 ),
@@ -1931,36 +1936,36 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
 
   void _checkRandomEvent() {
     _actionCount++;
-    // 20-30アクションごとにランダムイベント発生（確玁E0%に上�E�E�E
-    if (_actionCount >= 20 && math.Random().nextDouble() < 0.30) {
+    // 20-30アクションごとにランダムイベント発生（確率30%に上昇）
+    if (_actionCount >= 20 && Random().nextDouble() < 0.30) {
       _actionCount = 0;
-      _dailyEventCount++; // イベントミチE��ョンカウンチE
+      _dailyEventCount++; // イベントミッションカウント
       _showRandomEvent();
-      _checkDailyMissions(); // イベント後にミッションチェチE��
+      _checkDailyMissions(); // イベント後にミッションチェック
     }
   }
 
   void _showRandomEvent() {
     final events = [
       {
-        'title': '🎁 宝箱発見！E,
-        'description': 'キラキラ光る宝箱を見つけました�E�E,
+        'title': '🎁 宝箱発見！',
+        'description': 'キラキラ光る宝箱を見つけました！',
         'choices': [
-          {'text': '開けめE, 'coins': 30, 'happiness': 5, 'energy': 0},
-          {'text': '無視すめE, 'coins': 0, 'happiness': -5, 'energy': 5},
+          {'text': '開ける', 'coins': 30, 'happiness': 5, 'energy': 0},
+          {'text': '無視する', 'coins': 0, 'happiness': -5, 'energy': 5},
         ],
       },
       {
-        'title': '👤 訪問老E,
-        'description': '誰かが遊�Eに来ました�E�E,
+        'title': '👤 訪問者',
+        'description': '誰かが遊びに来ました！',
         'choices': [
-          {'text': '歓迎すめE, 'coins': 10, 'happiness': 15, 'energy': -5},
-          {'text': '断めE, 'coins': 5, 'happiness': -10, 'energy': 10},
+          {'text': '歓迎する', 'coins': 10, 'happiness': 15, 'energy': -5},
+          {'text': '断る', 'coins': 5, 'happiness': -10, 'energy': 10},
         ],
       },
       {
-        'title': '🎪 お祭めE,
-        'description': '近くでお祭りが開催中�E�E,
+        'title': '🎪 お祭り',
+        'description': '近くでお祭りが開催中！',
         'choices': [
           {
             'text': '参加する',
@@ -1973,8 +1978,8 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
         ],
       },
       {
-        'title': '⭁E流れ昁E,
-        'description': '流れ星が通り過ぎました�E�E,
+        'title': '⭐ 流れ星',
+        'description': '流れ星が通り過ぎました！',
         'choices': [
           {
             'text': '願いを込める',
@@ -1987,27 +1992,27 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
         ],
       },
       {
-        'title': '🌈 虹が�Eた！E,
-        'description': '美しぁE��が空にかかってぁE��す！E,
+        'title': '🌈 虹が出た！',
+        'description': '美しい虹が空にかかっています！',
         'choices': [
-          {'text': '写真を撮めE, 'coins': 15, 'happiness': 12, 'energy': -3},
-          {'text': 'のん�Eり眺める', 'coins': 0, 'happiness': 8, 'energy': 5},
+          {'text': '写真を撮る', 'coins': 15, 'happiness': 12, 'energy': -3},
+          {'text': 'のんびり眺める', 'coins': 0, 'happiness': 8, 'energy': 5},
         ],
       },
       {
-        'title': '💎 レアアイチE��発見！E,
-        'description': '地面にキラキラ光る石が！E,
+        'title': '💎 レアアイテム発見！',
+        'description': '地面にキラキラ光る石が！',
         'choices': [
-          {'text': '拾ぁE, 'coins': 50, 'happiness': 8, 'energy': 0},
-          {'text': '誰かに譲めE, 'coins': 20, 'happiness': 15, 'energy': 0},
+          {'text': '拾う', 'coins': 50, 'happiness': 8, 'energy': 0},
+          {'text': '誰かに譲る', 'coins': 20, 'happiness': 15, 'energy': 0},
         ],
       },
       {
-        'title': '🍀 幸運�E四つ葁E,
-        'description': '珍しぁE��つ葉�Eクローバ�Eを見つけた�E�E,
+        'title': '🍀 幸運の四つ葉',
+        'description': '珍しい四つ葉のクローバーを見つけた！',
         'choices': [
           {
-            'text': '大刁E��する',
+            'text': '大切にする',
             'coins': 10,
             'happiness': 20,
             'energy': 0,
@@ -2017,11 +2022,11 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
         ],
       },
       {
-        'title': '🎵 路上ライチE,
-        'description': '素敵な音楽が聞こえてきます！E,
+        'title': '🎵 路上ライブ',
+        'description': '素敵な音楽が聞こえてきます！',
         'choices': [
           {
-            'text': '聴き�EめE,
+            'text': '聴き入る',
             'coins': -5,
             'happiness': 18,
             'energy': -5,
@@ -2034,41 +2039,41 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
             'energy': -2,
             'exp': 20
           },
-          {'text': '通り過ぎめE, 'coins': 0, 'happiness': 0, 'energy': 0},
+          {'text': '通り過ぎる', 'coins': 0, 'happiness': 0, 'energy': 0},
         ],
       },
       {
-        'title': '🦁E珍しぁE��、E,
-        'description': 'めったに見られなぁE��しぁE��が飛んでぁE���E�E,
+        'title': '🦋 珍しい蝶々',
+        'description': 'めったに見られない美しい蝶が飛んでいる！',
         'choices': [
           {
-            'text': '追ぁE��ける',
+            'text': '追いかける',
             'coins': 0,
             'happiness': 15,
             'energy': -8,
             'exp': 35
           },
-          {'text': '観察すめE, 'coins': 5, 'happiness': 10, 'energy': 0, 'exp': 20},
+          {'text': '観察する', 'coins': 5, 'happiness': 10, 'energy': 0, 'exp': 20},
         ],
       },
     ];
 
-    // 趁E��アイベント！E%の確玁E��E
-    if (math.Random().nextDouble() < 0.05) {
+    // 超レアイベント（5%の確率）
+    if (Random().nextDouble() < 0.05) {
       final rareEvents = [
         {
-          'title': '🌟 奁E��の出会い�E�E,
-          'description': '伝説の生き物に出会った！E��E,
+          'title': '🌟 奇跡の出会い！',
+          'description': '伝説の生き物に出会った！！',
           'choices': [
             {
-              'text': '友達になめE,
+              'text': '友達になる',
               'coins': 100,
               'happiness': 30,
               'energy': 10,
               'exp': 100
             },
             {
-              'text': '写真だけ撮めE,
+              'text': '写真だけ撮る',
               'coins': 50,
               'happiness': 20,
               'energy': 0,
@@ -2077,12 +2082,12 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
           ],
         },
         {
-          'title': '💰 大当たり！E,
-          'description': 'コイン袋を拾った！E��E,
+          'title': '💰 大当たり！',
+          'description': 'コイン袋を拾った！！',
           'choices': [
-            {'text': '全部もらぁE, 'coins': 200, 'happiness': 15, 'energy': 0},
+            {'text': '全部もらう', 'coins': 200, 'happiness': 15, 'energy': 0},
             {
-              'text': '半�E寁E��E,
+              'text': '半分寄付',
               'coins': 100,
               'happiness': 25,
               'energy': 0,
@@ -2091,12 +2096,12 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
           ],
         },
       ];
-      final event = rareEvents[math.Random().nextInt(rareEvents.length)];
+      final event = rareEvents[Random().nextInt(rareEvents.length)];
       _showEventDialog(event);
       return;
     }
 
-    final event = events[math.Random().nextInt(events.length)];
+    final event = events[Random().nextInt(events.length)];
     _showEventDialog(event);
   }
 
@@ -2131,9 +2136,9 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
     });
     _saveState();
 
-    String message = 'イベント完亁E��E;
+    String message = 'イベント完了！';
     if ((effect['coins'] ?? 0) > 0) message += ' +${effect['coins']}コイン';
-    if ((effect['happiness'] ?? 0) > 0) message += ' +${effect['happiness']}幸禁E;
+    if ((effect['happiness'] ?? 0) > 0) message += ' +${effect['happiness']}幸福';
     if ((effect['exp'] ?? 0) > 0) message += ' +${effect['exp']}EXP';
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -2163,7 +2168,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
                 const Text('💰 ', style: TextStyle(fontSize: 16)),
                 Text('$_coins', style: theme.textTheme.titleMedium),
                 const SizedBox(width: 16),
-                Text('最髁E $_bestLevel', style: theme.textTheme.bodySmall),
+                Text('最高: $_bestLevel', style: theme.textTheme.bodySmall),
               ],
             ),
           ],
@@ -2185,7 +2190,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
                 children: [
-                  // 進化段階に応じた画像（存在しなぁE��合�E絵斁E��にフォールバック�E�E
+                  // 進化段階に応じた画像（存在しない場合は絵文字にフォールバック）
                   Builder(builder: (context) {
                     final stage = _evolutionStage.clamp(0, 3);
                     final path = 'assets/images/pet_stage_'
@@ -2244,7 +2249,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
           ),
         ),
         const Text(
-          'タチE�Eして触れ合おう�E�E,
+          'タップして触れ合おう！',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 12, color: Colors.grey),
         ),
@@ -2269,16 +2274,16 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
                     final parts = <String>[];
                     if (buff['exp'] != 1.0) {
                       final expBonus = ((buff['exp'] as double) - 1) * 100;
-                      parts.add('EXP ${expBonus.toInt()}%ↁE);
+                      parts.add('EXP ${expBonus.toInt()}%↑');
                     }
                     if (buff['coins'] != 1.0) {
                       final coinBonus = ((buff['coins'] as double) - 1) * 100;
-                      parts.add('コイン ${coinBonus.toInt()}%ↁE);
+                      parts.add('コイン ${coinBonus.toInt()}%↑');
                     }
                     if (buff['decay'] != 1.0) {
                       final decayReduction =
                           (1 - (buff['decay'] as double)) * 100;
-                      parts.add('減衰 ${decayReduction.toInt()}%ↁE);
+                      parts.add('減衰 ${decayReduction.toInt()}%↓');
                     }
                     return parts.join(' ');
                   }(),
@@ -2294,14 +2299,14 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _statChip('幸禁E, _happiness, Colors.pink),
-            _statChip('允E��E, _energy, Colors.amber),
+            _statChip('幸福', _happiness, Colors.pink),
+            _statChip('元気', _energy, Colors.amber),
             _statChip('EXP', ((_exp / _expNeededForNext()) * 100).toInt(),
                 Colors.teal),
           ],
         ),
         const SizedBox(height: 12),
-        // 親寁E��表示
+        // 親密度表示
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -2313,7 +2318,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('💖 親寁E��',
+                  const Text('💖 親密度',
                       style:
                           TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                   Text('$_affection / 1000',
@@ -2331,7 +2336,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
           ),
         ),
         const SizedBox(height: 12),
-        // チE��リーミッション表示
+        // デイリーミッション表示
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -2341,12 +2346,12 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('🎯 チE��リーミッション',
+              const Text('🎯 デイリーミッション',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              _missionRow('ご�EめE5囁E, _dailyFeedCount, 5, '30コイン'),
-              _missionRow('あそぶ 5囁E, _dailyPlayCount, 5, '40コイン'),
-              _missionRow('イベンチE3囁E, _dailyEventCount, 3, '50コイン'),
+              _missionRow('ごはん 5回', _dailyFeedCount, 5, '30コイン'),
+              _missionRow('あそぶ 5回', _dailyPlayCount, 5, '40コイン'),
+              _missionRow('イベント 3回', _dailyEventCount, 3, '50コイン'),
             ],
           ),
         ),
@@ -2356,22 +2361,22 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
           runSpacing: 12,
           alignment: WrapAlignment.center,
           children: [
-            _actionButton(Icons.fastfood, 'ご�EめE, _doFeed,
+            _actionButton(Icons.fastfood, 'ごはん', _doFeed,
                 enabled: _energy < 95, lastActionTime: _lastFeedTime),
             _actionButton(Icons.toys, 'あそぶ', _doPlay,
                 enabled: _energy >= 10, lastActionTime: _lastPlayTime),
-            _actionButton(Icons.bedtime, 'めE��む', _doRest,
+            _actionButton(Icons.bedtime, 'やすむ', _doRest,
                 enabled: _energy < 90, lastActionTime: _lastRestTime),
-            _actionButton(Icons.shopping_bag, 'ショチE�E', _openShop, enabled: true),
+            _actionButton(Icons.shopping_bag, 'ショップ', _openShop, enabled: true),
             _actionButton(Icons.casino, 'ガチャ', _openGacha,
                 enabled: true, buttonColor: Colors.amber),
-            _actionButton(Icons.help_outline, 'ガイチE, _showGuide,
+            _actionButton(Icons.help_outline, 'ガイド', _showGuide,
                 enabled: true, buttonColor: Colors.blue),
           ],
         ),
         const SizedBox(height: 12),
         Text(
-          '・ご�EめE 允E��E15/幸禁E3/exp+8/コイン+2\n・あそぶ: 幸禁E10/允E��E10/exp+12/コイン+3\n・めE��む: 允E��E25/幸禁E2/コイン+1\n一定時間で幸禁E允E���E減少します、Evが上がると忁E��EXPが増えます、E,
+          '・ごはん: 元気+15/幸福+3/exp+8/コイン+2\n・あそぶ: 幸福+10/元気-10/exp+12/コイン+3\n・やすむ: 元気+25/幸福-2/コイン+1\n一定時間で幸福/元気は減少します。Lvが上がると必要EXPが増えます。',
           style: theme.textTheme.bodySmall?.copyWith(
             color: isDark ? Colors.grey[400] : Colors.grey[600],
             height: 1.3,
@@ -2461,7 +2466,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
     if (lastActionTime != null) {
       final elapsed = DateTime.now().difference(lastActionTime).inSeconds;
       if (elapsed < _cooldownSeconds) {
-        cooldownText = '${_cooldownSeconds - elapsed}私E;
+        cooldownText = '${_cooldownSeconds - elapsed}秒';
       }
     }
 
@@ -2492,7 +2497,7 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
   }
 }
 
-// ニュースクイズ�E�E択！E
+// ニュースクイズ（3択）
 class _NewsQuizGame extends StatefulWidget {
   const _NewsQuizGame({super.key});
 
@@ -2528,16 +2533,16 @@ class _NewsQuizGameState extends State<_NewsQuizGame> {
   }
 
   List<_QuizQ> _buildQuestions(List<Article> arts) {
-    final rng = math.Random();
+    final rng = Random();
     final qs = <_QuizQ>[];
     for (final a in arts.take(5)) {
-      // 常に国当てに統一�E�国旗クイズ�E�E
+      // 常に国当てに統一（国旗クイズ）
       final cc = _inferCountry('${a.title} ${a.description} ${a.url}');
       final all = ['US', 'GB', 'JP', 'FR', 'DE', 'CN', 'IN'];
       all.shuffle(rng);
       if (!all.contains(cc)) all[0] = cc;
       qs.add(_QuizQ(
-        question: 'こ�E記事�E国旗�Eどれ！E,
+        question: 'この記事の国旗はどれ？',
         correct: cc,
         options: all.take(3).toList(),
         article: a,
@@ -2548,12 +2553,12 @@ class _NewsQuizGameState extends State<_NewsQuizGame> {
 
   String _inferTopic(String text) {
     final t = text.toLowerCase();
-    if (RegExp(r'economy|inflation|market|bank|stock').hasMatch(t)) return '経渁E;
+    if (RegExp(r'economy|inflation|market|bank|stock').hasMatch(t)) return '経済';
     if (RegExp(r'AI|tech|software|google|microsoft|apple|chip',
             caseSensitive: false)
-        .hasMatch(text)) return 'チE��ノロジー';
+        .hasMatch(text)) return 'テクノロジー';
     if (RegExp(r'football|soccer|nba|olympic|tennis|fifa').hasMatch(t))
-      return 'スポ�EチE;
+      return 'スポーツ';
     if (RegExp(r'film|music|celebrity|netflix|hollywood').hasMatch(t))
       return 'エンタメ';
     return '政治';
@@ -2585,7 +2590,7 @@ class _NewsQuizGameState extends State<_NewsQuizGame> {
         await p.setInt('quiz_best_score', _score);
         setState(() => _best = _score);
 
-        // 新記録演�E
+        // 新記録演出
         if (mounted) {
           AchievementNotifier.showHighScore(
             context,
@@ -2600,7 +2605,7 @@ class _NewsQuizGameState extends State<_NewsQuizGame> {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: Text(_score == _questions.length ? '🎉 満点�E�E : '結果'),
+            title: Text(_score == _questions.length ? '🎉 満点！' : '結果'),
             content: Text('スコア: $_score / ${_questions.length}'),
             actions: [
               TextButton(
@@ -2628,7 +2633,7 @@ class _NewsQuizGameState extends State<_NewsQuizGame> {
           return const Center(child: CircularProgressIndicator());
         }
         if (_questions.isEmpty) {
-          return const Center(child: Text('問題を生�Eできませんでした'));
+          return const Center(child: Text('問題を生成できませんでした'));
         }
         final q = _questions[_current];
         return Card(
@@ -2652,7 +2657,7 @@ class _NewsQuizGameState extends State<_NewsQuizGame> {
                           color: Colors.amber.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text('ベスチE $_best',
+                        child: Text('ベスト: $_best',
                             style: const TextStyle(
                                 color: Colors.orange,
                                 fontWeight: FontWeight.bold)),
@@ -2700,7 +2705,7 @@ class _QuizQ {
       required this.article});
 }
 
-// シンプル・スネ�Eク
+// シンプル・スネーク
 class _SnakeGame extends StatefulWidget {
   const _SnakeGame({super.key});
   @override
@@ -2744,8 +2749,8 @@ class _SnakeGameState extends State<_SnakeGame> {
     setState(() {
       _snake = [const Offset(10, 10)];
       _dir = const Offset(1, 0);
-      _apple = Offset(math.Random().nextInt(_cols).toDouble(),
-          math.Random().nextInt(_rows).toDouble());
+      _apple = Offset(Random().nextInt(_cols).toDouble(),
+          Random().nextInt(_rows).toDouble());
     });
   }
 
@@ -2756,11 +2761,11 @@ class _SnakeGameState extends State<_SnakeGame> {
       await p.setInt('snake_best', _snake.length);
       setState(() => _best = _snake.length);
 
-      // 新記録演�E
+      // 新記録演出
       if (mounted && _snake.length >= 10) {
         AchievementNotifier.showHighScore(
           context,
-          gameName: 'スネ�Eク',
+          gameName: 'スネーク',
           score: _snake.length,
           previousBest: previousBest > 1 ? previousBest : null,
         );
@@ -2782,8 +2787,8 @@ class _SnakeGameState extends State<_SnakeGame> {
     setState(() {
       _snake = [head, ..._snake];
       if (head == _apple) {
-        _apple = Offset(math.Random().nextInt(_cols).toDouble(),
-            math.Random().nextInt(_rows).toDouble());
+        _apple = Offset(Random().nextInt(_cols).toDouble(),
+            Random().nextInt(_rows).toDouble());
       } else {
         _snake.removeLast();
       }
@@ -2791,7 +2796,7 @@ class _SnakeGameState extends State<_SnakeGame> {
   }
 
   void _change(Offset d) {
-    if ((_dir + d) == Offset.zero) return; // 送E��禁止
+    if ((_dir + d) == Offset.zero) return; // 逆走禁止
     setState(() => _dir = d);
   }
 
@@ -2800,7 +2805,7 @@ class _SnakeGameState extends State<_SnakeGame> {
     final cell = 14.0;
     return Column(
       children: [
-        Text('長ぁE ${_snake.length}  ベスチE $_best'),
+        Text('長さ: ${_snake.length}  ベスト: $_best'),
         const SizedBox(height: 8),
         SizedBox(
           width: _cols * cell,
@@ -2859,7 +2864,7 @@ class _SnakeGameState extends State<_SnakeGame> {
   }
 }
 
-// 2048 ミニマム実裁E
+// 2048 ミニマム実装
 class _Game2048 extends StatefulWidget {
   const _Game2048({super.key});
   @override
@@ -2890,7 +2895,7 @@ class _Game2048State extends State<_Game2048> {
       await p.setInt('2048_best', maxTile);
       setState(() => best = maxTile);
 
-      // 新記録演�E�E�E28以上で表示�E�E
+      // 新記録演出（128以上で表示）
       if (mounted && maxTile >= 128) {
         AchievementNotifier.showHighScore(
           context,
@@ -2917,8 +2922,8 @@ class _Game2048State extends State<_Game2048> {
       }
     }
     if (empty.isEmpty) return;
-    final o = empty[math.Random().nextInt(empty.length)];
-    b[o.dy.toInt()][o.dx.toInt()] = math.Random().nextDouble() < 0.9 ? 2 : 4;
+    final o = empty[Random().nextInt(empty.length)];
+    b[o.dy.toInt()][o.dx.toInt()] = Random().nextDouble() < 0.9 ? 2 : 4;
   }
 
   void _move(int dx, int dy) {
@@ -3032,7 +3037,7 @@ class _Game2048State extends State<_Game2048> {
             ElevatedButton(
                 onPressed: () => _move(0, 1),
                 child: const Icon(Icons.keyboard_arrow_down)),
-            OutlinedButton(onPressed: _reset, child: const Text('リセチE��')),
+            OutlinedButton(onPressed: _reset, child: const Text('リセット')),
           ],
         ),
       ],
@@ -3040,7 +3045,7 @@ class _Game2048State extends State<_Game2048> {
   }
 }
 
-// ショチE�Eモーダル
+// ショップモーダル
 class _ShopModal extends StatelessWidget {
   final int coins;
   final List<String> ownedItems;
@@ -3062,7 +3067,7 @@ class _ShopModal extends StatelessWidget {
       {
         'id': 'hat',
         'emoji': '🎩',
-        'name': '帽孁E,
+        'name': '帽子',
         'price': 50,
         'buff': 'EXP+10%'
       },
@@ -3075,7 +3080,7 @@ class _ShopModal extends StatelessWidget {
       },
       {
         'id': 'glasses',
-        'emoji': '�E',
+        'emoji': '😎',
         'name': 'サングラス',
         'price': 40,
         'buff': 'EXP+5% コイン+10%'
@@ -3085,41 +3090,41 @@ class _ShopModal extends StatelessWidget {
         'emoji': '🎈',
         'name': '風船',
         'price': 20,
-        'buff': '減衰50%軽渁E
+        'buff': '減衰50%軽減'
       },
       {
         'id': 'crown',
         'emoji': '👑',
-        'name': '王�E',
+        'name': '王冠',
         'price': 100,
-        'buff': 'EXP+15% コイン+25% 減衰30%軽渁E
+        'buff': 'EXP+15% コイン+25% 減衰30%軽減'
       },
-      // プレミアムアイチE��
+      // プレミアムアイテム
       {
         'id': 'diamond',
         'emoji': '💎',
-        'name': 'ダイヤモンチE,
+        'name': 'ダイヤモンド',
         'price': 200,
         'buff': 'EXP+25% コイン+35%'
       },
       {
         'id': 'star',
-        'emoji': '⭁E,
-        'name': '星�EペンダンチE,
+        'emoji': '⭐',
+        'name': '星のペンダント',
         'price': 250,
-        'buff': 'EXP+30% 減衰60%軽渁E
+        'buff': 'EXP+30% 減衰60%軽減'
       },
       {
         'id': 'rainbow',
         'emoji': '🌈',
         'name': '虹の羽',
         'price': 300,
-        'buff': 'コイン+50% 減衰40%軽渁E
+        'buff': 'コイン+50% 減衰40%軽減'
       },
       {
         'id': 'galaxy',
         'emoji': '🌌',
-        'name': '銀河のマンチE,
+        'name': '銀河のマント',
         'price': 400,
         'buff': 'EXP+40% コイン+40%'
       },
@@ -3128,7 +3133,7 @@ class _ShopModal extends StatelessWidget {
         'emoji': '✨',
         'name': '究極の首輪',
         'price': 500,
-        'buff': 'EXP+50% コイン+60% 減衰70%軽渁E
+        'buff': 'EXP+50% コイン+60% 減衰70%軽減'
       },
     ];
 
@@ -3142,13 +3147,13 @@ class _ShopModal extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('🛍�E�EショチE�E',
+              const Text('🛍️ ショップ',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               Text('💰 $coins', style: const TextStyle(fontSize: 20)),
             ],
           ),
           const SizedBox(height: 16),
-          const Text('アイチE��を購入して裁E��しよぁE��E,
+          const Text('アイテムを購入して装備しよう！',
               style: TextStyle(fontSize: 14, color: Colors.grey)),
           const SizedBox(height: 16),
           Expanded(
@@ -3168,7 +3173,7 @@ class _ShopModal extends StatelessWidget {
                     leading: Text(emoji, style: const TextStyle(fontSize: 32)),
                     title: Text(name),
                     subtitle: Text(owned
-                        ? (equipped ? '裁E��中 - $buff' : '所有済み - $buff')
+                        ? (equipped ? '装備中 - $buff' : '所有済み - $buff')
                         : '💰 $price - $buff'),
                     trailing: owned
                         ? (equipped
@@ -3176,7 +3181,7 @@ class _ShopModal extends StatelessWidget {
                                 color: Colors.green)
                             : ElevatedButton(
                                 onPressed: () => onEquipItem(itemId),
-                                child: const Text('裁E��'),
+                                child: const Text('装備'),
                               ))
                         : ElevatedButton(
                             onPressed: coins >= price
@@ -3192,7 +3197,7 @@ class _ShopModal extends StatelessWidget {
           const SizedBox(height: 16),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('閉じめE),
+            child: const Text('閉じる'),
           ),
         ],
       ),
@@ -3200,237 +3205,7 @@ class _ShopModal extends StatelessWidget {
   }
 }
 
-/// 進化演�EウィジェチE��
-class _EvolutionAnimation extends StatefulWidget {
-  final int stage;
-  final String stageName;
-  final String imagePath;
-  final String message;
-  final GameResultLevel level;
-  final VoidCallback? onComplete;
-
-  const _EvolutionAnimation({
-    required this.stage,
-    required this.stageName,
-    required this.imagePath,
-    required this.message,
-    required this.level,
-    this.onComplete,
-  });
-
-  @override
-  State<_EvolutionAnimation> createState() => _EvolutionAnimationState();
-}
-
-class _EvolutionAnimationState extends State<_EvolutionAnimation>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-
-    _scaleAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    );
-
-    _controller.forward();
-
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        widget.onComplete?.call();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Color _getLevelColor() {
-    switch (widget.level) {
-      case GameResultLevel.perfect:
-        return Colors.amber;
-      case GameResultLevel.excellent:
-        return Colors.purple;
-      case GameResultLevel.good:
-        return Colors.blue;
-      case GameResultLevel.normal:
-        return Colors.grey;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _getLevelColor();
-
-    return Material(
-      color: Colors.black.withOpacity(0.8),
-      child: Stack(
-        children: [
-          // パ�EチE��クル�E�Excellent以上！E
-          if (widget.level == GameResultLevel.perfect ||
-              widget.level == GameResultLevel.excellent)
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return CustomPaint(
-                  size: Size.infinite,
-                  painter: _ParticlePainter(
-                    progress: _controller.value,
-                    color: color,
-                  ),
-                );
-              },
-            ),
-
-          Center(
-            child: AnimatedBuilder(
-              animation: _scaleAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _scaleAnimation.value,
-                  child: Container(
-                    margin: const EdgeInsets.all(32),
-                    padding: const EdgeInsets.all(32),
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [color, color.withOpacity(0.7)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withOpacity(0.6),
-                          blurRadius: 40,
-                          spreadRadius: 15,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          '✨ 進化しました�E�E✨',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        // ペット画僁E
-                        Image.asset(
-                          widget.imagePath,
-                          width: 150,
-                          height: 150,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Text(
-                            '🐣',
-                            style: TextStyle(fontSize: 100),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          '、E{widget.stageName}」に進化！E,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          widget.message,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // タチE�Eで閉じめE
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: GestureDetector(
-              onTap: () => widget.onComplete?.call(),
-              child: const Center(
-                child: Text(
-                  'タチE�Eして閉じめE,
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// パ�EチE��クル描画�E�Echievement_animation.dartから流用�E�E
-class _ParticlePainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  final math.Random _random = math.Random(42);
-
-  _ParticlePainter({required this.progress, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-    for (int i = 0; i < 100; i++) {
-      final x = _random.nextDouble() * size.width;
-      final startY = _random.nextDouble() * size.height * 0.3;
-      final endY = size.height;
-      final currentY = startY + (endY - startY) * progress;
-      if (currentY > size.height) continue;
-      final opacity = (1 - progress).clamp(0.0, 1.0);
-      paint.color = _getParticleColor(i).withOpacity(opacity);
-      final rotation = progress * math.pi * 4 + i;
-      canvas.save();
-      canvas.translate(x, currentY);
-      canvas.rotate(rotation);
-      if (i % 2 == 0) {
-        canvas.drawRect(const Rect.fromLTWH(-4, -4, 8, 8), paint);
-      } else {
-        canvas.drawCircle(Offset.zero, 4, paint);
-      }
-      canvas.restore();
-    }
-  }
-
-  Color _getParticleColor(int index) {
-    final colors = [color, color.withBlue(255), Colors.yellow, Colors.white];
-    return colors[index % colors.length];
-  }
-
-  @override
-  bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
-      oldDelegate.progress != progress;
-}
-
-// 数当てゲーム�E�E-100の数字を推測�E�E
+// 数当てゲーム（1-100の数字を推測）
 class _NumberGuessGame extends StatefulWidget {
   const _NumberGuessGame({super.key});
 
@@ -3477,10 +3252,10 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
 
   void _startNewGame() {
     setState(() {
-      _targetNumber = math.Random().nextInt(100) + 1;
+      _targetNumber = Random().nextInt(100) + 1;
       _attempts = 0;
       _history.clear();
-      _feedback = '1、E00の数字を当ててください�E�E;
+      _feedback = '1〜100の数字を当ててください！';
       _gameOver = false;
     });
     _guessController.clear();
@@ -3492,36 +3267,36 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
 
     final guess = int.tryParse(input);
     if (guess == null || guess < 1 || guess > 100) {
-      setState(() => _feedback = '⚠�E�E1、E00の数字を入力してください');
+      setState(() => _feedback = '⚠️ 1〜100の数字を入力してください');
       return;
     }
 
     setState(() {
       _attempts++;
       if (guess == _targetNumber) {
-        _feedback = '🎉 正解�E�E$_attempts 回で当たりました�E�E;
+        _feedback = '🎉 正解！ $_attempts 回で当たりました！';
         _gameOver = true;
-        _history.add('$guess ↁE🎯 正解�E�E);
+        _history.add('$guess → 🎯 正解！');
         _saveBestScore();
 
-        // スコアに応じた演�Eレベル決定（回数が少なぁE��ど高評価�E�E
+        // スコアに応じた演出レベル決定（回数が少ないほど高評価）
         GameResultLevel level;
         String? message;
         if (_attempts <= 3) {
           level = GameResultLevel.perfect;
-          message = '神�E勘！E;
+          message = '神の勘！';
         } else if (_attempts <= 5) {
           level = GameResultLevel.excellent;
-          message = '素晴らしぁE��E;
+          message = '素晴らしい！';
         } else if (_attempts <= 8) {
           level = GameResultLevel.good;
-          message = '良ぁE��琁E��E;
+          message = '良い推理！';
         } else {
           level = GameResultLevel.normal;
           message = null;
         }
 
-        // 派手な演�Eで結果表示
+        // 派手な演出で結果表示
         Future.delayed(const Duration(milliseconds: 300), () {
           if (mounted) {
             AchievementNotifier.showGameResult(
@@ -3537,23 +3312,23 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
       } else if (guess < _targetNumber) {
         final diff = _targetNumber - guess;
         if (diff <= 5) {
-          _feedback = '🔥 もう少し大きい数字です（かなり近い�E�E��E;
+          _feedback = '🔥 もう少し大きい数字です（かなり近い！）';
         } else if (diff <= 15) {
-          _feedback = '📈 もっと大きい数字です（近い�E�E;
+          _feedback = '📈 もっと大きい数字です（近い）';
         } else {
-          _feedback = '⬁E��Eもっと大きい数字でぁE;
+          _feedback = '⬆️ もっと大きい数字です';
         }
-        _history.add('$guess ↁE小さぁE);
+        _history.add('$guess → 小さい');
       } else {
         final diff = guess - _targetNumber;
         if (diff <= 5) {
-          _feedback = '🔥 もう少し小さぁE��字です（かなり近い�E�E��E;
+          _feedback = '🔥 もう少し小さい数字です（かなり近い！）';
         } else if (diff <= 15) {
-          _feedback = '📉 もっと小さぁE��字です（近い�E�E;
+          _feedback = '📉 もっと小さい数字です（近い）';
         } else {
-          _feedback = '⬁E��Eもっと小さぁE��字でぁE;
+          _feedback = '⬇️ もっと小さい数字です';
         }
-        _history.add('$guess ↁE大きい');
+        _history.add('$guess → 大きい');
       }
     });
 
@@ -3588,7 +3363,7 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '試行回数: $_attempts 囁E,
+                      '試行回数: $_attempts 回',
                       style: TextStyle(
                         fontSize: 14,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -3607,7 +3382,7 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
                     child: Column(
                       children: [
                         const Text(
-                          '🏆 ベスチE,
+                          '🏆 ベスト',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -3615,7 +3390,7 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
                           ),
                         ),
                         Text(
-                          '$_bestScore 囁E,
+                          '$_bestScore 回',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -3629,7 +3404,7 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
             ),
             const SizedBox(height: 24),
 
-            // フィードバチE��
+            // フィードバック
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -3667,8 +3442,8 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
                       controller: _guessController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: '予想を�E劁E,
-                        hintText: '1、E00',
+                        labelText: '予想を入力',
+                        hintText: '1〜100',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -3697,7 +3472,7 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
               const SizedBox(height: 16),
             ],
 
-            // リセチE��/新しいゲーム
+            // リセット/新しいゲーム
             if (_gameOver)
               ElevatedButton.icon(
                 onPressed: _startNewGame,
@@ -3715,8 +3490,8 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text('ゲームをリセチE��'),
-                      content: const Text('現在のゲームをリセチE��して新しく始めますか�E�E),
+                      title: const Text('ゲームをリセット'),
+                      content: const Text('現在のゲームをリセットして新しく始めますか？'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx),
@@ -3727,14 +3502,14 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
                             Navigator.pop(ctx);
                             _startNewGame();
                           },
-                          child: const Text('リセチE��'),
+                          child: const Text('リセット'),
                         ),
                       ],
                     ),
                   );
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('リセチE��'),
+                label: const Text('リセット'),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),

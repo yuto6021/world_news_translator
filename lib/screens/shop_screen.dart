@@ -58,7 +58,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
             ),
             const SizedBox(height: 8),
             Text(
-              '残高: $_pointspt',
+              '残高: $_points pt',
               style: TextStyle(
                 color: _points >= item.price ? Colors.green : Colors.red,
               ),
@@ -306,7 +306,17 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('${item.name}を適用しました'),
+                            content: Text('✅ ${item.name}を適用しました\nアプリを再起動すると反映されます'),
+                            duration: const Duration(seconds: 3),
+                            backgroundColor: Colors.green,
+                            action: SnackBarAction(
+                              label: '再起動',
+                              textColor: Colors.white,
+                              onPressed: () {
+                                // アプリ再起動の代わりにホーム画面に戻る
+                                Navigator.of(context).popUntil((route) => route.isFirst);
+                              },
+                            ),
                           ),
                         );
                       }

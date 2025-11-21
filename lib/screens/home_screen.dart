@@ -20,6 +20,7 @@ import 'game_screen.dart';
 import 'gacha_screen.dart';
 import 'achievement_collection_screen.dart';
 import 'shop_screen.dart';
+import 'user_profile_screen.dart';
 import '../models/country.dart';
 import '../services/availability_service.dart';
 import '../widgets/country_tab_enhanced.dart';
@@ -57,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen>
     _TabInfo(Icons.chat, 'コメント', 'コメント一覧'),
     _TabInfo(Icons.book, 'Wikipedia', 'Wikipedia検索'),
     _TabInfo(Icons.hourglass_bottom, 'タイムカプセル', 'タイムカプセル一覧'),
+    _TabInfo(Icons.account_circle, 'プロフィール', 'ユーザープロフィールとバッジ'),
     _TabInfo(Icons.person_add, '会員登録', 'アカウント作成'),
   ];
 
@@ -565,6 +567,8 @@ class _HomeScreenState extends State<HomeScreen>
                               const CommentsScreen(),
                               const WikipediaSearchScreen(),
                               const TimeCapsuleScreen(),
+                              // プロフィール
+                              const UserProfileScreen(),
                               // 会員登録
                               const RegistrationScreen(),
                             ],

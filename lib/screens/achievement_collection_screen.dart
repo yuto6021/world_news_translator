@@ -212,10 +212,10 @@ class _AchievementCollectionScreenState extends State<AchievementCollectionScree
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.8,
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.75,
       ),
       itemCount: achievements.length,
       itemBuilder: (context, index) {
@@ -259,8 +259,8 @@ class _AchievementCollectionScreenState extends State<AchievementCollectionScree
             children: [
               // アイコン
               Container(
-                width: 80,
-                height: 80,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: ach.isUnlocked
@@ -270,8 +270,8 @@ class _AchievementCollectionScreenState extends State<AchievementCollectionScree
                       ? [
                           BoxShadow(
                             color: rarityColor.withOpacity(0.4),
-                            blurRadius: 15,
-                            spreadRadius: 2,
+                            blurRadius: 10,
+                            spreadRadius: 1,
                           ),
                         ]
                       : null,
@@ -280,19 +280,19 @@ class _AchievementCollectionScreenState extends State<AchievementCollectionScree
                   child: Text(
                     isSecret ? '❓' : ach.icon,
                     style: TextStyle(
-                      fontSize: 40,
+                      fontSize: 28,
                       color: ach.isUnlocked ? null : Colors.grey,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // タイトル
               Text(
                 isSecret ? '???' : ach.title,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: ach.isUnlocked ? null : Colors.grey,
                 ),
@@ -304,28 +304,28 @@ class _AchievementCollectionScreenState extends State<AchievementCollectionScree
 
               // レア度バッジ
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: rarityColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: rarityColor, width: 1),
                 ),
                 child: Text(
                   _getRarityLabel(ach.rarity),
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 8,
                     color: rarityColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
 
               // 説明
               Text(
                 isSecret ? 'シークレット実績' : ach.description,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   color: ach.isUnlocked ? Colors.grey[600] : Colors.grey,
                 ),
                 textAlign: TextAlign.center,
@@ -334,11 +334,11 @@ class _AchievementCollectionScreenState extends State<AchievementCollectionScree
               ),
 
               if (ach.isUnlocked) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 const Icon(
                   Icons.check_circle,
                   color: Colors.green,
-                  size: 24,
+                  size: 20,
                 ),
               ],
             ],

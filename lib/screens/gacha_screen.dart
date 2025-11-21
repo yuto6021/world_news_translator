@@ -11,7 +11,8 @@ class GachaScreen extends StatefulWidget {
   State<GachaScreen> createState() => _GachaScreenState();
 }
 
-class _GachaScreenState extends State<GachaScreen> with SingleTickerProviderStateMixin {
+class _GachaScreenState extends State<GachaScreen>
+    with SingleTickerProviderStateMixin {
   bool _canDraw = false;
   Achievement? _activeChallenge;
   int _totalGachas = 0;
@@ -26,6 +27,8 @@ class _GachaScreenState extends State<GachaScreen> with SingleTickerProviderStat
       duration: const Duration(milliseconds: 800),
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+    // 初期表示時にアニメーションを開始し、ScaleTransitionが0で非表示にならないようにする
+    _controller.forward();
     _loadData();
   }
 
@@ -48,7 +51,8 @@ class _GachaScreenState extends State<GachaScreen> with SingleTickerProviderStat
   }
 
   Future<void> _drawGacha() async {
-    if (!_canDraw) return;
+    // デバッグ用：制限チェックを無効化
+    // if (!_canDraw) return;
 
     // ガチャ演出
     _controller.forward(from: 0);
@@ -59,11 +63,22 @@ class _GachaScreenState extends State<GachaScreen> with SingleTickerProviderStat
     setState(() {
       _canDraw = false;
       _activeChallenge = challenge;
+      _totalGachas++;
     });
 
     // チャレンジ表示
     if (mounted) {
       AchievementNotifier.show(context, challenge);
+
+      // デバッグ用：スナックバーでも表示
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              '${challenge.icon} ${challenge.title}\n${challenge.description}'),
+          duration: const Duration(seconds: 3),
+          backgroundColor: _getRarityColor(challenge.rarity),
+        ),
+      );
     }
   }
 
@@ -95,7 +110,7 @@ class _GachaScreenState extends State<GachaScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // isDark 未使用のため削除（テーマ依存表示が必要になれば再導入）
 
     return Scaffold(
       appBar: AppBar(
@@ -144,48 +159,68 @@ class _GachaScreenState extends State<GachaScreen> with SingleTickerProviderStat
                 const SizedBox(height: 24),
 
                 // ガチャボタン
-                ScaleTransition(
-                  scale: _animation,
-                  child: GestureDetector(
-                    onTap: _canDraw ? _drawGacha : null,
-                    child: Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: _canDraw
-                              ? [Colors.yellow, Colors.orange, Colors.red]
-                              : [Colors.grey.shade700, Colors.grey.shade500],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _canDraw ? Colors.orange.withOpacity(0.6) : Colors.grey.withOpacity(0.3),
-                            blurRadius: 30,
-                            spreadRadius: 10,
+                Center(
+                  child: ScaleTransition(
+                    scale: _animation,
+                    child: GestureDetector(
+                      onTap: _drawGacha, // デバッグ用：常に引けるように
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: _canDraw
+                                ? [Colors.yellow, Colors.orange, Colors.red]
+                                : [
+                                    Colors.cyan.shade300,
+                                    Colors.blue.shade400,
+                                    Colors.purple.shade500
+                                  ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              _canDraw ? '🎰' : '⏰',
-                              style: const TextStyle(fontSize: 64),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _canDraw ? 'ガチャを引く' : '明日まで待機',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _canDraw
+                                  ? Colors.orange.withOpacity(0.8)
+                                  : Colors.cyan.withOpacity(0.6),
+                              blurRadius: 40,
+                              spreadRadius: 15,
                             ),
                           ],
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 4,
+                          ),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _canDraw ? '🎰' : '🎲',
+                                style: const TextStyle(fontSize: 64),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _canDraw ? 'ガチャを引く' : 'タップして引く',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black,
+                                      offset: Offset(1, 1),
+                                      blurRadius: 3,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -247,11 +282,14 @@ class _GachaScreenState extends State<GachaScreen> with SingleTickerProviderStat
                                             vertical: 4,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: _getRarityColor(_activeChallenge!.rarity),
-                                            borderRadius: BorderRadius.circular(12),
+                                            color: _getRarityColor(
+                                                _activeChallenge!.rarity),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           child: Text(
-                                            _getRarityLabel(_activeChallenge!.rarity),
+                                            _getRarityLabel(
+                                                _activeChallenge!.rarity),
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 12,
@@ -276,7 +314,9 @@ class _GachaScreenState extends State<GachaScreen> with SingleTickerProviderStat
                           ),
                           const SizedBox(height: 16),
                           LinearProgressIndicator(
-                            value: (_activeChallenge!.progress / _activeChallenge!.target).clamp(0.0, 1.0),
+                            value: (_activeChallenge!.progress /
+                                    _activeChallenge!.target)
+                                .clamp(0.0, 1.0),
                             backgroundColor: Colors.white24,
                             color: _getRarityColor(_activeChallenge!.rarity),
                             minHeight: 8,
@@ -313,7 +353,8 @@ class _GachaScreenState extends State<GachaScreen> with SingleTickerProviderStat
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.check_circle, color: Colors.green, size: 28),
+                                  Icon(Icons.check_circle,
+                                      color: Colors.green, size: 28),
                                   SizedBox(width: 8),
                                   Text(
                                     'チャレンジ達成！',

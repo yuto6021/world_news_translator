@@ -345,7 +345,8 @@ class _NewsCardState extends State<NewsCard> {
                                       ),
                                       child: Text(
                                         (widget.translatedText != null &&
-                                                widget.translatedText!.isNotEmpty)
+                                                widget
+                                                    .translatedText!.isNotEmpty)
                                             ? widget.translatedText!
                                             : (_localTranslated ??
                                                 (_loadingTranslation

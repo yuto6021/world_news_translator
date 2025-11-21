@@ -196,29 +196,8 @@ class CountryTabEnhanced extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 国コードバッジ
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  code.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
+              // 国旗画像またはコードバッジ
+              _buildFlagOrBadge(),
               const SizedBox(width: 8),
               // 国名
               Text(
@@ -245,6 +224,46 @@ class CountryTabEnhanced extends StatelessWidget {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFlagOrBadge() {
+    final flagPath = 'assets/flags/${code.toLowerCase()}.png';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 40,
+        height: 28,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: Image.asset(
+          flagPath,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // 画像がない場合はコードバッジにフォールバック
+            return Center(
+              child: Text(
+                code.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
+                  letterSpacing: 1,
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

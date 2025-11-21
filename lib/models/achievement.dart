@@ -16,6 +16,7 @@ class Achievement {
   final int progress; // 0-100
   final int target; // 達成条件値
   final AchievementRarity rarity; // レア度
+  final bool isSecret; // シークレット実績（解除前は条件非公開）
 
   Achievement({
     required this.id,
@@ -26,6 +27,7 @@ class Achievement {
     this.progress = 0,
     this.target = 1,
     this.rarity = AchievementRarity.common,
+    this.isSecret = false,
   });
 
   bool get isUnlocked => unlockedAt != null;
@@ -39,6 +41,7 @@ class Achievement {
         'progress': progress,
         'target': target,
         'rarity': rarity.index,
+        'isSecret': isSecret,
       };
 
   factory Achievement.fromJson(Map<String, dynamic> json) => Achievement(
@@ -52,6 +55,7 @@ class Achievement {
         progress: json['progress'] as int? ?? 0,
         target: json['target'] as int? ?? 1,
         rarity: AchievementRarity.values[json['rarity'] as int? ?? 0],
+        isSecret: json['isSecret'] as bool? ?? false,
       );
 
   Achievement copyWith({
@@ -63,6 +67,7 @@ class Achievement {
     int? progress,
     int? target,
     AchievementRarity? rarity,
+    bool? isSecret,
   }) =>
       Achievement(
         id: id ?? this.id,
@@ -73,5 +78,6 @@ class Achievement {
         progress: progress ?? this.progress,
         target: target ?? this.target,
         rarity: rarity ?? this.rarity,
+        isSecret: isSecret ?? this.isSecret,
       );
 }

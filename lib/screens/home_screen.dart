@@ -17,6 +17,9 @@ import 'country_news_screen.dart';
 import 'swipe_news_screen.dart';
 import 'stats_screen.dart';
 import 'game_screen.dart';
+import 'gacha_screen.dart';
+import 'achievement_collection_screen.dart';
+import 'shop_screen.dart';
 import '../models/country.dart';
 import '../services/availability_service.dart';
 import '../widgets/country_tab_enhanced.dart';
@@ -369,6 +372,40 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             ),
                           ),
+                          // 実績ガチャボタン
+                          IconButton(
+                            icon: const Icon(Icons.casino),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const GachaScreen(),
+                              ),
+                            ),
+                            tooltip: '実績ガチャ',
+                          ),
+                          // 実績図鑑ボタン
+                          IconButton(
+                            icon: const Icon(Icons.menu_book),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AchievementCollectionScreen(),
+                              ),
+                            ),
+                            tooltip: '実績図鑑',
+                          ),
+                          // ショップボタン
+                          IconButton(
+                            icon: const Icon(Icons.shopping_bag),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ShopScreen(),
+                              ),
+                            ),
+                            tooltip: 'ショップ',
+                          ),
+                          // 設定ボタン
                           IconButton(
                             icon: const Icon(Icons.settings),
                             onPressed: () => Navigator.push(

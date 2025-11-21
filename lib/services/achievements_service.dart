@@ -173,4 +173,21 @@ class AchievementsService {
     final all = await getAll();
     return all.where((a) => a.isUnlocked).length;
   }
+
+  /// シークレット実績を解除（本来のタイトルと説明を設定）
+  static Future<void> unlockSecret(String id, String title, String description) async {
+    final box = _box ?? await Hive.openBox<String>(_boxName);
+    final existing = box.get(id);
+    if (existing == null) return;
+
+    final ach = Achievement.fromJson(jsonDecode(existing));
+    if (ach.isUnlocked) return;
+
+    final updated = ach.copyWith(
+      title: title,
+      description: description,
+      unlockedAt: DateTime.now(),
+    );
+    await box.put(id, jsonEncode(updated.toJson()));
+  }
 }

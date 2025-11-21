@@ -753,9 +753,21 @@ class _GameResultAnimationState extends State<GameResultAnimation>
 /// 実績解除通知を表示するヘルパー
 class AchievementNotifier {
   static OverlayEntry? _currentOverlay;
+  static List<Achievement> _pendingAchievements = [];
+  static bool _isShowing = false;
 
   static void show(BuildContext context, Achievement achievement) {
-    // 既存の通知があれば削除
+    // 連続解除の場合はキューに追加
+    if (_isShowing) {
+      _pendingAchievements.add(achievement);
+      return;
+    }
+
+    _showSingle(context, achievement);
+  }
+
+  static void _showSingle(BuildContext context, Achievement achievement) {
+    _isShowing = true;
     _currentOverlay?.remove();
 
     _currentOverlay = OverlayEntry(
@@ -764,6 +776,32 @@ class AchievementNotifier {
         onComplete: () {
           _currentOverlay?.remove();
           _currentOverlay = null;
+          _isShowing = false;
+
+          // 保留中の実績があればコンボ演出で表示
+          if (_pendingAchievements.isNotEmpty) {
+            final combo = [..._pendingAchievements];
+            _pendingAchievements.clear();
+            _showCombo(context, combo);
+          }
+        },
+      ),
+    );
+
+    Overlay.of(context).insert(_currentOverlay!);
+  }
+
+  static void _showCombo(BuildContext context, List<Achievement> achievements) {
+    _isShowing = true;
+    _currentOverlay?.remove();
+
+    _currentOverlay = OverlayEntry(
+      builder: (context) => ComboAchievementAnimation(
+        achievements: achievements,
+        onComplete: () {
+          _currentOverlay?.remove();
+          _currentOverlay = null;
+          _isShowing = false;
         },
       ),
     );
@@ -819,5 +857,214 @@ class AchievementNotifier {
     );
 
     Overlay.of(context).insert(_currentOverlay!);
+  }
+}
+
+/// コンボ実績解除演出（複数実績を一度に表示）
+class ComboAchievementAnimation extends StatefulWidget {
+  final List<Achievement> achievements;
+  final VoidCallback? onComplete;
+
+  const ComboAchievementAnimation({
+    super.key,
+    required this.achievements,
+    this.onComplete,
+  });
+
+  @override
+  State<ComboAchievementAnimation> createState() =>
+      _ComboAchievementAnimationState();
+}
+
+class _ComboAchievementAnimationState extends State<ComboAchievementAnimation>
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late AnimationController _comboController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _comboAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _scaleAnimation = CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    );
+
+    _comboController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _comboAnimation = CurvedAnimation(
+      parent: _comboController,
+      curve: Curves.easeOut,
+    );
+
+    _scaleController.forward();
+    _comboController.forward();
+
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) {
+        widget.onComplete?.call();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    _comboController.dispose();
+    super.dispose();
+  }
+
+  Color _getComboColor() {
+    final count = widget.achievements.length;
+    if (count >= 5) return Colors.red;
+    if (count >= 3) return Colors.purple;
+    return Colors.blue;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final comboColor = _getComboColor();
+    final count = widget.achievements.length;
+
+    return Material(
+      color: Colors.black87,
+      child: Stack(
+        children: [
+          // 大量パーティクル
+          AnimatedBuilder(
+            animation: _comboAnimation,
+            builder: (context, child) {
+              return CustomPaint(
+                size: Size.infinite,
+                painter: _ParticlePainter(
+                  progress: _comboAnimation.value,
+                  color: comboColor,
+                ),
+              );
+            },
+          ),
+
+          Center(
+            child: AnimatedBuilder(
+              animation: _scaleAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _scaleAnimation.value,
+                  child: Container(
+                    margin: const EdgeInsets.all(32),
+                    padding: const EdgeInsets.all(32),
+                    constraints: const BoxConstraints(maxWidth: 450),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [comboColor, comboColor.withOpacity(0.6)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: comboColor.withOpacity(0.8),
+                          blurRadius: 50,
+                          spreadRadius: 20,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '⚡ $count COMBO! ⚡',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          '連続実績解除！',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 300),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: widget.achievements.map((ach) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        ach.icon,
+                                        style: const TextStyle(fontSize: 32),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              ach.title,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              ach.description,
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => widget.onComplete?.call(),
+              child: const Center(
+                child: Text(
+                  'タップして閉じる',
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -355,6 +355,17 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
         }
       }
     });
+
+    // シークレット実績チェック（深夜読書）
+    final now = DateTime.now();
+    if (now.hour >= 2 && now.hour < 4) {
+      AchievementsService.unlockSecret(
+        'secret_midnight_reader',
+        '深夜の読書家',
+        '深夜2時～4時にニュースを読む',
+      );
+    }
+
     super.dispose();
   }
 

@@ -491,6 +491,11 @@ class _BadgeGridState extends State<_BadgeGrid> {
   bool _playTime30Unlocked = false; // 新規
   bool _playTime60Unlocked = false; // 新規
   bool _playTime180Unlocked = false; // 新規
+  int _wikiSearchCount = 0; // 新規
+  int _numberGuessBest = 999; // 新規
+  int _commentsCount = 0; // 新規
+  int _reactionsCount = 0; // 新規
+  int _translationsCount = 0; // 新規
 
   @override
   void initState() {
@@ -526,6 +531,13 @@ class _BadgeGridState extends State<_BadgeGrid> {
     final timeCapsule = prefs.getBool('time_capsule_used') ?? false;
     final nightReads = prefs.getInt('night_reads_count') ?? 0;
 
+    // 新機能の統計
+    final wikiSearchCount = prefs.getInt('wiki_search_count') ?? 0;
+    final numberGuessBest = prefs.getInt('guess_game_best') ?? 999;
+    final commentsCount = prefs.getInt('comments_count') ?? 0;
+    final reactionsCount = prefs.getInt('reactions_count') ?? 0;
+    final translationsCount = prefs.getInt('translations_count') ?? 0;
+
     if (mounted) {
       setState(() {
         _secretButtonUnlocked = secretUnlocked;
@@ -551,6 +563,11 @@ class _BadgeGridState extends State<_BadgeGrid> {
         _visitedTabsCount = tabs.length;
         _timeCapsuleUsed = timeCapsule;
         _nightReadsCount = nightReads;
+        _wikiSearchCount = wikiSearchCount;
+        _numberGuessBest = numberGuessBest;
+        _commentsCount = commentsCount;
+        _reactionsCount = reactionsCount;
+        _translationsCount = translationsCount;
       });
     }
   }
@@ -797,6 +814,42 @@ class _BadgeGridState extends State<_BadgeGrid> {
         name: '完璧主義者',
         description: '記憶ゲームをノーミスでクリア',
         unlocked: _memoryPerfectUnlocked,
+      ),
+      _Badge(
+        icon: '📚',
+        name: 'Wikipedia探検家',
+        description: 'Wikipedia検索を20回以上使用',
+        unlocked: _wikiSearchCount >= 20,
+      ),
+      _Badge(
+        icon: '🎲',
+        name: '数当てマスター',
+        description: '数当てゲームで5回以内にクリア',
+        unlocked: _numberGuessBest <= 5 && _numberGuessBest > 0,
+      ),
+      _Badge(
+        icon: '💬',
+        name: 'コメンテーター',
+        description: 'コメントを30個以上投稿',
+        unlocked: _commentsCount >= 30,
+      ),
+      _Badge(
+        icon: '❤️',
+        name: 'リアクション王',
+        description: 'リアクションを50回以上追加',
+        unlocked: _reactionsCount >= 50,
+      ),
+      _Badge(
+        icon: '🌏',
+        name: '国際派',
+        description: '10カ国以上のニュースを閲覧',
+        unlocked: _countriesReadCount >= 10,
+      ),
+      _Badge(
+        icon: '🔤',
+        name: '翻訳マスター',
+        description: '翻訳機能を100回以上使用',
+        unlocked: _translationsCount >= 100,
       ),
       _Badge(
         icon: '🍔',

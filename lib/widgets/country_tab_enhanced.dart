@@ -144,6 +144,30 @@ class CountryTabEnhanced extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
+      case 'AE': // UAE：赤・緑・白・黒
+        return const LinearGradient(
+          colors: [Color(0xFFFF0000), Color(0xFF00732F), Color(0xFFFFFFFF), Color(0xFF000000)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'ID': // インドネシア：赤・白
+        return const LinearGradient(
+          colors: [Color(0xFFFF0000), Color(0xFFFFFFFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'SA': // サウジアラビア：緑・白
+        return const LinearGradient(
+          colors: [Color(0xFF165B33), Color(0xFFFFFFFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'EG': // エジプト：赤・白・黒
+        return const LinearGradient(
+          colors: [Color(0xFFCE1126), Color(0xFFFFFFFF), Color(0xFF000000)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
       default:
         return LinearGradient(
           colors: [Colors.blue.shade700, Colors.blue.shade400],

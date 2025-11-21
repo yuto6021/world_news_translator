@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/achievement_service.dart';
 import '../services/news_api_service.dart';
 import '../models/article.dart';
+import '../widgets/achievement_animation.dart';
 
 /// ミニゲーム画面（暇つぶし用）
 class GameScreen extends StatefulWidget {
@@ -580,19 +581,34 @@ class _TapChallengeGameState extends State<_TapChallengeGame> {
       }
     }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('⏰ 終了！'),
-        content: Text('$_tapCount回タップしました！\nベスト: $_bestScore回'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+    // スコアに応じた演出レベル決定
+    GameResultLevel level;
+    String? message;
+    if (_tapCount >= 100) {
+      level = GameResultLevel.perfect;
+      message = '神の領域！';
+    } else if (_tapCount >= 80) {
+      level = GameResultLevel.excellent;
+      message = 'すごい！';
+    } else if (_tapCount >= 60) {
+      level = GameResultLevel.good;
+      message = '良い調子！';
+    } else {
+      level = GameResultLevel.normal;
+      message = null;
+    }
+
+    // 派手な演出で結果表示
+    if (mounted) {
+      AchievementNotifier.showGameResult(
+        context,
+        gameName: 'タップチャレンジ',
+        score: _tapCount,
+        bestScore: _bestScore,
+        message: message,
+        level: level,
+      );
+    }
   }
 
   void _onTap() {
@@ -2569,13 +2585,27 @@ class _NewsQuizGameState extends State<_NewsQuizGame> {
       setState(() => _current++);
     } else {
       final p = await SharedPreferences.getInstance();
-      final best = p.getInt('quiz_best_score') ?? 0;
-      if (_score > best) await p.setInt('quiz_best_score', _score);
+      final previousBest = _best;
+      if (_score > _best) {
+        await p.setInt('quiz_best_score', _score);
+        setState(() => _best = _score);
+
+        // 新記録演出
+        if (mounted) {
+          AchievementNotifier.showHighScore(
+            context,
+            gameName: 'ニュースクイズ',
+            score: _score,
+            previousBest: previousBest > 0 ? previousBest : null,
+          );
+        }
+      }
+
       if (mounted) {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: const Text('結果'),
+            title: Text(_score == _questions.length ? '🎉 満点！' : '結果'),
             content: Text('スコア: $_score / ${_questions.length}'),
             actions: [
               TextButton(
@@ -2727,8 +2757,19 @@ class _SnakeGameState extends State<_SnakeGame> {
   Future<void> _saveBest() async {
     final p = await SharedPreferences.getInstance();
     if (_snake.length > _best) {
+      final previousBest = _best;
       await p.setInt('snake_best', _snake.length);
       setState(() => _best = _snake.length);
+
+      // 新記録演出
+      if (mounted && _snake.length >= 10) {
+        AchievementNotifier.showHighScore(
+          context,
+          gameName: 'スネーク',
+          score: _snake.length,
+          previousBest: previousBest > 1 ? previousBest : null,
+        );
+      }
     }
   }
 
@@ -2850,8 +2891,19 @@ class _Game2048State extends State<_Game2048> {
     final p = await SharedPreferences.getInstance();
     final maxTile = b.expand((e) => e).fold<int>(0, (a, c) => c > a ? c : a);
     if (maxTile > best) {
+      final previousBest = best;
       await p.setInt('2048_best', maxTile);
       setState(() => best = maxTile);
+
+      // 新記録演出（128以上で表示）
+      if (mounted && maxTile >= 128) {
+        AchievementNotifier.showHighScore(
+          context,
+          gameName: '2048',
+          score: maxTile,
+          previousBest: previousBest > 0 ? previousBest : null,
+        );
+      }
     }
   }
 
@@ -3226,6 +3278,37 @@ class _NumberGuessGameState extends State<_NumberGuessGame> {
         _gameOver = true;
         _history.add('$guess → 🎯 正解！');
         _saveBestScore();
+
+        // スコアに応じた演出レベル決定（回数が少ないほど高評価）
+        GameResultLevel level;
+        String? message;
+        if (_attempts <= 3) {
+          level = GameResultLevel.perfect;
+          message = '神の勘！';
+        } else if (_attempts <= 5) {
+          level = GameResultLevel.excellent;
+          message = '素晴らしい！';
+        } else if (_attempts <= 8) {
+          level = GameResultLevel.good;
+          message = '良い推理！';
+        } else {
+          level = GameResultLevel.normal;
+          message = null;
+        }
+
+        // 派手な演出で結果表示
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            AchievementNotifier.showGameResult(
+              context,
+              gameName: '数当てゲーム',
+              score: _attempts,
+              bestScore: _bestScore < 999 ? _bestScore : null,
+              message: message,
+              level: level,
+            );
+          }
+        });
       } else if (guess < _targetNumber) {
         final diff = _targetNumber - guess;
         if (diff <= 5) {

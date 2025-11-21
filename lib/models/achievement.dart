@@ -1,3 +1,11 @@
+/// 実績レア度
+enum AchievementRarity {
+  common, // コモン（灰色）
+  rare, // レア（青）
+  epic, // エピック（紫）
+  legendary, // レジェンダリー（金）
+}
+
 /// 実績モデル（Hive永続化対応）
 class Achievement {
   final String id;
@@ -7,6 +15,7 @@ class Achievement {
   final DateTime? unlockedAt;
   final int progress; // 0-100
   final int target; // 達成条件値
+  final AchievementRarity rarity; // レア度
 
   Achievement({
     required this.id,
@@ -16,6 +25,7 @@ class Achievement {
     this.unlockedAt,
     this.progress = 0,
     this.target = 1,
+    this.rarity = AchievementRarity.common,
   });
 
   bool get isUnlocked => unlockedAt != null;
@@ -28,6 +38,7 @@ class Achievement {
         'unlockedAt': unlockedAt?.toIso8601String(),
         'progress': progress,
         'target': target,
+        'rarity': rarity.index,
       };
 
   factory Achievement.fromJson(Map<String, dynamic> json) => Achievement(
@@ -40,6 +51,7 @@ class Achievement {
             : null,
         progress: json['progress'] as int? ?? 0,
         target: json['target'] as int? ?? 1,
+        rarity: AchievementRarity.values[json['rarity'] as int? ?? 0],
       );
 
   Achievement copyWith({
@@ -50,6 +62,7 @@ class Achievement {
     DateTime? unlockedAt,
     int? progress,
     int? target,
+    AchievementRarity? rarity,
   }) =>
       Achievement(
         id: id ?? this.id,
@@ -59,5 +72,6 @@ class Achievement {
         unlockedAt: unlockedAt ?? this.unlockedAt,
         progress: progress ?? this.progress,
         target: target ?? this.target,
+        rarity: rarity ?? this.rarity,
       );
 }

@@ -25,79 +25,92 @@ class AchievementsService {
           title: '読書家の第一歩',
           description: '累計30分読書',
           icon: '📖',
-          target: 30),
+          target: 30,
+          rarity: AchievementRarity.common),
       Achievement(
           id: 'reading_2hours',
           title: '集中力の証',
           description: '累計2時間読書',
           icon: '📚',
-          target: 120),
+          target: 120,
+          rarity: AchievementRarity.rare),
       Achievement(
           id: 'reading_10hours',
           title: '知識の探求者',
           description: '累計10時間読書',
           icon: '🎓',
-          target: 600),
+          target: 600,
+          rarity: AchievementRarity.epic),
       Achievement(
           id: 'streak_7',
           title: '1週間連続',
           description: '7日間連続ログイン',
           icon: '🔥',
-          target: 7),
+          target: 7,
+          rarity: AchievementRarity.common),
       Achievement(
           id: 'streak_30',
           title: '習慣化マスター',
           description: '30日間連続ログイン',
           icon: '⭐',
-          target: 30),
+          target: 30,
+          rarity: AchievementRarity.rare),
       Achievement(
           id: 'streak_100',
           title: '不屈の意志',
           description: '100日間連続ログイン',
           icon: '👑',
-          target: 100),
+          target: 100,
+          rarity: AchievementRarity.legendary),
       Achievement(
           id: 'quiz_perfect',
           title: 'クイズマスター',
           description: 'クイズ満点達成',
           icon: '🏆',
-          target: 1),
+          target: 1,
+          rarity: AchievementRarity.rare),
       Achievement(
           id: 'quiz_perfect_5',
           title: 'クイズの天才',
           description: 'クイズ満点5回達成',
           icon: '🌟',
-          target: 5),
+          target: 5,
+          rarity: AchievementRarity.epic),
       Achievement(
           id: 'comments_10',
           title: '活発な議論',
           description: 'コメント10件投稿',
           icon: '💬',
-          target: 10),
+          target: 10,
+          rarity: AchievementRarity.common),
       Achievement(
           id: 'favorites_50',
           title: 'コレクター',
           description: 'お気に入り50件保存',
           icon: '❤️',
-          target: 50),
+          target: 50,
+          rarity: AchievementRarity.rare),
       Achievement(
           id: 'snake_20',
           title: 'スネークマスター',
           description: 'スネーク長さ20達成',
           icon: '🐍',
-          target: 20),
+          target: 20,
+          rarity: AchievementRarity.rare),
       Achievement(
           id: '2048_512',
           title: '2048チャレンジャー',
           description: '512タイル達成',
           icon: '🎮',
-          target: 512),
+          target: 512,
+          rarity: AchievementRarity.epic),
       Achievement(
           id: 'bingo_complete',
           title: 'ビンゴマスター',
           description: 'ビンゴ完成',
           icon: '🎯',
-          target: 1),
+          target: 1,
+          rarity: AchievementRarity.rare),
     ];
 
     final box = _box ?? await Hive.openBox<String>(_boxName);
@@ -120,22 +133,26 @@ class AchievementsService {
       });
   }
 
-  /// 進捗更新
-  static Future<void> updateProgress(
+  /// 進捗更新（新規解除の場合はAchievementを返す）
+  static Future<Achievement?> updateProgress(
       String id, int progress, int target) async {
     final box = _box ?? await Hive.openBox<String>(_boxName);
     final existing = box.get(id);
-    if (existing == null) return;
+    if (existing == null) return null;
 
     final ach = Achievement.fromJson(jsonDecode(existing));
+    final wasLocked = ach.unlockedAt == null;
+    final nowUnlocked = progress >= target;
+
     final updated = ach.copyWith(
       progress: progress,
       target: target,
-      unlockedAt: (progress >= target && ach.unlockedAt == null)
-          ? DateTime.now()
-          : ach.unlockedAt,
+      unlockedAt: (nowUnlocked && wasLocked) ? DateTime.now() : ach.unlockedAt,
     );
     await box.put(id, jsonEncode(updated.toJson()));
+
+    // 新規解除の場合は実績を返す
+    return (wasLocked && nowUnlocked) ? updated : null;
   }
 
   /// アンロック

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/article.dart';
+import '../models/achievement.dart';
 import '../services/translation_service.dart';
 import '../services/app_settings_service.dart';
 import '../services/time_capsule_service.dart';
@@ -15,6 +16,7 @@ import '../services/reading_time_service.dart';
 import '../services/achievements_service.dart';
 import '../models/news_insight.dart';
 import '../widgets/auto_link_text.dart';
+import '../widgets/achievement_animation.dart';
 
 class ArticleDetailScreen extends StatefulWidget {
   final Article article;
@@ -326,20 +328,30 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   void dispose() {
     // 読書時間トラッキング終了
     ReadingTimeService.endSession().then((elapsed) async {
-      if (elapsed > 0) {
+      if (elapsed > 0 && mounted) {
         // 読書時間に応じた実績チェック
         final totalMinutes = await ReadingTimeService.getTotalMinutes();
+        Achievement? unlockedAchievement;
+
         if (totalMinutes >= 30) {
-          await AchievementsService.updateProgress(
+          final ach = await AchievementsService.updateProgress(
               'reading_30min', totalMinutes, 30);
+          unlockedAchievement ??= ach;
         }
         if (totalMinutes >= 120) {
-          await AchievementsService.updateProgress(
+          final ach = await AchievementsService.updateProgress(
               'reading_2hours', totalMinutes, 120);
+          unlockedAchievement ??= ach;
         }
         if (totalMinutes >= 600) {
-          await AchievementsService.updateProgress(
+          final ach = await AchievementsService.updateProgress(
               'reading_10hours', totalMinutes, 600);
+          unlockedAchievement ??= ach;
+        }
+
+        // 新規解除があればアニメーション表示
+        if (unlockedAchievement != null && mounted) {
+          AchievementNotifier.show(context, unlockedAchievement);
         }
       }
     });

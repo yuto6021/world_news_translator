@@ -4,6 +4,7 @@ import '../services/achievement_service.dart';
 import '../services/reading_time_service.dart';
 import '../services/achievements_service.dart';
 import '../services/game_scores_service.dart';
+import '../models/achievement.dart';
 import 'streak_screen.dart';
 import 'bingo_screen.dart';
 import 'social_screen.dart';
@@ -1017,6 +1018,32 @@ class _BadgeCard extends StatelessWidget {
 class _AchievementsList extends StatelessWidget {
   const _AchievementsList();
 
+  Color _getRarityColor(AchievementRarity rarity) {
+    switch (rarity) {
+      case AchievementRarity.common:
+        return Colors.grey;
+      case AchievementRarity.rare:
+        return Colors.blue;
+      case AchievementRarity.epic:
+        return Colors.purple;
+      case AchievementRarity.legendary:
+        return Colors.amber;
+    }
+  }
+
+  String _getRarityLabel(AchievementRarity rarity) {
+    switch (rarity) {
+      case AchievementRarity.common:
+        return 'コモン';
+      case AchievementRarity.rare:
+        return 'レア';
+      case AchievementRarity.epic:
+        return 'エピック';
+      case AchievementRarity.legendary:
+        return 'レジェンダリー';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
@@ -1029,11 +1056,48 @@ class _AchievementsList extends StatelessWidget {
         return Column(
           children: achievements.map((ach) {
             final progress = ach.progress / ach.target;
+            final rarityColor = _getRarityColor(ach.rarity);
+
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
+              elevation: ach.isUnlocked ? 4 : 1,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: ach.isUnlocked
+                    ? BorderSide(color: rarityColor, width: 2)
+                    : BorderSide.none,
+              ),
               child: ListTile(
-                leading: Text(ach.icon, style: const TextStyle(fontSize: 32)),
-                title: Text(ach.title),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: rarityColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(ach.icon, style: const TextStyle(fontSize: 32)),
+                ),
+                title: Row(
+                  children: [
+                    Expanded(child: Text(ach.title)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: rarityColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: rarityColor, width: 1),
+                      ),
+                      child: Text(
+                        _getRarityLabel(ach.rarity),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: rarityColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1042,6 +1106,7 @@ class _AchievementsList extends StatelessWidget {
                     LinearProgressIndicator(
                       value: progress.clamp(0.0, 1.0),
                       backgroundColor: Colors.grey[300],
+                      color: rarityColor,
                     ),
                     Text('${ach.progress}/${ach.target}',
                         style: const TextStyle(fontSize: 12)),

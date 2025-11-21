@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/achievement_service.dart';
+import 'streak_screen.dart';
+import 'bingo_screen.dart';
+import 'social_screen.dart';
 
 /// 統計ダッシュボード画面 (読書記録の可視化)
 class StatsScreen extends StatefulWidget {
@@ -220,6 +223,39 @@ class _StatsScreenState extends State<StatsScreen>
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(spacing: 8, children: [
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const StreakScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.calendar_month),
+                  label: const Text('ストリークカレンダー'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const BingoScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.grid_view),
+                  label: const Text('ニュースビンゴ'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SocialScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.people_outline),
+                  label: const Text('ソーシャル'),
+                ),
+              ]),
             ),
             const SizedBox(height: 32),
 

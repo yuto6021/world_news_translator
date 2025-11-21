@@ -146,7 +146,12 @@ class CountryTabEnhanced extends StatelessWidget {
         );
       case 'AE': // UAE：赤・緑・白・黒
         return const LinearGradient(
-          colors: [Color(0xFFFF0000), Color(0xFF00732F), Color(0xFFFFFFFF), Color(0xFF000000)],
+          colors: [
+            Color(0xFFFF0000),
+            Color(0xFF00732F),
+            Color(0xFFFFFFFF),
+            Color(0xFF000000)
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );

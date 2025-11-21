@@ -8,10 +8,13 @@ import 'services/reading_mode_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/theme_service.dart';
 import 'widgets/konami_code_detector.dart';
+import 'services/streak_service.dart';
 
 Future<void> main() async {
   // .envファイルの読み込み（APIキーなど）
   await dotenv.load();
+  // 起動時にストリーク更新
+  await StreakService.instance.onAppOpen();
 
   runApp(const WorldNewsApp());
 }

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/achievement_service.dart';
+import '../services/news_api_service.dart';
+import '../models/article.dart';
 
 /// ミニゲーム画面（暇つぶし用）
 class GameScreen extends StatefulWidget {
@@ -66,48 +68,65 @@ class _GameScreenState extends State<GameScreen>
             ),
             const SizedBox(height: 24),
 
-            // ゲーム選択タブ
+            // ゲーム選択タブ（横スクロール）
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: isDark ? Colors.grey[850] : Colors.grey[200],
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _GameTab(
-                      label: '記憶ゲーム',
-                      icon: Icons.memory,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _GameTab(
+                      label: '神経衰弱(国旗)',
+                      icon: Icons.flag,
                       isSelected: _selectedGame == 0,
                       onTap: () => setState(() => _selectedGame = 0),
                     ),
-                  ),
-                  Expanded(
-                    child: _GameTab(
-                      label: 'タップチャレンジ',
+                    _GameTab(
+                      label: 'タップ',
                       icon: Icons.touch_app,
                       isSelected: _selectedGame == 1,
                       onTap: () => setState(() => _selectedGame = 1),
                     ),
-                  ),
-                  Expanded(
-                    child: _GameTab(
+                    _GameTab(
                       label: '育成',
                       icon: Icons.pets,
                       isSelected: _selectedGame == 2,
                       onTap: () => setState(() => _selectedGame = 2),
                     ),
-                  ),
-                  Expanded(
-                    child: _GameTab(
+                    _GameTab(
                       label: '数当て',
                       icon: Icons.casino,
                       isSelected: _selectedGame == 3,
                       onTap: () => setState(() => _selectedGame = 3),
                     ),
-                  ),
-                ],
+                    _GameTab(
+                      label: 'ニュースクイズ',
+                      icon: Icons.quiz,
+                      isSelected: _selectedGame == 4,
+                      onTap: () => setState(() => _selectedGame = 4),
+                    ),
+                    _GameTab(
+                      label: 'スネーク',
+                      icon: Icons.android,
+                      isSelected: _selectedGame == 5,
+                      onTap: () => setState(() => _selectedGame = 5),
+                    ),
+                    _GameTab(
+                      label: '2048',
+                      icon: Icons.grid_4x4,
+                      isSelected: _selectedGame == 6,
+                      onTap: () => setState(() => _selectedGame = 6),
+                    ),
+                  ]
+                      .map((w) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: w))
+                      .toList(),
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -126,13 +145,19 @@ class _GameScreenState extends State<GameScreen>
   Widget _buildGameContent() {
     switch (_selectedGame) {
       case 0:
-        return const _MemoryGame(key: ValueKey('memory'));
+        return const _FlagMemoryGame(key: ValueKey('memory'));
       case 1:
         return const _TapChallengeGame(key: ValueKey('tap'));
       case 2:
         return const _PetRaisingGame(key: ValueKey('pet'));
       case 3:
         return const _NumberGuessGame(key: ValueKey('guess'));
+      case 4:
+        return const _NewsQuizGame(key: ValueKey('quiz'));
+      case 5:
+        return const _SnakeGame(key: ValueKey('snake'));
+      case 6:
+        return const _Game2048(key: ValueKey('2048'));
       default:
         return const SizedBox();
     }
@@ -194,16 +219,36 @@ class _GameTab extends StatelessWidget {
   }
 }
 
-// 記憶ゲーム（神経衰弱風）
-class _MemoryGame extends StatefulWidget {
-  const _MemoryGame({super.key});
+// 国旗神経衰弱
+class _FlagMemoryGame extends StatefulWidget {
+  const _FlagMemoryGame({super.key});
 
   @override
-  State<_MemoryGame> createState() => _MemoryGameState();
+  State<_FlagMemoryGame> createState() => _FlagMemoryGameState();
 }
 
-class _MemoryGameState extends State<_MemoryGame> {
-  static const _emojis = ['🍎', '🍊', '🍋', '🍌', '🍇', '🍓', '🍒', '🍑'];
+class _FlagMemoryGameState extends State<_FlagMemoryGame> {
+  static const _flagCodes = [
+    'us',
+    'gb',
+    'jp',
+    'fr',
+    'de',
+    'cn',
+    'kr',
+    'in',
+    'br',
+    'au',
+    'ca',
+    'es',
+    'mx',
+    'ru',
+    'sa',
+    'eg',
+    'za',
+    'id',
+    'ae'
+  ];
   List<String> _cards = [];
   List<bool> _revealed = [];
   List<int> _matched = [];
@@ -225,14 +270,14 @@ class _MemoryGameState extends State<_MemoryGame> {
   Future<void> _loadBestScore() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _bestScore = prefs.getInt('game_memory_best') ?? 999;
+      _bestScore = prefs.getInt('game_flag_memory_best') ?? 999;
     });
   }
 
   Future<void> _saveBestScore(int score) async {
     if (score < _bestScore || _bestScore == 999) {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('game_memory_best', score);
+      await prefs.setInt('game_flag_memory_best', score);
       setState(() {
         _bestScore = score;
       });
@@ -240,7 +285,10 @@ class _MemoryGameState extends State<_MemoryGame> {
   }
 
   void _initGame() {
-    _cards = [..._emojis, ..._emojis]..shuffle(Random());
+    final rng = Random();
+    final pool = [..._flagCodes]..shuffle(rng);
+    final pick = pool.take(8).toList();
+    _cards = [...pick, ...pick]..shuffle(rng);
     _revealed = List.filled(16, false);
     _matched = [];
     _firstCard = null;
@@ -400,10 +448,14 @@ class _MemoryGameState extends State<_MemoryGame> {
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    isRevealed ? _cards[index] : '?',
-                    style: const TextStyle(fontSize: 32),
-                  ),
+                  child: isRevealed
+                      ? Image.asset(
+                          'assets/flags/${_cards[index]}.png',
+                          width: 48,
+                          height: 32,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.flag),
+                        )
+                      : const Text('?', style: TextStyle(fontSize: 32)),
                 ),
               ),
             );
@@ -2122,10 +2174,23 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
                 children: [
-                  Text(
-                    _petEmoji(),
-                    style: const TextStyle(fontSize: 80),
-                  ),
+                  // 進化段階に応じた画像（存在しない場合は絵文字にフォールバック）
+                  Builder(builder: (context) {
+                    final stage = _evolutionStage.clamp(0, 3);
+                    final path = 'assets/images/pet_stage_'
+                        '${stage.toString()}'
+                        '.png';
+                    return Image.asset(
+                      path,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Text(
+                        _petEmoji(),
+                        style: const TextStyle(fontSize: 80),
+                      ),
+                    );
+                  }),
                   if (_equippedItem != null)
                     Positioned(
                       top: 0,
@@ -2412,6 +2477,533 @@ class _PetRaisingGameState extends State<_PetRaisingGame> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ニュースクイズ（3択）
+class _NewsQuizGame extends StatefulWidget {
+  const _NewsQuizGame({super.key});
+
+  @override
+  State<_NewsQuizGame> createState() => _NewsQuizGameState();
+}
+
+class _NewsQuizGameState extends State<_NewsQuizGame> {
+  late Future<List<Article>> _future;
+  int _current = 0;
+  int _score = 0;
+  int _best = 0;
+  late List<_QuizQ> _questions;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+    _loadBest();
+  }
+
+  Future<void> _loadBest() async {
+    final p = await SharedPreferences.getInstance();
+    setState(() => _best = p.getInt('quiz_best_score') ?? 0);
+  }
+
+  Future<List<Article>> _load() async {
+    final arts = await NewsApiService.getTopHeadlines();
+    _questions = _buildQuestions(arts.take(10).toList());
+    _current = 0;
+    _score = 0;
+    return arts;
+  }
+
+  List<_QuizQ> _buildQuestions(List<Article> arts) {
+    final rng = Random();
+    final qs = <_QuizQ>[];
+    for (final a in arts.take(5)) {
+      if (rng.nextBool()) {
+        final topic = _inferTopic('${a.title} ${a.description}');
+        final options = ['政治', '経済', 'テクノロジー', 'スポーツ', 'エンタメ'];
+        options.shuffle(rng);
+        if (!options.contains(topic)) {
+          options[rng.nextInt(options.length)] = topic;
+        }
+        qs.add(_QuizQ(
+          question: '主なトピックは？',
+          correct: topic,
+          options: options.take(3).toList(),
+          article: a,
+        ));
+      } else {
+        final cc = _inferCountry('${a.title} ${a.description} ${a.url}');
+        final all = ['US', 'GB', 'JP', 'FR', 'DE', 'CN', 'IN'];
+        all.shuffle(rng);
+        if (!all.contains(cc)) all[0] = cc;
+        qs.add(_QuizQ(
+          question: 'この記事はどの国のニュース？',
+          correct: cc,
+          options: all.take(3).toList(),
+          article: a,
+        ));
+      }
+    }
+    return qs;
+  }
+
+  String _inferTopic(String text) {
+    final t = text.toLowerCase();
+    if (RegExp(r'economy|inflation|market|bank|stock').hasMatch(t)) return '経済';
+    if (RegExp(r'AI|tech|software|google|microsoft|apple|chip',
+            caseSensitive: false)
+        .hasMatch(text)) return 'テクノロジー';
+    if (RegExp(r'football|soccer|nba|olympic|tennis|fifa').hasMatch(t))
+      return 'スポーツ';
+    if (RegExp(r'film|music|celebrity|netflix|hollywood').hasMatch(t))
+      return 'エンタメ';
+    return '政治';
+  }
+
+  String _inferCountry(String text) {
+    final t = text.toLowerCase();
+    if (RegExp(r'united states|usa|us\b|biden|trump|washington').hasMatch(t))
+      return 'US';
+    if (RegExp(r'united kingdom|uk\b|britain|london|sunak|british').hasMatch(t))
+      return 'GB';
+    if (RegExp(r'japan|tokyo|kishida|japanese').hasMatch(t)) return 'JP';
+    if (RegExp(r'france|paris|macron|french').hasMatch(t)) return 'FR';
+    if (RegExp(r'germany|berlin|german|scholz').hasMatch(t)) return 'DE';
+    if (RegExp(r'china|beijing|xi jinping|chinese').hasMatch(t)) return 'CN';
+    if (RegExp(r'india|delhi|modi|indian').hasMatch(t)) return 'IN';
+    return 'US';
+  }
+
+  Future<void> _answer(String selected) async {
+    final q = _questions[_current];
+    if (selected == q.correct) _score++;
+    if (_current < _questions.length - 1) {
+      setState(() => _current++);
+    } else {
+      final p = await SharedPreferences.getInstance();
+      final best = p.getInt('quiz_best_score') ?? 0;
+      if (_score > best) await p.setInt('quiz_best_score', _score);
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('結果'),
+            content: Text('スコア: $_score / ${_questions.length}'),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      _future = _load();
+                    });
+                  },
+                  child: const Text('もう一度'))
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return FutureBuilder<List<Article>>(
+      future: _future,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (_questions.isEmpty) {
+          return const Center(child: Text('問題を生成できませんでした'));
+        }
+        final q = _questions[_current];
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('🧠 ニュースクイズ ${_current + 1}/${_questions.length}',
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    if (_best > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text('ベスト: $_best',
+                            style: const TextStyle(
+                                color: Colors.orange,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(q.article.title, style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.grey[850] : Colors.indigo[50],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(q.question,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 12),
+                ...q.options.map((o) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: ElevatedButton(
+                        onPressed: () => _answer(o),
+                        child: Text(o),
+                      ),
+                    )),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _QuizQ {
+  final String question;
+  final String correct;
+  final List<String> options;
+  final Article article;
+  _QuizQ(
+      {required this.question,
+      required this.correct,
+      required this.options,
+      required this.article});
+}
+
+// シンプル・スネーク
+class _SnakeGame extends StatefulWidget {
+  const _SnakeGame({super.key});
+  @override
+  State<_SnakeGame> createState() => _SnakeGameState();
+}
+
+class _SnakeGameState extends State<_SnakeGame> {
+  static const int _rows = 20;
+  static const int _cols = 20;
+  static const Duration _tick = Duration(milliseconds: 200);
+  Timer? _timer;
+  List<Offset> _snake = [const Offset(10, 10)];
+  Offset _dir = const Offset(1, 0);
+  Offset _apple = const Offset(5, 5);
+  int _best = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBest();
+    _start();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadBest() async {
+    final p = await SharedPreferences.getInstance();
+    setState(() => _best = p.getInt('snake_best') ?? 1);
+  }
+
+  void _start() {
+    _timer?.cancel();
+    _timer = Timer.periodic(_tick, (_) => _step());
+  }
+
+  void _reset() {
+    setState(() {
+      _snake = [const Offset(10, 10)];
+      _dir = const Offset(1, 0);
+      _apple = Offset(Random().nextInt(_cols).toDouble(),
+          Random().nextInt(_rows).toDouble());
+    });
+  }
+
+  Future<void> _saveBest() async {
+    final p = await SharedPreferences.getInstance();
+    if (_snake.length > _best) {
+      await p.setInt('snake_best', _snake.length);
+      setState(() => _best = _snake.length);
+    }
+  }
+
+  void _step() {
+    final head = _snake.first + _dir;
+    if (head.dx < 0 ||
+        head.dy < 0 ||
+        head.dx >= _cols ||
+        head.dy >= _rows ||
+        _snake.contains(head)) {
+      _saveBest();
+      _reset();
+      return;
+    }
+    setState(() {
+      _snake = [head, ..._snake];
+      if (head == _apple) {
+        _apple = Offset(Random().nextInt(_cols).toDouble(),
+            Random().nextInt(_rows).toDouble());
+      } else {
+        _snake.removeLast();
+      }
+    });
+  }
+
+  void _change(Offset d) {
+    if ((_dir + d) == Offset.zero) return; // 逆走禁止
+    setState(() => _dir = d);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cell = 14.0;
+    return Column(
+      children: [
+        Text('長さ: ${_snake.length}  ベスト: $_best'),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: _cols * cell,
+          height: _rows * cell,
+          child: Stack(
+            children: [
+              // apple
+              Positioned(
+                left: _apple.dx * cell,
+                top: _apple.dy * cell,
+                child: Image.asset(
+                  'assets/flags/us.png',
+                  width: cell,
+                  height: cell * 0.7,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.article, size: 12),
+                ),
+              ),
+              // snake
+              ..._snake.map((p) => Positioned(
+                    left: p.dx * cell,
+                    top: p.dy * cell,
+                    child: Container(
+                      width: cell,
+                      height: cell,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  )),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            ElevatedButton(
+                onPressed: () => _change(const Offset(0, -1)),
+                child: const Icon(Icons.keyboard_arrow_up)),
+            ElevatedButton(
+                onPressed: () => _change(const Offset(-1, 0)),
+                child: const Icon(Icons.keyboard_arrow_left)),
+            ElevatedButton(
+                onPressed: () => _change(const Offset(1, 0)),
+                child: const Icon(Icons.keyboard_arrow_right)),
+            ElevatedButton(
+                onPressed: () => _change(const Offset(0, 1)),
+                child: const Icon(Icons.keyboard_arrow_down)),
+          ],
+        )
+      ],
+    );
+  }
+}
+
+// 2048 ミニマム実装
+class _Game2048 extends StatefulWidget {
+  const _Game2048({super.key});
+  @override
+  State<_Game2048> createState() => _Game2048State();
+}
+
+class _Game2048State extends State<_Game2048> {
+  late List<List<int>> b;
+  int best = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _reset();
+    _loadBest();
+  }
+
+  Future<void> _loadBest() async {
+    final p = await SharedPreferences.getInstance();
+    setState(() => best = p.getInt('2048_best') ?? 0);
+  }
+
+  Future<void> _saveBest() async {
+    final p = await SharedPreferences.getInstance();
+    final maxTile = b.expand((e) => e).fold<int>(0, (a, c) => c > a ? c : a);
+    if (maxTile > best) {
+      await p.setInt('2048_best', maxTile);
+      setState(() => best = maxTile);
+    }
+  }
+
+  void _reset() {
+    b = List.generate(4, (_) => List.filled(4, 0));
+    _spawn();
+    _spawn();
+    setState(() {});
+  }
+
+  void _spawn() {
+    final empty = <Offset>[];
+    for (var y = 0; y < 4; y++) {
+      for (var x = 0; x < 4; x++) {
+        if (b[y][x] == 0) empty.add(Offset(x.toDouble(), y.toDouble()));
+      }
+    }
+    if (empty.isEmpty) return;
+    final o = empty[Random().nextInt(empty.length)];
+    b[o.dy.toInt()][o.dx.toInt()] = Random().nextDouble() < 0.9 ? 2 : 4;
+  }
+
+  void _move(int dx, int dy) {
+    bool moved = false;
+    for (int k = 0; k < 4; k++) {
+      for (int y = (dy > 0 ? 2 : 1); y >= 0 && y < 4; y += (dy > 0 ? -1 : 1)) {
+        for (int x = (dx > 0 ? 2 : 1);
+            x >= 0 && x < 4;
+            x += (dx > 0 ? -1 : 1)) {
+          int ny = y + dy, nx = x + dx;
+          if (b[y][x] == 0) continue;
+          while (nx >= 0 && nx < 4 && ny >= 0 && ny < 4 && b[ny][nx] == 0) {
+            b[ny][nx] = b[ny - dy][nx - dx];
+            b[ny - dy][nx - dx] = 0;
+            nx += dx;
+            ny += dy;
+            moved = true;
+          }
+          if (nx >= 0 &&
+              nx < 4 &&
+              ny >= 0 &&
+              ny < 4 &&
+              b[ny][nx] == b[ny - dy][nx - dx]) {
+            b[ny][nx] *= 2;
+            b[ny - dy][nx - dx] = 0;
+            moved = true;
+          }
+        }
+      }
+    }
+    if (moved) {
+      _spawn();
+      _saveBest();
+      setState(() {});
+    }
+  }
+
+  Color _tileColor(int v) {
+    switch (v) {
+      case 0:
+        return Colors.grey[300]!;
+      case 2:
+        return Colors.indigo[100]!;
+      case 4:
+        return Colors.indigo[200]!;
+      case 8:
+        return Colors.indigo[300]!;
+      case 16:
+        return Colors.indigo[400]!;
+      case 32:
+        return Colors.deepPurple[300]!;
+      case 64:
+        return Colors.deepPurple[400]!;
+      default:
+        return Colors.orange[400]!;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text('最大タイル: $best'),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+              color: Colors.grey[200], borderRadius: BorderRadius.circular(8)),
+          child: Column(
+            children: List.generate(
+                4,
+                (y) => Row(
+                      children: List.generate(
+                          4,
+                          (x) => Expanded(
+                                child: Container(
+                                  margin: const EdgeInsets.all(4),
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    color: _tileColor(b[y][x]),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      b[y][x] == 0 ? '' : b[y][x].toString(),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18),
+                                    ),
+                                  ),
+                                ),
+                              )),
+                    )),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            ElevatedButton(
+                onPressed: () => _move(0, -1),
+                child: const Icon(Icons.keyboard_arrow_up)),
+            ElevatedButton(
+                onPressed: () => _move(-1, 0),
+                child: const Icon(Icons.keyboard_arrow_left)),
+            ElevatedButton(
+                onPressed: () => _move(1, 0),
+                child: const Icon(Icons.keyboard_arrow_right)),
+            ElevatedButton(
+                onPressed: () => _move(0, 1),
+                child: const Icon(Icons.keyboard_arrow_down)),
+            OutlinedButton(onPressed: _reset, child: const Text('リセット')),
+          ],
+        ),
+      ],
     );
   }
 }

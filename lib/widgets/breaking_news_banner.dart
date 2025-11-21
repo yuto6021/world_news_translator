@@ -29,7 +29,11 @@ class _BreakingNewsBannerState extends State<BreakingNewsBanner> {
         _headlines = articles.take(8).toList(); // 上位8件
         _loading = false;
       });
+      if (articles.isEmpty) {
+        print('[BreakingNewsBanner] WARNING: fetchTrendingArticles returned empty');
+      }
     } catch (e) {
+      print('[BreakingNewsBanner] ERROR: $e');
       if (!mounted) return;
       setState(() => _loading = false);
     }
@@ -63,7 +67,23 @@ class _BreakingNewsBannerState extends State<BreakingNewsBanner> {
     }
 
     if (_headlines.isEmpty) {
-      return const SizedBox.shrink();
+      // 空でも最低限のプレースホルダーを表示（完全非表示を避ける）
+      return Container(
+        height: 40,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDark
+                ? [Colors.indigo.shade900, Colors.indigo.shade800]
+                : [Colors.indigo.shade700, Colors.indigo.shade800],
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            '速報取得中またはレート制限中...',
+            style: TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+        ),
+      );
     }
 
     return Container(

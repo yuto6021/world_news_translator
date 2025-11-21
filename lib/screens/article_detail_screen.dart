@@ -12,6 +12,7 @@ import '../services/wikipedia_service.dart';
 import '../services/wikipedia_history_service.dart';
 import '../services/comments_service.dart';
 import '../models/news_insight.dart';
+import '../widgets/auto_link_text.dart';
 
 class ArticleDetailScreen extends StatefulWidget {
   final Article article;
@@ -375,53 +376,76 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   ),
                 ),
               const SizedBox(height: 12),
-              SelectableText(
-                widget.article.title,
-                style: Theme.of(context).textTheme.titleLarge,
-                contextMenuBuilder: (context, editableTextState) {
-                  return AdaptiveTextSelectionToolbar.buttonItems(
-                    anchors: editableTextState.contextMenuAnchors,
-                    buttonItems: [
-                      ...editableTextState.contextMenuButtonItems,
-                      ContextMenuButtonItem(
-                        onPressed: () {
-                          final selection =
-                              editableTextState.textEditingValue.selection;
-                          final selectedText = editableTextState
-                              .textEditingValue.text
-                              .substring(selection.start, selection.end);
-                          ContextMenuController.removeAny();
-                          _showWikipediaSearch(selectedText);
-                        },
-                        label: 'Wikipediaで検索',
-                      ),
-                    ],
+              ValueListenableBuilder<bool>(
+                valueListenable: AppSettingsService.instance.autoWikiLink,
+                builder: (context, autoLink, _) {
+                  if (autoLink) {
+                    return AutoLinkText(
+                      text: widget.article.title,
+                      baseStyle: Theme.of(context).textTheme.titleLarge,
+                      onEntityTap: _showWikipediaSearch,
+                    );
+                  }
+                  return SelectableText(
+                    widget.article.title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                    contextMenuBuilder: (context, editableTextState) {
+                      return AdaptiveTextSelectionToolbar.buttonItems(
+                        anchors: editableTextState.contextMenuAnchors,
+                        buttonItems: [
+                          ...editableTextState.contextMenuButtonItems,
+                          ContextMenuButtonItem(
+                            onPressed: () {
+                              final selection =
+                                  editableTextState.textEditingValue.selection;
+                              final selectedText = editableTextState
+                                  .textEditingValue.text
+                                  .substring(selection.start, selection.end);
+                              ContextMenuController.removeAny();
+                              _showWikipediaSearch(selectedText);
+                            },
+                            label: 'Wikipediaで検索',
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
               const SizedBox(height: 8),
               if (widget.article.description != null &&
                   widget.article.description!.isNotEmpty)
-                SelectableText(
-                  widget.article.description!,
-                  contextMenuBuilder: (context, editableTextState) {
-                    return AdaptiveTextSelectionToolbar.buttonItems(
-                      anchors: editableTextState.contextMenuAnchors,
-                      buttonItems: [
-                        ...editableTextState.contextMenuButtonItems,
-                        ContextMenuButtonItem(
-                          onPressed: () {
-                            final selection =
-                                editableTextState.textEditingValue.selection;
-                            final selectedText = editableTextState
-                                .textEditingValue.text
-                                .substring(selection.start, selection.end);
-                            ContextMenuController.removeAny();
-                            _showWikipediaSearch(selectedText);
-                          },
-                          label: 'Wikipediaで検索',
-                        ),
-                      ],
+                ValueListenableBuilder<bool>(
+                  valueListenable: AppSettingsService.instance.autoWikiLink,
+                  builder: (context, autoLink, _) {
+                    if (autoLink) {
+                      return AutoLinkText(
+                        text: widget.article.description!,
+                        onEntityTap: _showWikipediaSearch,
+                      );
+                    }
+                    return SelectableText(
+                      widget.article.description!,
+                      contextMenuBuilder: (context, editableTextState) {
+                        return AdaptiveTextSelectionToolbar.buttonItems(
+                          anchors: editableTextState.contextMenuAnchors,
+                          buttonItems: [
+                            ...editableTextState.contextMenuButtonItems,
+                            ContextMenuButtonItem(
+                              onPressed: () {
+                                final selection =
+                                    editableTextState.textEditingValue.selection;
+                                final selectedText = editableTextState
+                                    .textEditingValue.text
+                                    .substring(selection.start, selection.end);
+                                ContextMenuController.removeAny();
+                                _showWikipediaSearch(selectedText);
+                              },
+                              label: 'Wikipediaで検索',
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
@@ -447,27 +471,38 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: _translated != null
-                    ? SelectableText(
-                        _translated!,
-                        contextMenuBuilder: (context, editableTextState) {
-                          return AdaptiveTextSelectionToolbar.buttonItems(
-                            anchors: editableTextState.contextMenuAnchors,
-                            buttonItems: [
-                              ...editableTextState.contextMenuButtonItems,
-                              ContextMenuButtonItem(
-                                onPressed: () {
-                                  final selection = editableTextState
-                                      .textEditingValue.selection;
-                                  final selectedText = editableTextState
-                                      .textEditingValue.text
-                                      .substring(
-                                          selection.start, selection.end);
-                                  ContextMenuController.removeAny();
-                                  _showWikipediaSearch(selectedText);
-                                },
-                                label: 'Wikipediaで検索',
-                              ),
-                            ],
+                    ? ValueListenableBuilder<bool>(
+                        valueListenable: AppSettingsService.instance.autoWikiLink,
+                        builder: (context, autoLink, _) {
+                          if (autoLink) {
+                            return AutoLinkText(
+                              text: _translated!,
+                              onEntityTap: _showWikipediaSearch,
+                            );
+                          }
+                          return SelectableText(
+                            _translated!,
+                            contextMenuBuilder: (context, editableTextState) {
+                              return AdaptiveTextSelectionToolbar.buttonItems(
+                                anchors: editableTextState.contextMenuAnchors,
+                                buttonItems: [
+                                  ...editableTextState.contextMenuButtonItems,
+                                  ContextMenuButtonItem(
+                                    onPressed: () {
+                                      final selection = editableTextState
+                                          .textEditingValue.selection;
+                                      final selectedText = editableTextState
+                                          .textEditingValue.text
+                                          .substring(
+                                              selection.start, selection.end);
+                                      ContextMenuController.removeAny();
+                                      _showWikipediaSearch(selectedText);
+                                    },
+                                    label: 'Wikipediaで検索',
+                                  ),
+                                ],
+                              );
+                            },
                           );
                         },
                       )

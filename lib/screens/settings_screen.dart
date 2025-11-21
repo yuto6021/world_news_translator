@@ -18,11 +18,12 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
-      body: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             const SizedBox(height: 8),
             const Text('テーマ', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -202,6 +203,20 @@ class SettingsScreen extends StatelessWidget {
                   value: enabled,
                   onChanged: (v) =>
                       AppSettingsService.instance.setAutoTranslate(v),
+                );
+              },
+            ),
+
+            // Wikipedia 自動リンク
+            ValueListenableBuilder<bool>(
+              valueListenable: AppSettingsService.instance.autoWikiLink,
+              builder: (context, enabled, _) {
+                return SwitchListTile(
+                  title: const Text('Wikipedia自動リンク'),
+                  subtitle: const Text('固有名詞を自動検出してタップで要約表示'),
+                  value: enabled,
+                  onChanged: (v) =>
+                      AppSettingsService.instance.setAutoWikiLink(v),
                 );
               },
             ),

@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
@@ -9,10 +10,26 @@ import 'package:google_fonts/google_fonts.dart';
 import 'services/theme_service.dart';
 import 'widgets/konami_code_detector.dart';
 import 'services/streak_service.dart';
+import 'services/comments_service.dart';
+import 'services/achievements_service.dart';
+import 'services/game_scores_service.dart';
+import 'services/reading_time_service.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Hive初期化
+  await Hive.initFlutter();
+
+  // 各種サービス初期化
+  await CommentsService.init();
+  await AchievementsService.init();
+  await GameScoresService.init();
+  await ReadingTimeService.init();
+
   // .envファイルの読み込み（APIキーなど）
   await dotenv.load();
+
   // 起動時にストリーク更新
   await StreakService.instance.onAppOpen();
 

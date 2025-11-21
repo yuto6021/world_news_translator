@@ -11,6 +11,8 @@ import '../services/time_capsule_service.dart';
 import '../services/wikipedia_service.dart';
 import '../services/wikipedia_history_service.dart';
 import '../services/comments_service.dart';
+import '../services/reading_time_service.dart';
+import '../services/achievements_service.dart';
 import '../models/news_insight.dart';
 import '../widgets/auto_link_text.dart';
 
@@ -30,6 +32,9 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // 読書時間トラッキング開始
+    ReadingTimeService.startSession();
+
     // 記事閲覧を記録（実績解除用）
     _recordArticleRead();
     // 自動翻訳が有効な場合のみ翻訳を行う
@@ -315,6 +320,30 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    // 読書時間トラッキング終了
+    ReadingTimeService.endSession().then((elapsed) async {
+      if (elapsed > 0) {
+        // 読書時間に応じた実績チェック
+        final totalMinutes = await ReadingTimeService.getTotalMinutes();
+        if (totalMinutes >= 30) {
+          await AchievementsService.updateProgress(
+              'reading_30min', totalMinutes, 30);
+        }
+        if (totalMinutes >= 120) {
+          await AchievementsService.updateProgress(
+              'reading_2hours', totalMinutes, 120);
+        }
+        if (totalMinutes >= 600) {
+          await AchievementsService.updateProgress(
+              'reading_10hours', totalMinutes, 600);
+        }
+      }
+    });
+    super.dispose();
   }
 
   @override

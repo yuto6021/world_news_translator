@@ -2520,31 +2520,17 @@ class _NewsQuizGameState extends State<_NewsQuizGame> {
     final rng = Random();
     final qs = <_QuizQ>[];
     for (final a in arts.take(5)) {
-      if (rng.nextBool()) {
-        final topic = _inferTopic('${a.title} ${a.description}');
-        final options = ['政治', '経済', 'テクノロジー', 'スポーツ', 'エンタメ'];
-        options.shuffle(rng);
-        if (!options.contains(topic)) {
-          options[rng.nextInt(options.length)] = topic;
-        }
-        qs.add(_QuizQ(
-          question: '主なトピックは？',
-          correct: topic,
-          options: options.take(3).toList(),
-          article: a,
-        ));
-      } else {
-        final cc = _inferCountry('${a.title} ${a.description} ${a.url}');
-        final all = ['US', 'GB', 'JP', 'FR', 'DE', 'CN', 'IN'];
-        all.shuffle(rng);
-        if (!all.contains(cc)) all[0] = cc;
-        qs.add(_QuizQ(
-          question: 'この記事はどの国のニュース？',
-          correct: cc,
-          options: all.take(3).toList(),
-          article: a,
-        ));
-      }
+      // 常に国当てに統一（国旗クイズ）
+      final cc = _inferCountry('${a.title} ${a.description} ${a.url}');
+      final all = ['US', 'GB', 'JP', 'FR', 'DE', 'CN', 'IN'];
+      all.shuffle(rng);
+      if (!all.contains(cc)) all[0] = cc;
+      qs.add(_QuizQ(
+        question: 'この記事の国旗はどれ？',
+        correct: cc,
+        options: all.take(3).toList(),
+        article: a,
+      ));
     }
     return qs;
   }
@@ -2797,7 +2783,7 @@ class _SnakeGameState extends State<_SnakeGame> {
                       const Icon(Icons.article, size: 12),
                 ),
               ),
-              // snake
+              // snake body
               ..._snake.map((p) => Positioned(
                     left: p.dx * cell,
                     top: p.dy * cell,
@@ -2805,7 +2791,7 @@ class _SnakeGameState extends State<_SnakeGame> {
                       width: cell,
                       height: cell,
                       decoration: BoxDecoration(
-                        color: Colors.green,
+                        color: Colors.green[400],
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
@@ -2816,7 +2802,6 @@ class _SnakeGameState extends State<_SnakeGame> {
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
-          runSpacing: 8,
           alignment: WrapAlignment.center,
           children: [
             ElevatedButton(

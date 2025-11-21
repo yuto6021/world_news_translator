@@ -1,4 +1,4 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:convert';
 
 class ArticleComment {
@@ -64,11 +64,21 @@ class ArticleComment {
 }
 
 class CommentsService {
-  static const String _key = 'article_comments';
+  static const String _boxName = 'article_comments';
+  static Box<String>? _box;
+
+  /// 初期化（main.dartから呼び出す）
+  static Future<void> init() async {
+    if (!Hive.isBoxOpen(_boxName)) {
+      _box = await Hive.openBox<String>(_boxName);
+    } else {
+      _box = Hive.box<String>(_boxName);
+    }
+  }
 
   static Future<List<ArticleComment>> getComments() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonList = prefs.getStringList(_key) ?? [];
+    final box = _box ?? await Hive.openBox<String>(_boxName);
+    final jsonList = box.values.toList();
     return jsonList
         .map((str) => ArticleComment.fromJson(json.decode(str)))
         .toList()
@@ -76,110 +86,101 @@ class CommentsService {
   }
 
   static Future<void> addComment(ArticleComment comment) async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonList = prefs.getStringList(_key) ?? [];
-    jsonList.insert(0, json.encode(comment.toJson()));
-    await prefs.setStringList(_key, jsonList);
+    final box = _box ?? await Hive.openBox<String>(_boxName);
+    final key = comment.createdAt.millisecondsSinceEpoch.toString();
+    await box.put(key, json.encode(comment.toJson()));
   }
 
   static Future<void> deleteComment(DateTime createdAt) async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = _box ?? await Hive.openBox<String>(_boxName);
     final comments = await getComments();
     // 親コメント削除時は子返信もまとめて削除（カスケード）
-    final filtered = comments
-        .where((c) {
-          if (c.createdAt == createdAt) return false; // 本人
-          if (c.parentCreatedAt != null && c.parentCreatedAt == createdAt) {
-            return false; // 返信 (子)
-          }
-          return true;
-        })
-        .map((c) => json.encode(c.toJson()))
-        .toList();
-    await prefs.setStringList(_key, filtered);
+    final toDelete = comments.where((c) {
+      if (c.createdAt == createdAt) return true; // 本人
+      if (c.parentCreatedAt != null && c.parentCreatedAt == createdAt) {
+        return true; // 返信 (子)
+      }
+      return false;
+    }).toList();
+
+    for (var c in toDelete) {
+      final key = c.createdAt.millisecondsSinceEpoch.toString();
+      await box.delete(key);
+    }
   }
 
   static Future<void> updateComment(
       DateTime originalCreatedAt, String newComment) async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = _box ?? await Hive.openBox<String>(_boxName);
     final comments = await getComments();
-    final updated = comments.map((c) {
-      if (c.createdAt == originalCreatedAt) {
-        return ArticleComment(
-          articleUrl: c.articleUrl,
-          articleTitle: c.articleTitle,
-          quote: c.quote,
-          comment: newComment,
-          createdAt: c.createdAt,
-          articleImage: c.articleImage,
-          parentCreatedAt: c.parentCreatedAt, // スレッド保持
-          reactions: c.reactions,
-        );
-      }
-      return c;
-    }).toList();
-    await prefs.setStringList(
-        _key, updated.map((c) => json.encode(c.toJson())).toList());
+    final target = comments.firstWhere((c) => c.createdAt == originalCreatedAt,
+        orElse: () => throw Exception('Comment not found'));
+    final updated = ArticleComment(
+      articleUrl: target.articleUrl,
+      articleTitle: target.articleTitle,
+      quote: target.quote,
+      comment: newComment,
+      createdAt: target.createdAt,
+      articleImage: target.articleImage,
+      parentCreatedAt: target.parentCreatedAt,
+      reactions: target.reactions,
+    );
+    final key = originalCreatedAt.millisecondsSinceEpoch.toString();
+    await box.put(key, json.encode(updated.toJson()));
   }
 
   static Future<void> addReaction(DateTime createdAt, String emoji) async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = _box ?? await Hive.openBox<String>(_boxName);
     final comments = await getComments();
-    final updated = comments.map((c) {
-      if (c.createdAt == createdAt) {
-        final newMap = Map<String, int>.from(c.reactions);
-        newMap.update(emoji, (v) => v + 1, ifAbsent: () => 1);
-        return ArticleComment(
-          articleUrl: c.articleUrl,
-          articleTitle: c.articleTitle,
-          quote: c.quote,
-          comment: c.comment,
-          createdAt: c.createdAt,
-          articleImage: c.articleImage,
-          parentCreatedAt: c.parentCreatedAt,
-          reactions: newMap,
-        );
-      }
-      return c;
-    }).toList();
-    await prefs.setStringList(
-        _key, updated.map((c) => json.encode(c.toJson())).toList());
+    final target = comments.firstWhere((c) => c.createdAt == createdAt,
+        orElse: () => throw Exception('Comment not found'));
+    final newMap = Map<String, int>.from(target.reactions);
+    newMap.update(emoji, (v) => v + 1, ifAbsent: () => 1);
+    final updated = ArticleComment(
+      articleUrl: target.articleUrl,
+      articleTitle: target.articleTitle,
+      quote: target.quote,
+      comment: target.comment,
+      createdAt: target.createdAt,
+      articleImage: target.articleImage,
+      parentCreatedAt: target.parentCreatedAt,
+      reactions: newMap,
+    );
+    final key = createdAt.millisecondsSinceEpoch.toString();
+    await box.put(key, json.encode(updated.toJson()));
   }
 
   static Future<void> decrementReaction(
       DateTime createdAt, String emoji) async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = _box ?? await Hive.openBox<String>(_boxName);
     final comments = await getComments();
-    final updated = comments.map((c) {
-      if (c.createdAt == createdAt) {
-        final newMap = Map<String, int>.from(c.reactions);
-        if (newMap.containsKey(emoji)) {
-          final next = newMap[emoji]! - 1;
-          if (next <= 0) {
-            newMap.remove(emoji);
-          } else {
-            newMap[emoji] = next;
-          }
-        }
-        return ArticleComment(
-          articleUrl: c.articleUrl,
-          articleTitle: c.articleTitle,
-          quote: c.quote,
-          comment: c.comment,
-          createdAt: c.createdAt,
-          articleImage: c.articleImage,
-          parentCreatedAt: c.parentCreatedAt,
-          reactions: newMap,
-        );
+    final target = comments.firstWhere((c) => c.createdAt == createdAt,
+        orElse: () => throw Exception('Comment not found'));
+    final newMap = Map<String, int>.from(target.reactions);
+    if (newMap.containsKey(emoji)) {
+      final next = newMap[emoji]! - 1;
+      if (next <= 0) {
+        newMap.remove(emoji);
+      } else {
+        newMap[emoji] = next;
       }
-      return c;
-    }).toList();
-    await prefs.setStringList(
-        _key, updated.map((c) => json.encode(c.toJson())).toList());
+    }
+    final updated = ArticleComment(
+      articleUrl: target.articleUrl,
+      articleTitle: target.articleTitle,
+      quote: target.quote,
+      comment: target.comment,
+      createdAt: target.createdAt,
+      articleImage: target.articleImage,
+      parentCreatedAt: target.parentCreatedAt,
+      reactions: newMap,
+    );
+    final key = createdAt.millisecondsSinceEpoch.toString();
+    await box.put(key, json.encode(updated.toJson()));
   }
 
   static Future<void> clearAll() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_key);
+    final box = _box ?? await Hive.openBox<String>(_boxName);
+    await box.clear();
   }
 }

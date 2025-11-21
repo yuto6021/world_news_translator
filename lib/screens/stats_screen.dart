@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/achievement_service.dart';
+import '../services/reading_time_service.dart';
+import '../services/achievements_service.dart';
+import '../services/game_scores_service.dart';
 import 'streak_screen.dart';
 import 'bingo_screen.dart';
 import 'social_screen.dart';
@@ -61,8 +64,8 @@ class _StatsScreenState extends State<StatsScreen>
     // 連続日数
     final consecutiveDays = prefs.getInt('consecutive_days') ?? 1;
 
-    // 読書時間 (記事数 × 平均3分)
-    final readingTime = totalRead * 3;
+    // 読書時間（実測値を使用）
+    final readingTime = await ReadingTimeService.getTotalMinutes();
 
     // カテゴリ統計（実データ）
     final categoriesRead = prefs.getStringList('categories_read') ?? [];
@@ -301,6 +304,28 @@ class _StatsScreenState extends State<StatsScreen>
               favoritesCount: _favoritesCount,
               consecutiveDays: _consecutiveDays,
             ),
+            const SizedBox(height: 32),
+
+            // 実績一覧
+            Text(
+              '🎯 実績',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const _AchievementsList(),
+            const SizedBox(height: 32),
+
+            // ゲームスコア
+            Text(
+              '🎮 ゲームスコア',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const _GameScoresList(),
           ],
         ),
       ),
@@ -984,6 +1009,96 @@ class _BadgeCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// 実績一覧ウィジェット
+class _AchievementsList extends StatelessWidget {
+  const _AchievementsList();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: AchievementsService.getAll(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final achievements = snapshot.data!;
+        return Column(
+          children: achievements.map((ach) {
+            final progress = ach.progress / ach.target;
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: Text(ach.icon, style: const TextStyle(fontSize: 32)),
+                title: Text(ach.title),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(ach.description),
+                    const SizedBox(height: 4),
+                    LinearProgressIndicator(
+                      value: progress.clamp(0.0, 1.0),
+                      backgroundColor: Colors.grey[300],
+                    ),
+                    Text('${ach.progress}/${ach.target}',
+                        style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
+                trailing: ach.isUnlocked
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : null,
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+// ゲームスコア一覧ウィジェット
+class _GameScoresList extends StatelessWidget {
+  const _GameScoresList();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: GameScoresService.getAll(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final scores = snapshot.data!;
+        final gameNames = {
+          'game_flag_memory_best': '🎴 国旗神経衰弱',
+          'tap_best': '👆 タップチャレンジ',
+          'pet_level': '🐾 ペット育成',
+          'number_guess_best': '🎲 数字当て',
+          'snake_best': '🐍 スネーク',
+          '2048_best': '🎮 2048',
+          'quiz_best_score': '📰 ニュースクイズ',
+        };
+
+        return Column(
+          children: scores.entries.map((e) {
+            final name = gameNames[e.key] ?? e.key;
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                title: Text(name),
+                trailing: Text(
+                  e.value.toString(),
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

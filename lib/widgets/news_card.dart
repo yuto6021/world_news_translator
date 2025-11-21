@@ -332,17 +332,34 @@ class _NewsCardState extends State<NewsCard> {
                                       }
                                       return const SizedBox.shrink();
                                     }),
-                                    Text(
-                                      (widget.translatedText != null &&
-                                              widget.translatedText!.isNotEmpty)
-                                          ? widget.translatedText!
-                                          : (_localTranslated ??
-                                              (_loadingTranslation
-                                                  ? '翻訳中...'
-                                                  : '（翻訳なし）')),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.grey.shade200,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        (widget.translatedText != null &&
+                                                widget.translatedText!.isNotEmpty)
+                                            ? widget.translatedText!
+                                            : (_localTranslated ??
+                                                (_loadingTranslation
+                                                    ? '翻訳中...'
+                                                    : '（翻訳なし）')),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
                                     ),
+                                    const SizedBox(height: 8),
                                   ] else ...[
                                     // overlay mode: show short description or source
                                     Text(

@@ -489,6 +489,18 @@ class _ReactionBarState extends State<_ReactionBar> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (reactions.isNotEmpty || _expanded)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              'タップで追加、長押しで削除',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
         Wrap(
           spacing: 6,
           runSpacing: -4,

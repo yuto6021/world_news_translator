@@ -99,6 +99,14 @@ class _GameScreenState extends State<GameScreen>
                       onTap: () => setState(() => _selectedGame = 2),
                     ),
                   ),
+                  Expanded(
+                    child: _GameTab(
+                      label: '数当て',
+                      icon: Icons.casino,
+                      isSelected: _selectedGame == 3,
+                      onTap: () => setState(() => _selectedGame = 3),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -123,6 +131,8 @@ class _GameScreenState extends State<GameScreen>
         return const _TapChallengeGame(key: ValueKey('tap'));
       case 2:
         return const _PetRaisingGame(key: ValueKey('pet'));
+      case 3:
+        return const _NumberGuessGame(key: ValueKey('guess'));
       default:
         return const SizedBox();
     }
@@ -2561,6 +2571,329 @@ class _ShopModal extends StatelessWidget {
             child: const Text('閉じる'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// 数当てゲーム（1-100の数字を推測）
+class _NumberGuessGame extends StatefulWidget {
+  const _NumberGuessGame({super.key});
+
+  @override
+  State<_NumberGuessGame> createState() => _NumberGuessGameState();
+}
+
+class _NumberGuessGameState extends State<_NumberGuessGame> {
+  int _targetNumber = 0;
+  int _attempts = 0;
+  int _bestScore = 999;
+  List<String> _history = [];
+  final TextEditingController _guessController = TextEditingController();
+  String _feedback = '';
+  bool _gameOver = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBestScore();
+    _startNewGame();
+  }
+
+  @override
+  void dispose() {
+    _guessController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadBestScore() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _bestScore = prefs.getInt('guess_game_best') ?? 999;
+    });
+  }
+
+  Future<void> _saveBestScore() async {
+    if (_attempts < _bestScore) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('guess_game_best', _attempts);
+      setState(() => _bestScore = _attempts);
+    }
+  }
+
+  void _startNewGame() {
+    setState(() {
+      _targetNumber = Random().nextInt(100) + 1;
+      _attempts = 0;
+      _history.clear();
+      _feedback = '1〜100の数字を当ててください！';
+      _gameOver = false;
+    });
+    _guessController.clear();
+  }
+
+  void _makeGuess() {
+    final input = _guessController.text.trim();
+    if (input.isEmpty) return;
+
+    final guess = int.tryParse(input);
+    if (guess == null || guess < 1 || guess > 100) {
+      setState(() => _feedback = '⚠️ 1〜100の数字を入力してください');
+      return;
+    }
+
+    setState(() {
+      _attempts++;
+      if (guess == _targetNumber) {
+        _feedback = '🎉 正解！ $_attempts 回で当たりました！';
+        _gameOver = true;
+        _history.add('$guess → 🎯 正解！');
+        _saveBestScore();
+      } else if (guess < _targetNumber) {
+        final diff = _targetNumber - guess;
+        if (diff <= 5) {
+          _feedback = '🔥 もう少し大きい数字です（かなり近い！）';
+        } else if (diff <= 15) {
+          _feedback = '📈 もっと大きい数字です（近い）';
+        } else {
+          _feedback = '⬆️ もっと大きい数字です';
+        }
+        _history.add('$guess → 小さい');
+      } else {
+        final diff = guess - _targetNumber;
+        if (diff <= 5) {
+          _feedback = '🔥 もう少し小さい数字です（かなり近い！）';
+        } else if (diff <= 15) {
+          _feedback = '📉 もっと小さい数字です（近い）';
+        } else {
+          _feedback = '⬇️ もっと小さい数字です';
+        }
+        _history.add('$guess → 大きい');
+      }
+    });
+
+    _guessController.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ヘッダー
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '🎲 数当てゲーム',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '試行回数: $_attempts 回',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                if (_bestScore < 999)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          '🏆 ベスト',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
+                        ),
+                        Text(
+                          '$_bestScore 回',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // フィードバック
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _gameOver
+                    ? Colors.green.shade50
+                    : (isDark ? Colors.grey[800] : Colors.blue.shade50),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _gameOver
+                      ? Colors.green.shade200
+                      : (isDark ? Colors.grey[700]! : Colors.blue.shade200),
+                  width: 2,
+                ),
+              ),
+              child: Text(
+                _feedback,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _gameOver
+                      ? Colors.green.shade700
+                      : (isDark ? Colors.blue[300] : Colors.blue.shade700),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // 入力エリア
+            if (!_gameOver) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _guessController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: '予想を入力',
+                        hintText: '1〜100',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.casino),
+                      ),
+                      onSubmitted: (_) => _makeGuess(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: _makeGuess,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      '予想',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // リセット/新しいゲーム
+            if (_gameOver)
+              ElevatedButton.icon(
+                onPressed: _startNewGame,
+                icon: const Icon(Icons.refresh),
+                label: const Text('新しいゲーム'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+              )
+            else
+              OutlinedButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('ゲームをリセット'),
+                      content: const Text('現在のゲームをリセットして新しく始めますか？'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('キャンセル'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _startNewGame();
+                          },
+                          child: const Text('リセット'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('リセット'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+
+            const SizedBox(height: 24),
+
+            // 履歴
+            if (_history.isNotEmpty) ...[
+              const Text(
+                '📝 履歴',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[850] : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _history.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Text(
+                        '${index + 1}. ${_history[index]}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.grey[300] : Colors.grey[700],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

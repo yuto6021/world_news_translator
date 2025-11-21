@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_background.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../services/comments_service.dart';
+import '../utils/app_snackbar.dart';
 
 class CommentsScreen extends StatefulWidget {
   const CommentsScreen({super.key});
@@ -37,9 +36,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     final text = _newCommentController.text.trim();
     if (text.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('コメントを入力してください')),
-      );
+      AppSnackBar.warning(context, 'コメントを入力してください');
       return;
     }
     final comment = ArticleComment(
@@ -57,9 +54,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     setState(() => _replyTo = null);
     await _loadComments();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('コメントを追加しました')),
-    );
+    AppSnackBar.success(context, 'コメントを追加しました');
   }
 
   String _formatDate(DateTime date) {
@@ -90,9 +85,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
           TextButton(
             onPressed: () async {
               if (controller.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('コメントを入力してください')),
-                );
+                AppSnackBar.warning(context, 'コメントを入力してください');
                 return;
               }
               await CommentsService.updateComment(
@@ -102,9 +95,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
               if (!mounted) return;
               Navigator.pop(context);
               _loadComments();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('コメントを更新しました')),
-              );
+              AppSnackBar.success(context, 'コメントを更新しました');
             },
             child: const Text('保存'),
           ),
@@ -206,10 +197,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           onReply: (c) {
                             setState(() => _replyTo = c.createdAt);
                             _newCommentController.text = '@返信: ';
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('返信先をセットしました。下の入力欄から投稿できます')),
-                            );
+                            AppSnackBar.info(
+                                context, '返信先をセットしました。下の入力欄から投稿できます');
                           },
                           onEdit: _showEditDialog,
                           onDelete: (c) async {
@@ -483,18 +472,14 @@ class _ReactionBarState extends State<_ReactionBar> {
     await CommentsService.addReaction(widget.comment.createdAt, emoji);
     // 親の一覧再読込が理想だが簡易再構築のため setState + SnackBarで知らせる
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('リアクション $emoji を追加しました')),
-      );
+      AppSnackBar.success(context, 'リアクション $emoji を追加しました');
     }
   }
 
   Future<void> _remove(String emoji) async {
     await CommentsService.decrementReaction(widget.comment.createdAt, emoji);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('リアクション $emoji を減らしました')),
-      );
+      AppSnackBar.info(context, 'リアクション $emoji を減らしました');
     }
   }
 

@@ -2,7 +2,7 @@
 class EntityDetector {
   // 固有名詞候補: 大文字始まり + (アルファベット | スペース | ハイフン | アポストロフィ) 2語以上
   static final RegExp _entityPattern = RegExp(
-    r'\b([A-Z][a-z]+(?:[\s\-\'][A-Z][a-z]+)+)\b',
+    r'\b([A-Z][a-z]+(?:[\s\-][A-Z][a-z]+)+)\b',
     multiLine: true,
   );
 

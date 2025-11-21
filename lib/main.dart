@@ -6,7 +6,6 @@ import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
 import 'services/reading_mode_service.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'services/theme_service.dart';
 import 'widgets/konami_code_detector.dart';
 

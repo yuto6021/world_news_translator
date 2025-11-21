@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import '../services/achievement_service.dart';
 
 /// 統計ダッシュボード画面 (読書記録の可視化)

@@ -13,14 +13,16 @@ import 'search_screen.dart';
 import 'wikipedia_search_screen.dart';
 import 'markets_screen.dart';
 import 'map_news_screen.dart';
+import 'country_news_screen.dart';
 import 'swipe_news_screen.dart';
 import 'stats_screen.dart';
 import 'game_screen.dart';
 import '../models/country.dart';
 import '../services/availability_service.dart';
-import '../widgets/country_tab.dart';
+import '../widgets/country_tab_enhanced.dart';
 import '../widgets/social_footer.dart';
 import '../widgets/breaking_news_banner.dart';
+import '../widgets/keyboard_shortcuts.dart';
 
 class _TabInfo {
   final IconData icon;
@@ -273,264 +275,295 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
-      body: Stack(
-        children: [
-          _buildBackground(isDark),
-          Column(
-            children: [
-              // 速報バナーを固定位置に配置
-              const BreakingNewsBanner(),
-              Expanded(
-                child: NestedScrollView(
-                  controller: _scrollController,
-                  headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                    SliverAppBar(
-                      expandedHeight: 160,
-                      floating: false,
-                      pinned: true,
-                      elevation: 0,
-                      backgroundColor: Colors.transparent,
-                      flexibleSpace:
-                          _buildFlexibleSpace(innerBoxIsScrolled, isDark),
-                      title: AnimatedOpacity(
-                        opacity: innerBoxIsScrolled ? 1.0 : 0.9,
-                        duration: const Duration(milliseconds: 200),
-                        child: Text(
-                          '世界のニュース',
-                          style: TextStyle(
-                            color:
-                                isDark ? Colors.grey.shade100 : Colors.indigo,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
+    return KeyboardShortcuts(
+      onSearch: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SearchScreen()),
+      ),
+      onRefresh: () {
+        // 現在のタブを再読み込み（setStateで再構築）
+        setState(() {});
+      },
+      onSettings: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+      ),
+      child: Scaffold(
+        backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
+        body: Stack(
+          children: [
+            _buildBackground(isDark),
+            Column(
+              children: [
+                // 速報バナーを固定位置に配置
+                const BreakingNewsBanner(),
+                Expanded(
+                  child: NestedScrollView(
+                    controller: _scrollController,
+                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                      SliverAppBar(
+                        expandedHeight: 160,
+                        floating: false,
+                        pinned: true,
+                        elevation: 0,
+                        backgroundColor: Colors.transparent,
+                        flexibleSpace:
+                            _buildFlexibleSpace(innerBoxIsScrolled, isDark),
+                        title: AnimatedOpacity(
+                          opacity: innerBoxIsScrolled ? 1.0 : 0.9,
+                          duration: const Duration(milliseconds: 200),
+                          child: Text(
+                            '世界のニュース',
+                            style: TextStyle(
+                              color:
+                                  isDark ? Colors.grey.shade100 : Colors.indigo,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                            ),
                           ),
                         ),
-                      ),
-                      centerTitle: true,
-                      actions: [
-                        // より目立つ検索ボタン（サイズ＋背景色）
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 8, horizontal: 4),
-                          child: Material(
-                            color: isDark
-                                ? Colors.indigo.shade700.withOpacity(0.3)
-                                : Colors.indigo.shade100.withOpacity(0.6),
-                            borderRadius: BorderRadius.circular(12),
-                            child: InkWell(
+                        centerTitle: true,
+                        actions: [
+                          // より目立つ検索ボタン（サイズ＋背景色）
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 8, horizontal: 4),
+                            child: Material(
+                              color: isDark
+                                  ? Colors.indigo.shade700.withOpacity(0.3)
+                                  : Colors.indigo.shade100.withOpacity(0.6),
                               borderRadius: BorderRadius.circular(12),
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const SearchScreen()),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SearchScreen()),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 8),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.search,
+                                          size: 22,
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.indigo.shade700),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '検索',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.indigo.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 8),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.settings),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const SettingsScreen()),
+                            ),
+                            tooltip: 'アプリ設定',
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        bottom: TabBar(
+                          controller: _tabController,
+                          indicatorColor:
+                              isDark ? Colors.grey.shade100 : Colors.indigo,
+                          indicatorWeight: 3,
+                          labelColor:
+                              isDark ? Colors.grey.shade100 : Colors.indigo,
+                          unselectedLabelColor: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade700,
+                          isScrollable: true,
+                          tabAlignment: TabAlignment.center,
+                          tabs: _tabs.asMap().entries.map((entry) {
+                            final idx = entry.key;
+                            final tab = entry.value;
+                            return AnimatedBuilder(
+                              animation: _tabController,
+                              builder: (context, child) {
+                                final isSelected = _tabController.index == idx;
+                                return Transform.scale(
+                                  scale: isSelected ? 1.1 : 1.0,
+                                  child: Tooltip(
+                                    message: tab.semanticLabel,
+                                    child: Tab(
+                                      icon: Icon(
+                                        tab.icon,
+                                        size: isSelected ? 26 : 22,
+                                      ),
+                                      text: tab.label,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                    body: Column(
+                      children: [
+                        // タブコンテンツ
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            // _tabs: ニュース, 国別, スワイプ, 統計, マーケット, 地図, 天気, お気に入り, コメント, Wikipedia, タイムカプセル
+                            children: [
+                              // ニュース
+                              const TrendingScreen(),
+                              // 国別
+                              Scrollbar(
+                                child: ListView(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 16, 16, 80),
                                   children: [
-                                    Icon(Icons.search,
-                                        size: 22,
-                                        color: isDark
-                                            ? Colors.white
-                                            : Colors.indigo.shade700),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '検索',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark
-                                            ? Colors.white
-                                            : Colors.indigo.shade700,
+                                    Card(
+                                      elevation: 4,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(24),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.language,
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
+                                                  size: 28,
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Text(
+                                                  '国別ニュース',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .headlineSmall
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 24),
+                                            _availableCountries.isEmpty
+                                                ? const Center(
+                                                    child: Padding(
+                                                      padding:
+                                                          EdgeInsets.all(16.0),
+                                                      child:
+                                                          CircularProgressIndicator(),
+                                                    ),
+                                                  )
+                                                : Wrap(
+                                                    spacing: 8,
+                                                    runSpacing: 12,
+                                                    children:
+                                                        _availableCountries
+                                                            .map((c) =>
+                                                                CountryTabEnhanced(
+                                                                  name: c.name,
+                                                                  code: c.code,
+                                                                  onTap: () {
+                                                                    Navigator
+                                                                        .push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                        builder:
+                                                                            (context) =>
+                                                                                CountryNewsScreen(
+                                                                          countryName:
+                                                                              c.name,
+                                                                          countryCode:
+                                                                              c.code,
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  },
+                                                                ))
+                                                            .toList(),
+                                                  ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
+                              // スワイプ
+                              const SwipeNewsScreen(),
+                              // 統計
+                              const StatsScreen(),
+                              // ゲーム
+                              const GameScreen(),
+                              // マーケット
+                              const MarketsScreen(),
+                              // 地図
+                              const MapNewsScreen(),
+                              // 天気
+                              const WeatherScreen(),
+                              const FavoritesScreen(),
+                              const CommentsScreen(),
+                              const WikipediaSearchScreen(),
+                              const TimeCapsuleScreen(),
+                              // 会員登録
+                              const RegistrationScreen(),
+                            ],
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.settings),
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const SettingsScreen()),
-                          ),
-                          tooltip: 'アプリ設定',
-                        ),
-                        const SizedBox(width: 8),
                       ],
-                      bottom: TabBar(
-                        controller: _tabController,
-                        indicatorColor:
-                            isDark ? Colors.grey.shade100 : Colors.indigo,
-                        indicatorWeight: 3,
-                        labelColor:
-                            isDark ? Colors.grey.shade100 : Colors.indigo,
-                        unselectedLabelColor: isDark
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade700,
-                        isScrollable: true,
-                        tabAlignment: TabAlignment.center,
-                        tabs: _tabs.asMap().entries.map((entry) {
-                          final idx = entry.key;
-                          final tab = entry.value;
-                          return AnimatedBuilder(
-                            animation: _tabController,
-                            builder: (context, child) {
-                              final isSelected = _tabController.index == idx;
-                              return Transform.scale(
-                                scale: isSelected ? 1.1 : 1.0,
-                                child: Tooltip(
-                                  message: tab.semanticLabel,
-                                  child: Tab(
-                                    icon: Icon(
-                                      tab.icon,
-                                      size: isSelected ? 26 : 22,
-                                    ),
-                                    text: tab.label,
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        }).toList(),
-                      ),
                     ),
-                  ],
-                  body: Column(
-                    children: [
-                      // タブコンテンツ
-                      Expanded(
-                        child: TabBarView(
-                          controller: _tabController,
-                          // _tabs: ニュース, 国別, スワイプ, 統計, マーケット, 地図, 天気, お気に入り, コメント, Wikipedia, タイムカプセル
-                          children: [
-                            // ニュース
-                            const TrendingScreen(),
-                            // 国別
-                            Scrollbar(
-                              child: ListView(
-                                padding:
-                                    const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                                children: [
-                                  Card(
-                                    elevation: 4,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(24),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.language,
-                                                color: Theme.of(context)
-                                                    .primaryColor,
-                                                size: 28,
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Text(
-                                                '国別ニュース',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .headlineSmall
-                                                    ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 24),
-                                          _availableCountries.isEmpty
-                                              ? const Center(
-                                                  child: Padding(
-                                                    padding:
-                                                        EdgeInsets.all(16.0),
-                                                    child:
-                                                        CircularProgressIndicator(),
-                                                  ),
-                                                )
-                                              : Wrap(
-                                                  spacing: 16,
-                                                  runSpacing: 16,
-                                                  children: _availableCountries
-                                                      .map((c) => SizedBox(
-                                                            height: 80,
-                                                            child: CountryTab(
-                                                                name: c.name,
-                                                                code: c.code),
-                                                          ))
-                                                      .toList(),
-                                                ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // スワイプ
-                            const SwipeNewsScreen(),
-                            // 統計
-                            const StatsScreen(),
-                            // ゲーム
-                            const GameScreen(),
-                            // マーケット
-                            const MarketsScreen(),
-                            // 地図
-                            const MapNewsScreen(),
-                            // 天気
-                            const WeatherScreen(),
-                            const FavoritesScreen(),
-                            const CommentsScreen(),
-                            const WikipediaSearchScreen(),
-                            const TimeCapsuleScreen(),
-                            // 会員登録
-                            const RegistrationScreen(),
-                          ],
-                        ),
-                      ),
-                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: SocialFooter(),
-          ),
-          // 先頭へ戻る FAB（スクロール方向が forward かつ一定オフセット以上で表示）
-          if (_showTopFab)
-            Positioned(
-              right: 16,
-              bottom: 90,
-              child: FloatingActionButton(
-                heroTag: 'toTopFab',
-                tooltip: '先頭へ',
-                elevation: 8,
-                onPressed: () {
-                  _scrollController.animateTo(0,
-                      duration: const Duration(milliseconds: 380),
-                      curve: Curves.easeOut);
-                },
-                child: const Icon(Icons.vertical_align_top),
-              ),
+              ],
             ),
-        ],
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SocialFooter(),
+            ),
+            // 先頭へ戻る FAB（スクロール方向が forward かつ一定オフセット以上で表示）
+            if (_showTopFab)
+              Positioned(
+                right: 16,
+                bottom: 90,
+                child: FloatingActionButton(
+                  heroTag: 'toTopFab',
+                  tooltip: '先頭へ',
+                  elevation: 8,
+                  onPressed: () {
+                    _scrollController.animateTo(0,
+                        duration: const Duration(milliseconds: 380),
+                        curve: Curves.easeOut);
+                  },
+                  child: const Icon(Icons.vertical_align_top),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

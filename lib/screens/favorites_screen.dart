@@ -3,6 +3,7 @@ import '../widgets/app_background.dart';
 import '../services/favorites_service.dart';
 import '../widgets/news_card.dart';
 import '../models/article.dart';
+import '../widgets/state_widgets.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
@@ -25,25 +26,14 @@ class FavoritesScreen extends StatelessWidget {
             builder: (context, map, _) {
               final articles = map.values.toList();
               if (articles.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.favorite_border,
-                            size: 72, color: Colors.grey.shade400),
-                        const SizedBox(height: 12),
-                        const Text('お気に入りはまだありません',
-                            style: TextStyle(fontSize: 16)),
-                        const SizedBox(height: 8),
-                        TextButton.icon(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.home),
-                          label: const Text('ホームに戻る'),
-                        ),
-                      ],
-                    ),
+                return EmptyStateWidget(
+                  title: 'お気に入りはまだありません',
+                  subtitle: '記事詳細でハートアイコンをタップして\nお気に入りに追加しましょう',
+                  icon: Icons.favorite_border,
+                  action: ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.home),
+                    label: const Text('ホームに戻る'),
                   ),
                 );
               }

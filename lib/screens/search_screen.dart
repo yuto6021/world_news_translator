@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/news_api_service.dart';
 import '../models/article.dart';
 import '../widgets/news_card.dart';
+import '../widgets/state_widgets.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -173,7 +174,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 const SizedBox(height: 12),
                 Expanded(
                   child: _results == null
-                      ? const Center(child: Text('検索ワードを入力してください'))
+                      ? EmptyStateWidget(
+                          title: 'ニュースを検索',
+                          subtitle: 'キーワードを入力して世界のニュースを検索しましょう',
+                          icon: Icons.search,
+                        )
                       : FutureBuilder<List<Article>>(
                           future: _results,
                           builder: (context, snapshot) {
@@ -184,7 +189,16 @@ class _SearchScreenState extends State<SearchScreen> {
                             }
                             final articles = snapshot.data ?? [];
                             if (articles.isEmpty) {
-                              return const Center(child: Text('該当する記事はありません'));
+                              return EmptyStateWidget(
+                                title: '該当する記事が見つかりません',
+                                subtitle: '別のキーワードで再度お試しください',
+                                icon: Icons.search_off,
+                                action: ElevatedButton.icon(
+                                  onPressed: _doSearch,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('再検索'),
+                                ),
+                              );
                             }
                             return RefreshIndicator(
                               onRefresh: () async {

@@ -442,6 +442,47 @@ class PetService {
     return _box!.values.where((pet) => !pet.isAlive).toList();
   }
 
+  /// バトル勝利記録
+  static Future<void> incrementWins(String petId) async {
+    await init();
+    final pet = _box!.get(petId);
+    if (pet == null) return;
+    pet.wins += 1;
+    pet.battleCount += 1;
+    await pet.save();
+  }
+
+  /// バトル敗北記録
+  static Future<void> incrementLosses(String petId) async {
+    await init();
+    final pet = _box!.get(petId);
+    if (pet == null) return;
+    pet.losses += 1;
+    pet.battleCount += 1;
+    await pet.save();
+  }
+
+  /// 経験値追加
+  static Future<void> addExp(String petId, int expAmount) async {
+    await init();
+    final pet = _box!.get(petId);
+    if (pet == null) return;
+
+    pet.exp += expAmount;
+
+    // レベルアップチェック
+    while (pet.exp >= pet.expToNextLevel && pet.level < 99) {
+      pet.exp -= pet.expToNextLevel;
+      pet.level += 1;
+      pet.attack += 3;
+      pet.defense += 2;
+      pet.speed += 2;
+      pet.hp += 10;
+    }
+
+    await pet.save();
+  }
+
   /// 配合（2体のペットから新しいたまご生成）
   static Future<String> breedPets(String parentId1, String parentId2) async {
     await init();

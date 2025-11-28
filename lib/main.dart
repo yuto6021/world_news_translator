@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'models/pet.dart';
+import 'services/pet_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
@@ -16,6 +17,8 @@ import 'services/achievements_service.dart';
 import 'services/game_scores_service.dart';
 import 'services/reading_time_service.dart';
 import 'services/shop_service.dart';
+import 'services/inventory_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +37,15 @@ Future<void> main() async {
   await AchievementsService.init();
   await GameScoresService.init();
   await ReadingTimeService.init();
+  await PetService.init();
+
+  // 初回起動チェック＆ウェルカムボーナス
+  final prefs = await SharedPreferences.getInstance();
+  final isFirstLaunch = prefs.getBool('first_launch') ?? true;
+  if (isFirstLaunch) {
+    await InventoryService.resetCoins(amount: 5000); // 初回5000コインプレゼント
+    await prefs.setBool('first_launch', false);
+  }
 
   // .envファイルの読み込み（APIキーなど）
   await dotenv.load();
@@ -53,7 +65,6 @@ class WorldNewsApp extends StatefulWidget {
 
 class _WorldNewsAppState extends State<WorldNewsApp> {
   Color _primaryColor = Colors.indigo;
-  Color _accentColor = const Color(0xFFFF4081);
 
   @override
   void initState() {
@@ -66,8 +77,6 @@ class _WorldNewsAppState extends State<WorldNewsApp> {
     setState(() {
       _primaryColor =
           Color(int.parse(colors['primary_color'].replaceFirst('#', '0xFF')));
-      _accentColor =
-          Color(int.parse(colors['accent_color'].replaceFirst('#', '0xFF')));
     });
   }
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/achievements_service.dart';
 import '../models/achievement.dart';
-import 'dart:convert';
 
 /// ユーザープロフィール画面（実績バッジ管理）
 class UserProfileScreen extends StatefulWidget {
@@ -113,7 +112,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   void _showBadgeSelector() {
     final allBadges = ['🎖️', ..._unlockedBadges]; // デフォルト + 解除済みバッジ
-    
+
     showModalBottomSheet(
       context: context,
       builder: (ctx) => Container(
@@ -187,7 +186,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final completionRate = _unlockedAchievements.isEmpty
         ? 0.0
         : (_stats['achievements'] ?? 0) / 150 * 100;
@@ -250,7 +248,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.amber,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                                border:
+                                    Border.all(color: Colors.white, width: 2),
                               ),
                               child: const Icon(
                                 Icons.edit,
@@ -328,16 +327,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       ],
                     ),
                     const Divider(),
-                    _buildStatRow('📖 記事閲覧数', '${_stats['totalReads'] ?? 0} 記事'),
+                    _buildStatRow(
+                        '📖 記事閲覧数', '${_stats['totalReads'] ?? 0} 記事'),
                     _buildStatRow(
                       '⏱️ プレイ時間',
                       '${((_stats['totalPlayTime'] ?? 0) / 60).toStringAsFixed(0)} 分',
                     ),
-                    _buildStatRow('🔥 連続ログイン', '${_stats['streakDays'] ?? 0} 日'),
+                    _buildStatRow(
+                        '🔥 連続ログイン', '${_stats['streakDays'] ?? 0} 日'),
                     _buildStatRow('❤️ お気に入り', '${_stats['favorites'] ?? 0} 件'),
                     _buildStatRow('🪙 累計コイン', '${_stats['totalCoins'] ?? 0}'),
                     _buildStatRow('🎰 ガチャ回数', '${_stats['gachaCount'] ?? 0} 回'),
-                    _buildStatRow('⭐ ショップポイント', '${_stats['shopPoints'] ?? 0} pt'),
+                    _buildStatRow(
+                        '⭐ ショップポイント', '${_stats['shopPoints'] ?? 0} pt'),
                     _buildStatRow(
                       '🏆 解除実績',
                       '${_stats['achievements'] ?? 0} / 150',
@@ -462,7 +464,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: _getRarityColor(ach.rarity).withOpacity(0.2),
+                                color: _getRarityColor(ach.rarity)
+                                    .withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: _getRarityColor(ach.rarity),

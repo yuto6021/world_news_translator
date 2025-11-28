@@ -7,10 +7,12 @@ class AchievementCollectionScreen extends StatefulWidget {
   const AchievementCollectionScreen({super.key});
 
   @override
-  State<AchievementCollectionScreen> createState() => _AchievementCollectionScreenState();
+  State<AchievementCollectionScreen> createState() =>
+      _AchievementCollectionScreenState();
 }
 
-class _AchievementCollectionScreenState extends State<AchievementCollectionScreen>
+class _AchievementCollectionScreenState
+    extends State<AchievementCollectionScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Achievement> _allAchievements = [];
@@ -44,17 +46,24 @@ class _AchievementCollectionScreenState extends State<AchievementCollectionScree
   List<Achievement> _filterByCategory(String category) {
     switch (category) {
       case 'reading':
-        return _allAchievements.where((a) =>
-            a.id.contains('reading') || a.id.contains('streak')).toList();
+        return _allAchievements
+            .where((a) => a.id.contains('reading') || a.id.contains('streak'))
+            .toList();
       case 'game':
-        return _allAchievements.where((a) =>
-            a.id.contains('tap') || a.id.contains('snake') ||
-            a.id.contains('2048') || a.id.contains('memory') ||
-            a.id.contains('pet') || a.id.contains('quiz') ||
-            a.id.contains('number')).toList();
+        return _allAchievements
+            .where((a) =>
+                a.id.contains('tap') ||
+                a.id.contains('snake') ||
+                a.id.contains('2048') ||
+                a.id.contains('memory') ||
+                a.id.contains('pet') ||
+                a.id.contains('quiz') ||
+                a.id.contains('number'))
+            .toList();
       case 'social':
-        return _allAchievements.where((a) =>
-            a.id.contains('comment') || a.id.contains('favorite')).toList();
+        return _allAchievements
+            .where((a) => a.id.contains('comment') || a.id.contains('favorite'))
+            .toList();
       case 'secret':
         return _allAchievements.where((a) => a.isSecret).toList();
       default:
@@ -90,7 +99,6 @@ class _AchievementCollectionScreenState extends State<AchievementCollectionScree
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final completionRate = _totalCount > 0
         ? (_unlockedCount / _totalCount * 100).toStringAsFixed(1)
         : '0.0';
@@ -158,10 +166,13 @@ class _AchievementCollectionScreenState extends State<AchievementCollectionScree
                           width: 100,
                           height: 100,
                           child: CircularProgressIndicator(
-                            value: _totalCount > 0 ? _unlockedCount / _totalCount : 0,
+                            value: _totalCount > 0
+                                ? _unlockedCount / _totalCount
+                                : 0,
                             strokeWidth: 10,
                             backgroundColor: Colors.white24,
-                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                Colors.amber),
                           ),
                         ),
                       ),

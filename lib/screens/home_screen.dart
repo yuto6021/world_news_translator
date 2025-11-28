@@ -10,7 +10,6 @@ import 'registration_screen.dart';
 import 'weather_screen.dart';
 import 'settings_screen.dart';
 import 'search_screen.dart';
-import 'wikipedia_search_screen.dart';
 import 'markets_screen.dart';
 import 'map_news_screen.dart';
 import 'country_news_screen.dart';
@@ -21,7 +20,7 @@ import 'gacha_screen.dart';
 import 'achievement_collection_screen.dart';
 import 'shop_screen.dart';
 import 'user_profile_screen.dart';
-import 'pet_care_screen.dart';
+import 'pet_care_screen_full.dart';
 import '../models/country.dart';
 import '../services/availability_service.dart';
 import '../widgets/country_tab_enhanced.dart';
@@ -425,7 +424,7 @@ class _HomeScreenState extends State<HomeScreen>
                             onPressed: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const PetCareScreen(),
+                                builder: (context) => const PetCareScreenFull(),
                               ),
                             ),
                             tooltip: 'ペットケア',
@@ -578,7 +577,7 @@ class _HomeScreenState extends State<HomeScreen>
                               const WeatherScreen(),
                               const FavoritesScreen(),
                               const CommentsScreen(),
-                              const WikipediaSearchScreen(),
+                              const PetCareScreenFull(),
                               const TimeCapsuleScreen(),
                               // プロフィール
                               const UserProfileScreen(),

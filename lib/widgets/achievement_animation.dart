@@ -44,14 +44,6 @@ class _AchievementUnlockedAnimationState
                 ? 600
                 : 500;
 
-    final particleCount = rarity == AchievementRarity.legendary
-        ? 200
-        : rarity == AchievementRarity.epic
-            ? 150
-            : rarity == AchievementRarity.rare
-                ? 80
-                : 40;
-
     // スケールアニメーション（飛び出す感じ）
     _scaleController = AnimationController(
       vsync: this,

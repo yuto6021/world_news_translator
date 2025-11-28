@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'models/pet.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
@@ -21,6 +22,12 @@ Future<void> main() async {
 
   // Hive初期化
   await Hive.initFlutter();
+  // Hiveアダプタ登録（PetModel）
+  try {
+    Hive.registerAdapter(PetModelAdapter());
+  } catch (_) {
+    // 既に登録済みの場合は無視
+  }
 
   // 各種サービス初期化
   await CommentsService.init();
@@ -57,8 +64,10 @@ class _WorldNewsAppState extends State<WorldNewsApp> {
   Future<void> _loadTheme() async {
     final colors = await ShopService.getActiveThemeColors();
     setState(() {
-      _primaryColor = Color(int.parse(colors['primary_color'].replaceFirst('#', '0xFF')));
-      _accentColor = Color(int.parse(colors['accent_color'].replaceFirst('#', '0xFF')));
+      _primaryColor =
+          Color(int.parse(colors['primary_color'].replaceFirst('#', '0xFF')));
+      _accentColor =
+          Color(int.parse(colors['accent_color'].replaceFirst('#', '0xFF')));
     });
   }
 

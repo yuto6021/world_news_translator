@@ -14,13 +14,16 @@ class PetCareScreen extends StatelessWidget {
         children: [
           Card(
             elevation: 3,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('プレビュー', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text('プレビュー',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
@@ -28,9 +31,12 @@ class PetCareScreen extends StatelessWidget {
                     children: const [
                       _PreviewTile('assets/pets/egg/egg_idle.png'),
                       _PreviewTile('assets/pets/baby/baby_genki_normal.png'),
-                      _PreviewTile('assets/pets/child/child_warrior_normal.png'),
-                      _PreviewTile('assets/pets/adult/adult_greymon_normal.png'),
-                      _PreviewTile('assets/pets/ultimate/ultimate_wargreymon_normal.png'),
+                      _PreviewTile(
+                          'assets/pets/child/child_warrior_normal.png'),
+                      _PreviewTile(
+                          'assets/pets/adult/adult_greymon_normal.png'),
+                      _PreviewTile(
+                          'assets/pets/ultimate/ultimate_wargreymon_normal.png'),
                     ],
                   ),
                 ],
@@ -40,21 +46,35 @@ class PetCareScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Card(
             elevation: 3,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('アクション', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text('アクション',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
                     children: [
-                      _ActionButton(label: '食事', assetPath: 'assets/pets/adult/adult_agumon_eat.png'),
-                      _ActionButton(label: '攻撃', assetPath: 'assets/pets/adult/adult_agumon_attack.png'),
-                      _ActionButton(label: '睡眠', assetPath: 'assets/pets/adult/adult_agumon_sleep.png'),
-                      _ActionButton(label: '掃除', assetPath: 'assets/pets/adult/adult_agumon_clean.png'),
+                      _ActionButton(
+                          label: '食事',
+                          assetPath: 'assets/pets/adult/adult_agumon_eat.png'),
+                      _ActionButton(
+                          label: '攻撃',
+                          assetPath:
+                              'assets/pets/adult/adult_agumon_attack.png'),
+                      _ActionButton(
+                          label: '睡眠',
+                          assetPath:
+                              'assets/pets/adult/adult_agumon_sleep.png'),
+                      _ActionButton(
+                          label: '掃除',
+                          assetPath:
+                              'assets/pets/adult/adult_agumon_clean.png'),
                     ],
                   ),
                 ],
@@ -123,7 +143,8 @@ class _ActionButton extends StatelessWidget {
             content: Image.asset(
               assetPath,
               fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => const Text('Not found'),
+              errorBuilder: (context, error, stackTrace) =>
+                  const Text('Not found'),
             ),
           ),
         );

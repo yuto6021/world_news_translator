@@ -392,7 +392,8 @@ class _HomeScreenState extends State<HomeScreen>
                             onPressed: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const AchievementCollectionScreen(),
+                                builder: (context) =>
+                                    const AchievementCollectionScreen(),
                               ),
                             ),
                             tooltip: '実績図鑑',

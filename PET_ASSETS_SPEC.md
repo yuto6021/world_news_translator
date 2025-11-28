@@ -3,22 +3,30 @@
 ## 📦 発注概要（更新）
 第1フェーズは静止画最小構成（Tier0）に追加アクションポーズ（Tier0+）を導入。将来アニメ導入時は同プレフィックスでフレーム差し替え。
 
-現行第1フェーズ想定総数: 約**135枚**
-- ペット本体: 55枚（たまご7アクション〈idle / walk / eat / play / sleep / clean / attack〉 + 幼年期8〈4状態+4アクション〉 + 成長期16〈2種×8〉 + 成熟期24〈3種×8〉）
+現行第1フェーズ想定総数: 約**109枚**
+- ペット本体: 71枚（たまご7 + 幼年期8 + 成長期16 + 成熟期24 + 究極体16〈2種×8〉）
 - UI部品: 18枚（ボタン8［押下含む］+ 背景/パネル10）
 - アイテム: 20枚（消耗品8 + レア12）
-- エフェクト: 42枚（感情16 + バトル26）
 
-（旧記述 105 / 192 / 240 / 272 枚などは差し替え前参照値）
+**注意**: ステータスパネル、ポップアップ、カード枠の3つはFlutterウィジェットで実装済み。画像不要。エフェクトは後回し（コードで暫定実装）。
 
-### UI枚数が旧48枚から18枚へ減った理由
-1. ゲージ画像を完全削除（Flutter描画へ移行）: 旧仕様で複数色/状態差分を想定していたが不要化。
-2. ボタンは通常+押下のみ（ホバー/無効/選択中差分を初期リリースでは除外）。
-3. 背景・パネルは環境差分を昼/夜/進化/バトル主要テンプレのみ10枚にスリム化（サイズ違い/解像度別バリエーション廃止）。
-4. アニメーション前提の追加装飾（発光フレーム、オーバーレイ段階）はコードエフェクトに統合。
-5. 同解像度統一(1080x1920 / 600x200 / 800x600)により冗長な縮小版生成を不要化。
+（旧記述 105 / 125 / 135 / 192 / 240 / 272 枚などは差し替え前参照値）
 
-→ 以上により初期工数を抑え、ペット本体ポーズ拡張へリソース集中。
+### UI実装方針: コード実装 + 画像のハイブリッド
+1. **コード実装（3種類）**: ステータスパネル、ポップアップ、カード枠
+   - HTMLプロトタイプを参考にFlutterウィジェット化
+   - グラデーション枠線、虹色ボーダー、回路装飾などをCustomPaint/BoxDecoration/ShaderMaskで実装
+   - 利点: 動的な色変更、サイズ調整、アニメーション統合が容易
+   - 詳細は下記「Flutter実装サンプル参考」セクション参照
+
+2. **画像から取得（18枚）**: それ以外のUI要素
+   - ボタン: 4種×2状態（通常/押下）= 8枚
+   - 背景: 昼/夜の部屋背景、バトル背景など = 5枚
+   - その他パネル: 進化演出用背景、墓標など = 5枚
+
+3. **ゲージは全てFlutter描画**: グラデーション塗り＋角丸で実装、画像不要
+
+→ **ペット本体55枚に制作リソースを集中**しつつ、UI品質も確保するバランス型設計。
 
 ---
 
@@ -203,6 +211,73 @@
 
 ---
 
+### A-5) 究極体（第1フェーズ: 16枚）
+**第1フェーズ: 主要2種のみ実装（各: 4状態 + 4アクション = 8枚 → 2種合計16枚）**
+
+#### 主要2種（詳細指示）
+
+##### ウォーグレイモン（最強戦士）
+ファイル名例: `ultimate_wargreymon_normal.png`
+
+**デザイン指示**:
+- 体型: 人型恐竜、頭身3.5:1、筋骨隆々
+- 色: 鮮やかなオレンジ、金属部分シルバー
+- 装備:
+  - 頭部: メタルヘルム（角状アンテナ）
+  - 胴体: プレートアーマー（胸・肩・腰）
+  - 腕: 巨大な爪盾（ドラモンキラー）× 2
+  - 背中: 翼なし、背面に推進器風
+- エフェクト: オーラ（赤橙）、地面に亀裂
+- サイズ: 縦510px、横420px
+- 参考: メカゴジラ + ドラゴンナイト
+
+**状態バリエーション（ステータス）**:
+- `normal`: 通常直立、両腕の爪盾を構える
+- `happy`: 勝利ポーズ、片腕を上げる
+- `sick`: 膝をつき、オーラ消失
+- `angry`: 前傾姿勢、爪盾を交差、オーラ増強
+
+**アクションポーズ（Tier0+ 静止）**:
+- `eat`: 爪盾を外し食事（エネルギー補給）
+- `attack`: 爪盾を突き出し突進姿勢
+- `sleep`: 座り込み、ヘルム外した状態
+- `clean`: 装甲メンテナンス（工具持ち）
+
+ファイル命名例: `ultimate_wargreymon_normal.png`, `ultimate_wargreymon_attack.png`
+
+##### メタルガルルモン（究極獣）
+ファイル名例: `ultimate_metalgarurumon_normal.png`
+
+**デザイン指示**:
+- 体型: サイボーグ狼、四足
+- 色: 青、シルバー、黒
+- 装備:
+  - 頭部: メタルマスク、赤い複眼
+  - 体: 機械装甲（関節部分はメカニカル）
+  - 翼: 金属製ブレード型×2
+  - 武器: 背中にミサイルポッド
+- エフェクト: 冷気+電撃
+- サイズ: 縦450px、横500px
+- 参考: ロボット犬 + 戦闘機
+
+**状態バリエーション（ステータス）**:
+- `normal`: 四足直立、翼展開
+- `happy`: 遠吠え姿勢、冷気オーラ
+- `sick`: 伏せた姿勢、装甲くすむ
+- `angry`: 牙を剥き、ミサイルポッド展開
+
+**アクションポーズ（Tier0+ 静止）**:
+- `eat`: エネルギーカプセル摂取
+- `attack`: 飛び掛かる姿勢、爪を前に
+- `sleep`: 丸くなり翼を畳む
+- `clean`: 自己修復モード（スパーク表現）
+
+ファイル命名例: `ultimate_metalgarurumon_normal.png`, `ultimate_metalgarurumon_attack.png`
+
+**注意**: 残り7種（セラフィモン、デーモン、オメガモン等）は第2フェーズ以降。
+
+---
+
 ### 🚀 将来拡張: Animation Upgrade Roadmap（論理スロット指針）
 | ティア | 目的 | 追加スロット例 | 1状態あたりフレーム目安 | ペット1種あたり総フレーム例（4状態） |
 |-------|------|----------------|--------------------------|----------------------------------------|
@@ -288,37 +363,53 @@ slot eat    -> mouthOverlayCycle()
 
 ---
 
-## 🥈 **高優先**: UI部品（18枚）
+## 🥈 **高優先**: UI部品（8枚 / ボタンのみ）
 
-### B-1) アクションボタン（4種）
+### B-1) アクションボタン（4種 × 2状態 = 8枚）
 | ファイル名 | アイコン | 背景色 |
 |-----------|---------|-------|
 | `btn_feed.png` | 🍖肉アイコン | オレンジ円形 |
+| `btn_feed_pressed.png` | 同上 | 10%暗め |
 | `btn_play.png` | 🎮ゲームパッドアイコン | 青円形 |
+| `btn_play_pressed.png` | 同上 | 10%暗め |
 | `btn_clean.png` | 🧹ほうきアイコン | 緑円形 |
+| `btn_clean_pressed.png` | 同上 | 10%暗め |
 | `btn_medicine.png` | 💊薬アイコン | 赤円形 |
+| `btn_medicine_pressed.png` | 同上 | 10%暗め |
 
 **仕様**:
 - サイズ: 128×128px
 - 形: 完全な円
 - 内側アイコン: 白、64×64px
-- 押下状態: 同名`_pressed.png`（10%暗め）
+- 押下状態: 元画像を10%暗くした別ファイル
 
 ---
 
-### B-2) パネル・背景（10枚）
-| ファイル名 | サイズ | 用途 |
-|-----------|-------|------|
-| `panel_status.png` | 600×200px | ステータス表示背景 |
-| `panel_popup.png` | 800×600px | ポップアップ背景 |
-| `bg_room_day.png` | 1080×1920px | 昼の部屋 |
-| `bg_room_night.png` | 1080×1920px | 夜の部屋 |
-| `evolution_bg.png` | 1080×1920px | 進化時の光背景 |
-| `evolution_flash.png` | 1080×1920px | 白フラッシュ |
-| `bg_battle_field.png` | 1080×1920px | 草原バトル場 |
-| `bg_battle_cave.png` | 1080×1920px | 洞窟バトル場 |
-| `bg_evolution_tree.png` | 1080×1920px | 進化ツリー背景 |
-| `tombstone.png` | 400×600px | 墓標（死亡時） |
+### B-2) 背景・パネル画像（10種 × 各サイズ）
+
+**注意**: ステータスパネル、ポップアップ、カード枠の3つはFlutterコード実装のため画像不要。
+
+| ファイル名 | サイズ | デザイン指示 |
+|-----------|--------|-------------|
+| `bg_room_day.png` | 1080×1920px | 明るい部屋（窓から日光、木製家具、暖色系） |
+| `bg_room_night.png` | 1080×1920px | 夜の部屋（月明かり、ランプ、寒色系） |
+| `bg_battle_fire.png` | 1080×1920px | 炎属性バトル場（溶岩、赤橙グラデ） |
+| `bg_battle_water.png` | 1080×1920px | 水属性バトル場（海底、青緑グラデ） |
+| `bg_battle_nature.png` | 1080×1920px | 自然属性バトル場（森林、緑グラデ） |
+| `bg_evolution.png` | 1080×1920px | 進化演出用（光の渦、虹色グラデ） |
+| `panel_evolution_tree.png` | 800×1200px | 進化ツリー背景（ノード接続図ベース） |
+| `panel_gacha_bg.png` | 1080×1920px | ガチャ演出背景（キラキラ、金色） |
+| `ui_gravestone.png` | 256×256px | 墓標アイコン（🪦石碑+RIP文字） |
+| `ui_flash_white.png` | 1080×1920px | 白フラッシュ用（完全白、透過なし） |
+
+**仕様**:
+- フォーマット: PNG-24（透過あり、フラッシュ以外）
+- 解像度: 背景1080×1920px、パネル800×1200px、小物256×256px
+- 圧縮: 背景は200KB以下、パネル/小物は50KB以下推奨
+
+**Flutter実装との組み合わせ**:
+- 背景画像上にコード実装のステータスパネルやカードを重ねて表示
+- 進化演出時は`bg_evolution.png`を表示し、その上にアニメーションエフェクトを追加
 
 ---
 
@@ -354,26 +445,23 @@ slot eat    -> mouthOverlayCycle()
 
 ---
 
-## 🎭 低優先: エフェクト（48枚）
+## 🎭 エフェクト（第2フェーズ以降 / 暫定コード実装）
 
-### D-1) 感情エフェクト（128×128px）
-| ファイル名 | フレーム数 | 説明 |
-|-----------|-----------|------|
-| `effect_heart_{01-05}.png` | 5枚 | ピンクハート浮遊 |
-| `effect_anger_{01-03}.png` | 3枚 | 赤い怒りマーク |
-| `effect_sick.png` | 1枚 | 緑の病気マーク |
-| `effect_sleep_{01-03}.png` | 3枚 | ZZZアニメ |
-| `effect_dizzy_{01-03}.png` | 3枚 | 渦巻き目 |
-| `effect_shock.png` | 1枚 | 青ざめ |
+**第1フェーズではエフェクト画像は制作せず、Flutterコードで暫定実装します。**
 
-### D-2) バトルエフェクト（256×256px）
-| ファイル名 | フレーム数 | 説明 |
-|-----------|-----------|------|
-| `effect_sparkle_{01-08}.png` | 8枚 | キラキラ |
-| `effect_explosion_{01-06}.png` | 6枚 | 爆発 |
-| `effect_slash_{01-04}.png` | 4枚 | 斬撃 |
-| `effect_heal_{01-05}.png` | 5枚 | 回復光 |
-| `effect_poison_{01-03}.png` | 3枚 | 紫の毒 |
+### 暫定実装方針
+- **感情エフェクト**: 絵文字 + AnimatedOpacity（💗❤️😡😴💫🤢）
+- **バトルエフェクト**: CustomPaint + パーティクルシステム
+  - キラキラ: 白い円をランダム配置 + ScaleTransition
+  - 爆発: 円形グラデーション + 拡大アニメーション
+  - 斬撃: 白い線 + SlideTransition
+  - 回復: 緑の光粒子上昇
+  - 毒: 紫の泡浮遊
+
+### 将来拡張（第2フェーズ）
+画像エフェクトを追加する場合の仕様:
+- 感情: 128×128px、各3-5フレーム、計約16枚
+- バトル: 256×256px、各4-8フレーム、計約26枚
 
 ---
 
@@ -382,22 +470,27 @@ slot eat    -> mouthOverlayCycle()
 ```
 assets/
 ├── pets/
-│   ├── egg/egg_default.png
-│   ├── baby/genki/baby_genki_{normal,happy,sick,angry}.png
+│   ├── egg/
+│   │   └── egg_{idle,walk,eat,play,sleep,clean,attack}.png
+│   ├── baby/
+│   │   └── genki/baby_genki_{normal,happy,sick,angry,eat,attack,sleep,clean}.png
 │   ├── child/
-│   │   ├── warrior/child_warrior_{normal,happy,sick,angry}.png
-│   │   ├── beast/child_beast_{normal,happy,sick,angry}.png
+│   │   ├── warrior/child_warrior_{normal,happy,sick,angry,eat,attack,sleep,clean}.png
+│   │   ├── beast/child_beast_{normal,happy,sick,angry,eat,attack,sleep,clean}.png
 │   │   ├── angel/（第2フェーズ）
 │   │   └── demon/（第2フェーズ）
 │   ├── adult/
-│   │   ├── greymon/adult_greymon_{normal,happy,sick,angry}.png
-│   │   ├── garurumon/adult_garurumon_{normal,happy,sick,angry}.png
-│   │   ├── angemon/adult_angemon_{normal,happy,sick,angry}.png
+│   │   ├── greymon/adult_greymon_{normal,happy,sick,angry,eat,attack,sleep,clean}.png
+│   │   ├── garurumon/adult_garurumon_{normal,happy,sick,angry,eat,attack,sleep,clean}.png
+│   │   ├── angemon/adult_angemon_{normal,happy,sick,angry,eat,attack,sleep,clean}.png
 │   │   └── devimon/（第2フェーズ）
-│   └── ultimate/（第2フェーズ以降）
+│   └── ultimate/
+│       ├── wargreymon/ultimate_wargreymon_{normal,happy,sick,angry,eat,attack,sleep,clean}.png
+│       ├── metalgarurumon/ultimate_metalgarurumon_{normal,happy,sick,angry,eat,attack,sleep,clean}.png
+│       └── seraphimon/（第2フェーズ）
 ├── ui/{buttons,panels}/... （ゲージはコード生成）
 ├── items/{consumables,rare}/...
-└── effects/{emotions,battle}/...
+└── effects/ （第2フェーズ、暫定はコード実装）
 ```
 
 ---
@@ -424,16 +517,127 @@ assets/
 
 ---
 
+## 💻 Flutter実装サンプル参考（コード実装UI）
+
+以下の3つのUIコンポーネントは**画像不要**で、Flutterコードで実装済みです。
+HTMLプロトタイプコードを参考に実装されています。
+
+### 1. ステータスパネル (`PanelStatus`)
+**実装要素**:
+- サイズ: 600×200px（レスポンシブ対応）
+- 背景: 半透明白（opacity 85%）
+- 枠線: 2px、青→水色グラデーション（`border-image`相当をCustomPainterで実装）
+- 角装飾: 4隅に回路パターン風の装飾（10×10px、青色線）
+- ゲージ: 4本（お腹/機嫌/清潔/体力）、各々グラデーション塗り
+  - 80%以上: 緑系 `#4ade80 → #10b981`
+  - 40-79%: 黄色系 `#facc15 → #f59e0b`
+  - 1-39%: 赤系 `#f87171 → #ef4444`
+
+**Flutter実装ポイント**:
+```dart
+// グラデーション枠線
+CustomPaint(
+  painter: _GradientBorderPainter(
+    gradient: LinearGradient(colors: [Color(0xFF007BFF), Color(0xFF00C7FF)]),
+    strokeWidth: 2.0,
+  ),
+  child: Container(...),
+)
+
+// ゲージバー
+LinearProgressIndicator(
+  value: 0.8,
+  backgroundColor: Color(0xFFE5E7EB),
+  valueColor: AlwaysStoppedAnimation(Color(0xFF4ADE80)),
+)
+```
+
+### 2. ポップアップパネル (`PanelPopup`)
+**実装要素**:
+- サイズ: 800×600px（モーダル表示）
+- 背景: 白→薄青グラデーション（opacity 95%）
+- 外枠: 金色二重線（4px + 影）＋虹色装飾（✨絵文字アニメーション）
+- ヘッダー: 青→紫グラデーション、上部中央に金色エンブレム（🏆）
+- フッター: 金色二重境界線、ボタン2個（OK/キャンセル）
+
+**Flutter実装ポイント**:
+```dart
+// 金色枠線
+Container(
+  decoration: BoxDecoration(
+    border: Border.all(color: Color(0xFFFFC107), width: 4),
+    borderRadius: BorderRadius.circular(12),
+    boxShadow: [
+      BoxShadow(color: Colors.amber.withOpacity(0.5), blurRadius: 10),
+    ],
+  ),
+)
+
+// キラキラアニメーション
+AnimatedOpacity(
+  opacity: _twinkle ? 0.8 : 1.0,
+  duration: Duration(milliseconds: 1500),
+  child: Text('✨', style: TextStyle(fontSize: 24)),
+)
+```
+
+### 3. カード枠パネル (`PanelCardFrame`)
+**実装要素**:
+- サイズ: 280×400px
+- 背景: 属性別グラデーション（ダークブルー系など）
+- 外枠: 虹色グラデーション（4px）＋ホログラム風
+  - マゼンタ→シアン→イエロー→オレンジレッド
+- 画像エリア: 白い太枠（3px）＋内側に薄い影
+- フッター: ATK/DEF/SPDの3本ゲージ（4px高さ、色分け）
+- 角装飾: 4隅に回路パターン（8×8px）
+
+**Flutter実装ポイント**:
+```dart
+// 虹色枠線（ShaderMask使用）
+ShaderMask(
+  shaderCallback: (bounds) => LinearGradient(
+    colors: [Color(0xFFFF00FF), Color(0xFF00FFFF), Color(0xFFFFFF00), Color(0xFFFF4500)],
+  ).createShader(bounds),
+  child: Container(
+    decoration: BoxDecoration(
+      border: Border.all(width: 4, color: Colors.white),
+      borderRadius: BorderRadius.circular(16),
+    ),
+  ),
+)
+
+// ステータスゲージ（フッター）
+Row(
+  children: [
+    _StatBar(label: 'ATK', value: 0.8, color: Colors.red),
+    _StatBar(label: 'DEF', value: 0.65, color: Colors.blue),
+    _StatBar(label: 'SPD', value: 0.9, color: Colors.green),
+  ],
+)
+```
+
+**HTMLプロトタイプとの対応**:
+- CSS `linear-gradient` → Flutter `LinearGradient`
+- CSS `box-shadow` → Flutter `BoxShadow`
+- CSS `border-image` → Flutter `CustomPaint` with gradient painter
+- CSS `@keyframes` → Flutter `AnimationController` + `Tween`
+- CSS `::before/::after` → Flutter `Stack` + `Positioned`
+
+---
+
 ## 📊 制作優先度と枚数（第1フェーズ / Tier0+ 静止ポーズ拡張）
 
 | 優先度 | カテゴリ | 枚数 | 納期目安 |
-|--------|---------|------|---------|
-| 🔴最優先 | ペット本体（状態+アクション 53枚） | 53枚 | 5-7日 |
-| 🟠高 | UI部品（ボタン8+背景10） | 18枚 | 2-3日 |
+|--------|---------|------|----------|
+| 🔴最優先 | ペット本体（たまご7+幼年期8+成長期16+成熟期24+究極体16） | 71枚 | 7-10日 |
+| 🟠高 | UI部品（ボタン8+背景/パネル10） | 18枚 | 2-3日 |
 | 🟡中 | アイテムアイコン（消耗+レア） | 20枚 | 3-4日 |
-| 🟢低 | エフェクト（感情+バトル） | 42枚 | 4-6日 |
 
-**第1フェーズ合計: 約133枚**（ゲージ画像除く）
+**第1フェーズ合計: 約109枚**
+
+**注意**: 
+- ステータスパネル、ポップアップ、カード枠はFlutterコード実装のため画像不要
+- エフェクトは第2フェーズ（暫定はコード実装：絵文字+パーティクル）
 
 **第2フェーズ以降**: 残りモンスター種類、究極体、レアアイテム等を追加
 
@@ -469,7 +673,9 @@ assets/
 - **ゲージはFlutter製**: グラデーション＋角丸を完全制御、画像不要
 - **段階的拡張**: 第1フェーズで基本種のみ実装、後続で拡張
 
-**最優先発注**: たまご(5案) + 幼年期(4状態+4アクション=8) + 成長期2種(各8) + 成熟期3種(各8) の計53枚から開始してください！（静止画 Tier0+）
+**最優先発注**: たまご(7アクション) + 幼年期(4状態+4アクション=8) + 成長期2種(各8) + 成熟期3種(各8) の計55枚から開始してください！（静止画 Tier0+）
+
+**UI部品**: アクションボタン4種×2状態=8枚のみ。パネル・背景はFlutterウィジェット実装済みで画像不要。
 
 ---
 
@@ -563,44 +769,13 @@ assets/
 
 ---
 
-### A-5) 究極体（第2フェーズ: 258枚）
-**9種類 × 4状態 × 8アニメーション = 288枚**
-（第2フェーズでは主要3種の合計96枚、残り6種は第3フェーズ）
+### A-5追加) 究極体（第2フェーズ: 追加7種）
+**第2フェーズで追加する究極体（7種 × 8ポーズ = 56枚）**
 
-#### 主要3種（詳細指示）
-
-##### ウォーグレイモン（最強戦士）
-ファイル名例: `ultimate_wargreymon_normal_idle.png`
-
-**デザイン指示**:
-- 体型: 人型恐竜、頭身3.5:1、筋骨隆々
-- 色: 鮮やかなオレンジ、金属部分シルバー
-- 装備:
-  - 頭部: メタルヘルム（角状アンテナ）
-  - 胴体: プレートアーマー（胸・肩・腰）
-  - 腕: 巨大な爪盾（ドラモンキラー）× 2
-  - 背中: 翼なし、背面に推進器風
-- エフェクト: オーラ（赤橙）、地面に亀裂
-- サイズ: 縦510px、横420px
-- 参考: メカゴジラ + ドラゴンナイト
-
-##### メタルガルルモン（究極獣）
-ファイル名例: `ultimate_metalgarurumon_normal_idle.png`
-
-**デザイン指示**:
-- 体型: サイボーグ狼、四足
-- 色: 青、シルバー、黒
-- 装備:
-  - 頭部: メタルマスク、赤い複眼
-  - 体: 機械装甲（関節部分はメカニカル）
-  - 翼: 金属製ブレード型×2
-  - 武器: 背中にミサイルポッド
-- エフェクト: 冷気+電撃
-- サイズ: 縦450px、横500px
-- 参考: ロボット犬 + 戦闘機
+#### 主要種（詳細指示）
 
 ##### セラフィモン（最高天使）
-ファイル名例: `ultimate_seraphimon_normal_idle.png`
+ファイル名例: `ultimate_seraphimon_normal.png`
 
 **デザイン指示**:
 - 体型: 人型、頭身5:1、威厳ある

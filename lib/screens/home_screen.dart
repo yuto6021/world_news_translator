@@ -21,6 +21,7 @@ import 'gacha_screen.dart';
 import 'achievement_collection_screen.dart';
 import 'shop_screen.dart';
 import 'user_profile_screen.dart';
+import 'pet_care_screen.dart';
 import '../models/country.dart';
 import '../services/availability_service.dart';
 import '../widgets/country_tab_enhanced.dart';
@@ -416,6 +417,17 @@ class _HomeScreenState extends State<HomeScreen>
                                   builder: (context) => const SettingsScreen()),
                             ),
                             tooltip: 'アプリ設定',
+                          ),
+                          // ゲーム起動（右上）
+                          IconButton(
+                            icon: const Icon(Icons.sports_esports),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PetCareScreen(),
+                              ),
+                            ),
+                            tooltip: 'ペットケア',
                           ),
                           const SizedBox(width: 8),
                         ],

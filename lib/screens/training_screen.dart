@@ -231,7 +231,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
               size: 32,
             ),
             const SizedBox(width: 8),
-            Text(result.isPerfect ? 'パーフェクト！' : '特訓完了！'),
+            Text(result.isPerfect ? 'パーフェクト!' : '特訓完了!'),
           ],
         ),
         content: Column(
@@ -250,6 +250,39 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     style: TextStyle(
                         color: Colors.amber, fontWeight: FontWeight.bold)),
               ),
+            if (result.trainingStreak > 0) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange, width: 2),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('🔥', style: TextStyle(fontSize: 20)),
+                    const SizedBox(width: 8),
+                    Text(
+                      '連続${result.trainingStreak}日',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    if (result.trainingStreak >= 5)
+                      const Text(' (×2.0倍!)',
+                          style: TextStyle(fontSize: 14, color: Colors.orange))
+                    else if (result.trainingStreak >= 3)
+                      const Text(' (×1.5倍!)',
+                          style: TextStyle(fontSize: 14, color: Colors.orange)),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
         actions: [

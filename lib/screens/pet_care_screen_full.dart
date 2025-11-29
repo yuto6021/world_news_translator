@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/pet_image_resolver.dart';
 import '../services/pet_service.dart';
 import '../models/pet.dart';
+import '../models/skill.dart';
 import '../services/talent_discovery_service.dart';
 import '../services/intimacy_bond_service.dart';
 import 'battle_screen.dart';
@@ -10,6 +11,10 @@ import 'inventory_screen.dart';
 import 'training_screen.dart';
 import 'training_policy_screen.dart';
 import 'awakening_screen.dart';
+import 'detailed_stats_screen.dart';
+import 'equipment_screen.dart';
+import 'skill_tree_screen.dart';
+import 'pet_detail_screen.dart';
 
 class PetCareScreenFull extends StatefulWidget {
   const PetCareScreenFull({super.key});
@@ -243,7 +248,15 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
           ),
           IconButton(
             icon: const Icon(Icons.info_outline),
-            onPressed: () => _showStatsDialog(),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetailedStatsScreen(pet: _currentPet!),
+                ),
+              );
+            },
+            tooltip: '詳細統計',
           ),
           IconButton(
             icon: const Icon(Icons.pets),
@@ -610,6 +623,48 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
                             AwakeningScreen(pet: _currentPet!),
                       ),
                     ).then((_) => _loadPet());
+                  },
+                ),
+                _buildActionButton(
+                  '装備',
+                  Icons.shield,
+                  Colors.brown,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            EquipmentScreen(pet: _currentPet!),
+                      ),
+                    ).then((_) => _loadPet());
+                  },
+                ),
+                _buildActionButton(
+                  'スキル',
+                  Icons.auto_awesome,
+                  Colors.cyan,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            SkillTreeScreen(pet: _currentPet!),
+                      ),
+                    ).then((_) => _loadPet());
+                  },
+                ),
+                _buildActionButton(
+                  '詳細',
+                  Icons.info,
+                  Colors.green,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            PetDetailScreen(pet: _currentPet!),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -988,7 +1043,7 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${_currentPet!.nickname}の隠された才能が明らかになりました！',
+                '${_currentPet!.name}の隠された才能が明らかになりました！',
                 style:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
@@ -1125,7 +1180,14 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
 
     final bondLevel = IntimacyBondService.bondLevels[newLevel - 1];
     final bonus = IntimacyBondService.getBondBonus(_currentPet!.intimacy);
-    final newSkills = IntimacyBondService.getUnlockedSkillsForLevel(newLevel);
+    final allSkills =
+        IntimacyBondService.getUnlockedSkills(_currentPet!.intimacy);
+    // 前回の絆レベルでのスキルを計算（レベル1:20, 2:40, 3:60, 4:80, 5:100）
+    final prevIntimacy = _lastBondLevel > 0 ? (_lastBondLevel * 20) : 0;
+    final prevSkills = prevIntimacy > 0
+        ? IntimacyBondService.getUnlockedSkills(prevIntimacy)
+        : <String>[];
+    final newSkills = allSkills.where((s) => !prevSkills.contains(s)).toList();
 
     if (!mounted) return;
 
@@ -1207,23 +1269,27 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              ...newSkills.map((skill) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      children: [
-                        Icon(Icons.auto_awesome,
-                            size: 20, color: Colors.amber.shade700),
-                        const SizedBox(width: 8),
-                        Text(
-                          skill.name,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
+              ...newSkills.map((skillId) {
+                final skill = Skill.getSkillById(skillId);
+                if (skill == null) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_awesome,
+                          size: 20, color: Colors.amber.shade700),
+                      const SizedBox(width: 8),
+                      Text(
+                        skill.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
-                    ),
-                  )),
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ],
           ],
         ),

@@ -88,7 +88,7 @@ class _TrainingPolicyScreenState extends State<TrainingPolicyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.pet.nickname}の育成方針'),
+        title: Text('${widget.pet.name}の育成方針'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

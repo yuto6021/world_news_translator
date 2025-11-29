@@ -32,6 +32,11 @@ class PetService {
       moodIncrease = 10;
     }
 
+    // ケアミス判定（空腹10未満で餌やり = 過剰）
+    if (pet.hunger < 10) {
+      pet.careMistakes = (pet.careMistakes + 1).clamp(0, 999);
+    }
+
     pet.hunger = (pet.hunger + hungerIncrease).clamp(0, 100);
     pet.mood = (pet.mood + moodIncrease).clamp(0, 100);
     pet.dirty = (pet.dirty + dirtyIncrease).clamp(0, 100);
@@ -39,6 +44,9 @@ class PetService {
 
     // 親密度+1
     pet.intimacy = (pet.intimacy + 1).clamp(0, 100);
+
+    // ケア品質更新
+    _updateCareQuality(pet);
 
     await pet.save();
   }
@@ -70,10 +78,18 @@ class PetService {
     final pet = _box!.get(petId);
     if (pet == null || !pet.isAlive) return;
 
+    // ケアミス判定（汚れ90超過で放置）
+    if (pet.dirty > 90) {
+      pet.careMistakes = (pet.careMistakes + 1).clamp(0, 999);
+    }
+
     pet.dirty = 0;
     pet.mood = (pet.mood + 15).clamp(0, 100);
     pet.lastCleaned = DateTime.now();
     pet.cleanCount += 1;
+
+    // ケア品質更新
+    _updateCareQuality(pet);
 
     await pet.save();
   }
@@ -91,6 +107,51 @@ class PetService {
     }
 
     await pet.save();
+  }
+
+  /// ケア品質を更新
+  static void _updateCareQuality(PetModel pet) {
+    // ケアミス数に基づいてケア品質を計算
+    pet.careQuality = (100 - (pet.careMistakes * 5)).clamp(0, 100);
+  }
+
+  /// 性格を決定（年齢3日で確定）
+  static void _determinePersonality(PetModel pet) {
+    if (pet.truePersonality != null) return; // すでに決定済み
+
+    final playCount = pet.playCount;
+    final cleanCount = pet.cleanCount;
+    final battleCount = pet.wins + pet.losses;
+    final mistakes = pet.careMistakes;
+
+    // 優先順位: ミス多→戦闘多→遊び多→掃除多
+    if (mistakes >= 10) {
+      pet.truePersonality = '臆病'; // 全ステ-5%
+    } else if (battleCount >= 20) {
+      pet.truePersonality = '勇敢'; // SPD+10%
+    } else if (playCount >= 30) {
+      pet.truePersonality = 'わんぱく'; // ATK+10%
+    } else if (cleanCount >= 25) {
+      pet.truePersonality = 'おとなしい'; // DEF+10%
+    } else {
+      pet.truePersonality = 'ふつう'; // ボーナスなし
+    }
+  }
+
+  /// 性格によるステータス補正を取得
+  static Map<String, double> getPersonalityBonus(String? personality) {
+    switch (personality) {
+      case 'わんぱく':
+        return {'attack': 1.1};
+      case 'おとなしい':
+        return {'defense': 1.1};
+      case '勇敢':
+        return {'speed': 1.1};
+      case '臆病':
+        return {'attack': 0.95, 'defense': 0.95, 'speed': 0.95};
+      default:
+        return {};
+    }
   }
 
   // === ゲージ自動更新 ===
@@ -232,7 +293,11 @@ class PetService {
     if (pet.stage == 'egg' && pet.age >= 1) return true;
 
     // 幼年期 → 成長期（レベル10以上、3日経過）
-    if (pet.stage == 'baby' && pet.level >= 10 && pet.age >= 3) return true;
+    if (pet.stage == 'baby' && pet.level >= 10 && pet.age >= 3) {
+      // 年齢3日で性格決定
+      _determinePersonality(pet);
+      return true;
+    }
 
     // 成長期 → 成熟期（レベル30以上、6日経過、条件達成）
     if (pet.stage == 'child' && pet.level >= 30 && pet.age >= 6) {
@@ -263,24 +328,36 @@ class PetService {
     // エンジェモン条件: 国際政治記事30本 + 病気0回
     if (politicsArticles >= 30 && !pet.isSick) return true;
 
-    // デビモン条件: 放置（機嫌20以下）
-    if (pet.mood <= 20) return true;
+    // デビモン条件: 放置（機嫌20以下 or ケア品質50以下）
+    if (pet.mood <= 20 || pet.careQuality <= 50) return true;
 
     return false;
   }
 
   /// 究極進化条件チェック
   static bool _checkUltimateEvolutionConditions(PetModel pet) {
-    // ウォーグレイモン: グレイモン + 親密度100 + 対戦50勝
-    if (pet.species == 'greymon' && pet.intimacy >= 100 && pet.wins >= 50)
-      return true;
+    // ケア品質による分岐
+    final highQuality = pet.careQuality >= 80;
+    final lowQuality = pet.careQuality <= 50;
 
-    // メタルガルルモン: ガルルモン + 全ジャンル記事50本
-    if (pet.species == 'garurumon') {
+    // ウォーグレイモン: グレイモン + 親密度100 + 対戦50勝 + 高品質ケア
+    if (pet.species == 'greymon' &&
+        pet.intimacy >= 100 &&
+        pet.wins >= 50 &&
+        highQuality) return true;
+
+    // スカルグレイモン: グレイモン + 低品質ケア
+    if (pet.species == 'greymon' && lowQuality) return true;
+
+    // メタルガルルモン: ガルルモン + 全ジャンル記事50本 + 高品質ケア
+    if (pet.species == 'garurumon' && highQuality) {
       final allGenresAbove50 =
           pet.genreStats.values.every((count) => count >= 50);
       if (allGenresAbove50) return true;
     }
+
+    // ダークドラモン: ガルルモン + 低品質ケア
+    if (pet.species == 'garurumon' && lowQuality) return true;
 
     return false;
   }
@@ -307,15 +384,26 @@ class PetService {
         evolutions.add('greymon');
       if (sportsArticles >= 30 && pet.mood >= 80) evolutions.add('garurumon');
       if (politicsArticles >= 30 && !pet.isSick) evolutions.add('angemon');
-      if (pet.mood <= 20) evolutions.add('devimon');
+      if (pet.mood <= 20 || pet.careQuality <= 50) evolutions.add('devimon');
     } else if (pet.stage == 'adult' && pet.level >= 70) {
-      if (pet.species == 'greymon' && pet.intimacy >= 100 && pet.wins >= 50) {
-        evolutions.add('wargreymon');
+      final highQuality = pet.careQuality >= 80;
+      final lowQuality = pet.careQuality <= 50;
+
+      if (pet.species == 'greymon') {
+        if (pet.intimacy >= 100 && pet.wins >= 50 && highQuality) {
+          evolutions.add('wargreymon');
+        } else if (lowQuality) {
+          evolutions.add('skullgreymon'); // 低品質進化
+        }
       }
       if (pet.species == 'garurumon') {
         final allGenresAbove50 =
             pet.genreStats.values.every((count) => count >= 50);
-        if (allGenresAbove50) evolutions.add('metalgarurumon');
+        if (allGenresAbove50 && highQuality) {
+          evolutions.add('metalgarurumon');
+        } else if (lowQuality) {
+          evolutions.add('darkdramon'); // 低品質進化
+        }
       }
     }
 
@@ -534,6 +622,57 @@ class PetService {
     if (pet == null) return;
 
     pet.skills = skills;
+    await pet.save();
+  }
+
+  /// ペットの任意フィールドを更新（汎用メソッド）
+  static Future<void> updatePet(
+      String petId, Map<String, dynamic> updates) async {
+    await init();
+    final pet = _box!.get(petId);
+    if (pet == null) return;
+
+    updates.forEach((key, value) {
+      switch (key) {
+        case 'skillPoints':
+          pet.skillPoints = value as int;
+          break;
+        case 'skillMastery':
+          pet.skillMastery = Map<String, int>.from(value as Map);
+          break;
+        case 'skills':
+          pet.skills = List<String>.from(value as List);
+          break;
+        case 'careMistakes':
+          pet.careMistakes = value as int;
+          break;
+        case 'careQuality':
+          pet.careQuality = value as int;
+          break;
+        case 'discipline':
+          pet.discipline = value as int;
+          break;
+        case 'truePersonality':
+          pet.truePersonality = value as String?;
+          break;
+        case 'trainingStreak':
+          pet.trainingStreak = value as int;
+          break;
+        case 'lastTrainingDate':
+          pet.lastTrainingDate = value as DateTime?;
+          break;
+        case 'equippedWeapon':
+          pet.equippedWeapon = value as String?;
+          break;
+        case 'equippedArmor':
+          pet.equippedArmor = value as String?;
+          break;
+        case 'equippedAccessory':
+          pet.equippedAccessory = value as String?;
+          break;
+      }
+    });
+
     await pet.save();
   }
 

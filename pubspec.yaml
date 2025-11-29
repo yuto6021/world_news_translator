@@ -98,6 +98,12 @@ flutter:
     - assets/items/consumables/
     - assets/items/rare/
     - assets/items/equipment/
+    # 素材画像（20枚）
+    - assets/materials/ores/
+    - assets/materials/beast/
+    - assets/materials/dragon/
+    - assets/materials/magical/
+    - assets/materials/common/
     # エネミー画像（20枚+シークレット）
     - assets/enemies/
     - assets/enemies/boss/

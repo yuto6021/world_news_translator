@@ -109,7 +109,7 @@ class _AwakeningScreenState extends State<AwakeningScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${widget.pet.nickname}の真の力を解放',
+                        '${widget.pet.name}の真の力を解放',
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.white.withOpacity(0.9),
@@ -376,7 +376,7 @@ class _AwakeningScreenState extends State<AwakeningScreen>
     await _showAwakeningAnimation();
 
     // 覚醒実行
-    await AwakeningService.executeAwakening(widget.pet);
+    await AwakeningService.executeAwakening(widget.pet.id);
 
     // ペット更新
     await PetService.updatePetStats(

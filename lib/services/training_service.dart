@@ -56,11 +56,17 @@ class TrainingService {
       throw Exception('コインが不足しています');
     }
 
+    // 連続特訓ボーナスを計算
+    final streakBonus = await _updateTrainingStreak(petId);
+
     // ミニゲームスコアから成長値を計算
     final baseGain = config['baseGain'] as int;
     final maxGain = config['maxGain'] as int;
     final scoreRatio = miniGameScore / 100.0;
-    final statGain = (baseGain + (maxGain - baseGain) * scoreRatio).round();
+    var statGain = (baseGain + (maxGain - baseGain) * scoreRatio).round();
+
+    // 連続特訓ボーナス適用
+    statGain = (statGain * streakBonus).round();
 
     // ボーナス判定（パーフェクトで追加ボーナス）
     final bonusGain = miniGameScore >= 95 ? 2 : 0;
@@ -89,12 +95,17 @@ class TrainingService {
     // 特訓回数記録
     await _recordTraining(petId, trainingType, totalGain);
 
+    // 最新のストリーク情報を取得
+    final updatedPet = await PetService.getPetById(petId);
+    final currentStreak = updatedPet?.trainingStreak ?? 0;
+
     return TrainingResult(
       trainingType: trainingType,
       statGain: totalGain,
       score: miniGameScore,
       isPerfect: miniGameScore >= 95,
       bonusGain: bonusGain,
+      trainingStreak: currentStreak,
     );
   }
 
@@ -203,6 +214,51 @@ class TrainingService {
     if (avgTime < 600) return 60;
     return 50;
   }
+
+  /// 連続特訓ボーナスを計算・更新
+  static Future<double> _updateTrainingStreak(String petId) async {
+    final pet = await PetService.getPetById(petId);
+    if (pet == null) return 1.0;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    int currentStreak = pet.trainingStreak;
+    DateTime? lastTraining = pet.lastTrainingDate;
+
+    if (lastTraining != null) {
+      final lastDay =
+          DateTime(lastTraining.year, lastTraining.month, lastTraining.day);
+      final daysDiff = today.difference(lastDay).inDays;
+
+      if (daysDiff == 1) {
+        // 連続
+        currentStreak++;
+      } else if (daysDiff > 1) {
+        // 途切れた
+        currentStreak = 1;
+      }
+      // daysDiff == 0 は同日内なのでストリークは変わらない
+    } else {
+      currentStreak = 1; // 初回
+    }
+
+    // 連続日数に応じたボーナス倍率
+    double bonus = 1.0;
+    if (currentStreak >= 5) {
+      bonus = 2.0;
+    } else if (currentStreak >= 3) {
+      bonus = 1.5;
+    }
+
+    // ペット情報更新
+    await PetService.updatePet(petId, {
+      'trainingStreak': currentStreak,
+      'lastTrainingDate': now,
+    });
+
+    return bonus;
+  }
 }
 
 /// 特訓結果モデル
@@ -212,6 +268,7 @@ class TrainingResult {
   final int score; // ミニゲームスコア
   final bool isPerfect; // パーフェクト達成
   final int bonusGain; // ボーナス上昇値
+  final int trainingStreak; // 連続特訓日数
 
   TrainingResult({
     required this.trainingType,
@@ -219,6 +276,7 @@ class TrainingResult {
     required this.score,
     required this.isPerfect,
     required this.bonusGain,
+    this.trainingStreak = 0,
   });
 
   String get typeName {

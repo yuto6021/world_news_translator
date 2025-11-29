@@ -126,6 +126,44 @@ class PetModel extends HiveObject {
   @HiveField(37)
   bool talentDiscovered; // 才能が開花したか
 
+  // スキル習得システム（DQ風）
+  @HiveField(38)
+  int skillPoints; // スキルポイント（バトル勝利で獲得）
+
+  @HiveField(39)
+  Map<String, int> skillMastery; // スキル使用回数 {"skill_id": 回数}
+
+  // ケア品質システム（たまごっち風）
+  @HiveField(40)
+  int careMistakes; // ケアミス回数（お腹空かせすぎ、不衛生放置など）
+
+  @HiveField(41)
+  int careQuality; // ケア品質スコア（0-100、進化に影響）
+
+  // しつけ・性格システム（たまごっち風）
+  @HiveField(42)
+  int discipline; // しつけ度（0-100、コマンド従順度）
+
+  @HiveField(43)
+  String? truePersonality; // 真の性格（わんぱく/おとなしい/勇敢/臆病）
+
+  // 連続特訓記録
+  @HiveField(44)
+  int trainingStreak; // 連続特訓日数
+
+  @HiveField(45)
+  DateTime? lastTrainingDate; // 最終特訓日
+
+  // 装備システム（DQ風）
+  @HiveField(46)
+  String? equippedWeapon; // 装備中の武器ID
+
+  @HiveField(47)
+  String? equippedArmor; // 装備中の防具ID
+
+  @HiveField(48)
+  String? equippedAccessory; // 装備中のアクセサリーID
+
   PetModel({
     required this.id,
     required this.name,
@@ -165,6 +203,17 @@ class PetModel extends HiveObject {
     this.talentDefense = 50,
     this.talentSpeed = 50,
     this.talentDiscovered = false,
+    this.skillPoints = 0,
+    this.skillMastery = const {},
+    this.careMistakes = 0,
+    this.careQuality = 100,
+    this.discipline = 50,
+    this.truePersonality,
+    this.trainingStreak = 0,
+    this.lastTrainingDate,
+    this.equippedWeapon,
+    this.equippedArmor,
+    this.equippedAccessory,
   });
 
   // ファクトリーコンストラクタ: 新しいたまごを作成
@@ -222,6 +271,17 @@ class PetModel extends HiveObject {
       talentDefense: talentB,
       talentSpeed: talentC,
       talentDiscovered: false,
+      skillPoints: 0,
+      skillMastery: {},
+      careMistakes: 0,
+      careQuality: 100,
+      discipline: 50,
+      truePersonality: null,
+      trainingStreak: 0,
+      lastTrainingDate: null,
+      equippedWeapon: null,
+      equippedArmor: null,
+      equippedAccessory: null,
     );
   }
 

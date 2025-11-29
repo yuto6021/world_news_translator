@@ -726,6 +726,60 @@ slot eat    -> mouthOverlayCycle()
 | `item_exp_crown.png` | 金の王冠、キラキラ | 獲得経験値+50% |
 
 **用途**: ペットに装備させて能力強化。バトルで有利に。
+### C-3拡張) 装備カテゴリ拡張（剣・盾・鎧・杖 など）
+
+ユーザー要望に基づき、装備ラインナップを拡張します。既存命名規約に従い、`assets/items/equipment/`配下に追加してください。
+
+#### 武器（剣）
+- `item_sword_bronze.png`（ブロンズソード / 攻撃+10%）
+- `item_sword_iron.png`（アイアンソード / 攻撃+15%）
+- `item_sword_dragon.png`（ドラゴンソード / 攻撃+25%、炎相性ボーナス）
+
+#### 盾（シールド）
+- `item_shield_wood.png`（木の盾 / 防御+10%）
+- `item_shield_iron.png`（鉄の盾 / 防御+15%）
+- `item_shield_dragon.png`（ドラゴンシールド / 防御+25%、炎耐性）
+
+#### 鎧（アーマー）
+- `item_armor_leather.png`（レザーメイル / 最大HP+10%）
+- `item_armor_chain.png`（チェインメイル / 最大HP+20%）
+- `item_armor_paladin.png`（パラディンアーマー / 最大HP+25%、光耐性）
+
+#### 杖（ロッド）
+- `item_staff_oak.png`（オークスタッフ / サポート効果強化+10%）
+- `item_staff_mage.png`（メイジスタッフ / スキル威力+15%）
+- `item_staff_seraph.png`（セラフロッド / スキル威力+25%、光相性ボーナス）
+
+#### 付加装備（アクセサリ）
+- `item_ring_crit.png`（クリティカルリング / クリ率+10%）
+- `item_amulet_guard.png`（ガードアミュレット / 防御+10%）
+- `item_boots_swift.png`（スウィフトブーツ / 素早さ+15%）
+
+**技術仕様**
+- サイズ: 256×256px、透過PNG、輪郭線2px
+- スタイル: アイテムは俯瞰寄りの単品描写、背景透過
+- 圧縮目標: 50KB以下
+
+**命名規約（装備）**
+- プレフィックス: `item_`
+- 構造: `item_{category}_{name}.png`
+- 例: `item_sword_dragon.png`, `item_armor_paladin.png`
+
+---
+
+## 🏷️ 命名規約まとめ（カテゴリ別）
+
+- 装備: `item_{category}_{name}.png`（例: `item_sword_iron.png`）
+- 素材: `{group}_{specific}.png`（例: `dragon_scale.png`, `ore_fire_crystal.png`）
+- スキルアイコン（将来追加）: `skill_{element}_{name}.png`（例: `skill_fire_blaze.png`）
+- 属性アイコン: `icon_element_{element}.png`（例: `icon_element_light.png`）
+- 状態アイコン: `icon_status_{state}.png`（例: `icon_status_sick.png`）
+- UIボタン: `btn_{action}_{state}.png`（例: `btn_feed_pressed.png`）
+- 敵: `enemy_{type}_{state}.png`（例: `enemy_dragon_attack.png`）
+- ペット本体: `{stage}_{species}_{state or action}.png`（例: `adult_greymon_attack.png`）
+
+拡張子はすべて `.png`、小文字スネークケースで統一。
+
 
 ### C-4) 推奨追加アイテム（今後の拡張用）
 
@@ -980,6 +1034,135 @@ assets/
 ```
 
 ---
+
+## 🧰 クラフト素材画像（追加指示）
+
+ゲーム内クラフト/装備レシピで用いる「素材」画像の正式仕様を定義します。既存の装備・レアアイテムと重複しないよう、素材は明確な形状で抽象化してください。
+
+### 素材カテゴリとファイル一覧（256×256px / 透過PNG）
+- `materials/ores/`
+  - `ore_fire_crystal.png`（赤橙の結晶／炎属性）
+  - `ore_water_pearl.png`（青い真珠／水属性）
+  - `ore_nature_leafstone.png`（葉の化石／草属性）
+  - `ore_rock_fragment.png`（灰茶の鉱石片／岩属性）
+  - `ore_light_shard.png`（白金の光欠片／光属性）
+  - `ore_dark_shard.png`（黒紫の闇欠片／闇属性）
+
+- `materials/beast/`
+  - `beast_fang.png`（獣の牙）
+  - `beast_claw.png`（鋭い爪）
+  - `beast_hide.png`（毛皮）
+
+- `materials/dragon/`
+  - `dragon_scale.png`（ドラゴンの鱗）
+  - `dragon_bone.png`（大きな骨）
+  - `dragon_flame_sac.png`（炎袋）
+
+- `materials/magical/`
+  - `magic_core_small.png`（小型魔力核）
+  - `magic_core_medium.png`（中型魔力核）
+  - `magic_core_large.png`（大型魔力核）
+  - `enchanted_thread.png`（魔法糸）
+
+- `materials/common/`
+  - `wood_plank.png`（木板）
+  - `iron_ingot.png`（鉄インゴット）
+  - `leather_strip.png`（革ひも）
+  - `rune_stone.png`（ルーン石）
+
+### スタイル/技術仕様（素材）
+- フォーマット: PNG-24 透過必須
+- サイズ: 256×256px（被写体は中心寄せ、余白16px）
+- 輪郭線: 2pxダークで統一
+- 圧縮目標: 40–60KB/枚
+- 背景: 完全透過、影は半透明で軽め（Opacity≤30%）
+
+### 用途（コード連携）
+- 装備レシピUI・素材所持一覧・ドロップ表示に使用
+- 既実装の敵タイプ別ドロップに対応（例: ドラゴン→`dragon_scale.png`）
+
+---
+
+## 📘 pubspec.yaml 追記（アセット登録）
+
+以下のディレクトリを一括登録します。追加後は`flutter pub get`を実行してください。
+
+```yaml
+flutter:
+  assets:
+    - assets/pets/
+    - assets/enemies/
+    - assets/ui/buttons/
+    - assets/ui/backgrounds/
+    - assets/ui/decorations/
+    - assets/ui/icons/elements/
+    - assets/ui/icons/status/
+    - assets/ui/icons/misc/
+    - assets/ui/misc/
+    - assets/items/consumables/
+    - assets/items/rare/
+    - assets/items/equipment/
+    - assets/effects/evolution/
+    - assets/gacha/
+    - assets/materials/ores/
+    - assets/materials/beast/
+    - assets/materials/dragon/
+    - assets/materials/magical/
+    - assets/materials/common/
+```
+
+---
+
+## 🔄 画像優先表示ロジック（実装方針）
+
+UIは「画像が存在すれば画像優先、なければ絵文字フォールバック」を採用します。既存の装備/クラフト画面に以下のパターンで導入してください。
+
+### Dart擬似コード
+```dart
+Widget buildItemThumb(String assetPath, {String? emojiFallback}) {
+  return FutureBuilder<bool>(
+    future: _assetExists(assetPath),
+    builder: (context, snapshot) {
+      final exists = snapshot.data ?? false;
+      if (exists) {
+        return Image.asset(assetPath, width: 64, height: 64, fit: BoxFit.contain);
+      }
+      return Text(emojiFallback ?? '🧩', style: const TextStyle(fontSize: 32));
+    },
+  );
+}
+
+Future<bool> _assetExists(String path) async {
+  try {
+    await rootBundle.load(path);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+```
+
+### 適用箇所
+- `lib/screens/equipment_screen.dart`（インベントリ/レシピ一覧）
+- `lib/screens/skill_tree_screen.dart`（スキルアイコン）
+- `lib/screens/pet_detail_screen.dart`（属性/状態アイコン）
+- バトル/ドロップ表示（敵タイプ別素材）
+
+---
+
+## 🧪 導入手順（チェックリスト）
+- [ ] 素材画像を所定フォルダへ配置（上記命名厳守）
+- [ ] `pubspec.yaml`へディレクトリを追記
+- [ ] `powershell`: `flutter clean; flutter pub get; flutter run`
+- [ ] 画像優先ロジックを装備/クラフト/バトルUIに適用
+- [ ] 落ちないパスは絵文字フォールバックで視認性を確認
+
+---
+
+## 📎 相互参照（コード）
+- 敵別素材ドロップ: `battle_screen.dart` の `_getEnemyDropMaterial(...)`
+- 装備/クラフトサービス: `lib/services/equipment_service.dart`
+- 画面遷移元: `pet_care_screen_full.dart`（ボタン追加済み）
 
 ## ✅ 納品チェックリスト
 

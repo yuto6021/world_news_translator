@@ -47,19 +47,45 @@ class WeatherCycleService {
   static Map<String, double> getWeatherStatBonus(Weather weather) {
     switch (weather) {
       case Weather.sunny:
-        return {'attack': 1.1, 'speed': 1.1}; // 攻撃・速度+10%
+        return {
+          'attack': 1.1,
+          'speed': 1.1,
+          'fire': 1.5,
+          'water': 0.75
+        }; // 火炎強化、水弱体化
       case Weather.rainy:
-        return {'defense': 1.15, 'hp': 1.1}; // 防御+15%, HP+10%
+        return {
+          'defense': 1.15,
+          'hp': 1.1,
+          'water': 1.5,
+          'fire': 0.75,
+          'electric': 1.3
+        }; // 水・電気強化、火弱体化
       case Weather.cloudy:
-        return {'exp': 1.05}; // 経験値+5%
+        return {'exp': 1.05, 'normal': 1.2}; // ノーマル技威力UP
       case Weather.stormy:
-        return {'attack': 1.2, 'critRate': 1.3}; // 攻撃+20%, クリティカル+30%
+        return {
+          'attack': 1.2,
+          'critRate': 1.3,
+          'electric': 1.5,
+          'ice': 0.8
+        }; // 電気強化、氷弱体化
       case Weather.clear:
-        return {'dropRate': 1.15}; // ドロップ率+15%
+        return {'dropRate': 1.15, 'light': 1.3}; // 光属性強化
       case Weather.sunset:
-        return {'intimacy': 1.2, 'mood': 1.1}; // 親密度+20%, 機嫌+10%
+        return {
+          'intimacy': 1.2,
+          'mood': 1.1,
+          'fire': 1.2,
+          'dark': 1.2
+        }; // 火・闇属性微強化
       case Weather.starry:
-        return {'luck': 1.3, 'shiny': 1.5}; // 運+30%, レア率+50%
+        return {
+          'luck': 1.3,
+          'shiny': 1.5,
+          'light': 1.4,
+          'dark': 1.4
+        }; // 光・闇属性強化
     }
   }
 
@@ -67,17 +93,22 @@ class WeatherCycleService {
   static Map<String, double> getTimeStatBonus(TimeOfDay time) {
     switch (time) {
       case TimeOfDay.dawn:
-        return {'stamina': 1.1, 'healing': 1.2}; // 体力+10%, 回復+20%
+        return {'stamina': 1.1, 'healing': 1.2, 'light': 1.2}; // 光属性強化
       case TimeOfDay.morning:
-        return {'exp': 1.1, 'mood': 1.1}; // 経験値+10%, 機嫌+10%
+        return {'exp': 1.1, 'mood': 1.1, 'normal': 1.15}; // ノーマル技強化
       case TimeOfDay.afternoon:
-        return {'coins': 1.1}; // コイン+10%
+        return {'coins': 1.1, 'fire': 1.2}; // 火属性強化
       case TimeOfDay.evening:
-        return {'intimacy': 1.15}; // 親密度+15%
+        return {'intimacy': 1.15, 'grass': 1.2}; // 草属性強化
       case TimeOfDay.night:
-        return {'defense': 1.1, 'evasion': 1.2}; // 防御+10%, 回避+20%
+        return {'defense': 1.1, 'evasion': 1.2, 'dark': 1.3}; // 闇属性強化
       case TimeOfDay.midnight:
-        return {'darkPower': 1.3, 'rareEnemy': 1.5}; // 闇属性+30%, レア敵+50%
+        return {
+          'darkPower': 1.3,
+          'rareEnemy': 1.5,
+          'dark': 1.5,
+          'light': 0.7
+        }; // 闇大幅強化、光弱体化
     }
   }
 

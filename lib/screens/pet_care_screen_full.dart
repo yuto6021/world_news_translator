@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import '../utils/pet_image_resolver.dart';
 import '../services/pet_service.dart';
 import '../models/pet.dart';
+import '../services/talent_discovery_service.dart';
+import '../services/intimacy_bond_service.dart';
 import 'battle_screen.dart';
 import 'item_shop_screen.dart';
 import 'inventory_screen.dart';
+import 'training_screen.dart';
+import 'training_policy_screen.dart';
+import 'awakening_screen.dart';
 
 class PetCareScreenFull extends StatefulWidget {
   const PetCareScreenFull({super.key});
@@ -46,6 +51,22 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
         _currentPet = updatedPet;
         _loading = false;
       });
+
+      // 才能発見チェック
+      if (updatedPet != null && !updatedPet.talentDiscovered) {
+        final canDiscover =
+            await TalentDiscoveryService.checkDiscoveryConditions(updatedPet);
+        if (canDiscover) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) _showTalentDiscoveryDialog();
+          });
+        }
+      }
+
+      // 絆レベルアップチェック
+      if (updatedPet != null) {
+        await _checkBondLevelUp(updatedPet);
+      }
     } else {
       setState(() {
         _currentPet = null;
@@ -545,6 +566,52 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
                     );
                   },
                 ),
+                _buildActionButton(
+                  '特訓',
+                  Icons.fitness_center,
+                  Colors.amber,
+                  () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TrainingScreen(pet: _currentPet!),
+                      ),
+                    );
+
+                    // 特訓後に才能発見記録
+                    await TalentDiscoveryService.recordTraining(
+                        _currentPet!.id);
+                    await _loadPet();
+                  },
+                ),
+                _buildActionButton(
+                  '育成方針',
+                  Icons.trending_up,
+                  Colors.indigo,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            TrainingPolicyScreen(pet: _currentPet!),
+                      ),
+                    );
+                  },
+                ),
+                _buildActionButton(
+                  '覚醒',
+                  Icons.auto_awesome,
+                  Colors.purple,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            AwakeningScreen(pet: _currentPet!),
+                      ),
+                    ).then((_) => _loadPet());
+                  },
+                ),
               ],
             ),
           ],
@@ -873,5 +940,322 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
       'ultimate': '⚡究極体',
     };
     return labels[stage] ?? stage;
+  }
+
+  // 才能発見ダイアログ
+  Future<void> _showTalentDiscoveryDialog() async {
+    if (_currentPet == null || _currentPet!.talentDiscovered) return;
+
+    await TalentDiscoveryService.discoverTalent(_currentPet!);
+    final talentInfo = TalentDiscoveryService.getTalentInfo(_currentPet!);
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.amber.shade600, Colors.orange.shade600],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.auto_awesome, color: Colors.white, size: 32),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '才能発見！',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${_currentPet!.nickname}の隠された才能が明らかになりました！',
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 20),
+              _buildTalentCard(
+                '攻撃才能',
+                talentInfo['attack'],
+                Icons.flash_on,
+                Colors.red,
+              ),
+              const SizedBox(height: 12),
+              _buildTalentCard(
+                '防御才能',
+                talentInfo['defense'],
+                Icons.shield,
+                Colors.blue,
+              ),
+              const SizedBox(height: 12),
+              _buildTalentCard(
+                '速度才能',
+                talentInfo['speed'],
+                Icons.speed,
+                Colors.green,
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade700),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.amber.shade700),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        '才能値が高いほど、レベルアップ時の成長率が向上します',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber.shade700,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('素晴らしい！', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTalentCard(
+    String label,
+    Map<String, dynamic> info,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3), width: 2),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${info['value']} / 90  -  ${info['rank']}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  info['description'] as String,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 絆レベルアップチェック
+  int _lastBondLevel = 0;
+
+  Future<void> _checkBondLevelUp(PetModel pet) async {
+    final currentLevel = IntimacyBondService.getBondLevel(pet.intimacy);
+
+    if (_lastBondLevel == 0) {
+      _lastBondLevel = currentLevel;
+      return;
+    }
+
+    if (currentLevel > _lastBondLevel) {
+      _lastBondLevel = currentLevel;
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) _showBondLevelUpDialog(currentLevel);
+      });
+    }
+  }
+
+  Future<void> _showBondLevelUpDialog(int newLevel) async {
+    if (_currentPet == null) return;
+
+    final bondLevel = IntimacyBondService.bondLevels[newLevel - 1];
+    final bonus = IntimacyBondService.getBondBonus(_currentPet!.intimacy);
+    final newSkills = IntimacyBondService.getUnlockedSkillsForLevel(newLevel);
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.pink.shade400, Colors.purple.shade400],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.favorite, color: Colors.white, size: 32),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '絆レベルアップ！',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    bondLevel['name'] as String,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.purple.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '絆レベル $newLevel',
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 32),
+            const Text(
+              'ステータスボーナス',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildBonusStat(
+                    '攻撃', bonus['attack']!, Icons.flash_on, Colors.red),
+                _buildBonusStat(
+                    '防御', bonus['defense']!, Icons.shield, Colors.blue),
+                _buildBonusStat(
+                    '速度', bonus['speed']!, Icons.speed, Colors.green),
+              ],
+            ),
+            if (newSkills.isNotEmpty) ...[
+              const Divider(height: 32),
+              const Text(
+                '新スキル習得',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ...newSkills.map((skill) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Icon(Icons.auto_awesome,
+                            size: 20, color: Colors.amber.shade700),
+                        const SizedBox(width: 8),
+                        Text(
+                          skill.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.purple.shade600,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text('ありがとう！', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBonusStat(String label, int value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12)),
+        Text(
+          '+$value',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
   }
 }

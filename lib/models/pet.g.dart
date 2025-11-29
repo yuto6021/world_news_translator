@@ -51,13 +51,17 @@ class PetModelAdapter extends TypeAdapter<PetModel> {
       isActive: fields[31] as bool,
       lastHealthCheck: fields[32] as DateTime?,
       personality: fields[33] as String,
+      talentAttack: fields[34] as int? ?? 50,
+      talentDefense: fields[35] as int? ?? 50,
+      talentSpeed: fields[36] as int? ?? 50,
+      talentDiscovered: fields[37] as bool? ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, PetModel obj) {
     writer
-      ..writeByte(34)
+      ..writeByte(38)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -125,7 +129,15 @@ class PetModelAdapter extends TypeAdapter<PetModel> {
       ..writeByte(32)
       ..write(obj.lastHealthCheck)
       ..writeByte(33)
-      ..write(obj.personality);
+      ..write(obj.personality)
+      ..writeByte(34)
+      ..write(obj.talentAttack)
+      ..writeByte(35)
+      ..write(obj.talentDefense)
+      ..writeByte(36)
+      ..write(obj.talentSpeed)
+      ..writeByte(37)
+      ..write(obj.talentDiscovered);
   }
 
   @override

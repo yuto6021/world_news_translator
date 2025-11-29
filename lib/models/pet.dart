@@ -113,6 +113,19 @@ class PetModel extends HiveObject {
   @HiveField(33)
   String personality; // "genki", "shy", "warrior", "beast", "angel", "demon"
 
+  // 才能システム（隠しパラメータ、0-100）
+  @HiveField(34)
+  int talentAttack; // 攻撃才能（成長率に影響）
+
+  @HiveField(35)
+  int talentDefense; // 防御才能
+
+  @HiveField(36)
+  int talentSpeed; // 速さ才能
+
+  @HiveField(37)
+  bool talentDiscovered; // 才能が開花したか
+
   PetModel({
     required this.id,
     required this.name,
@@ -148,11 +161,22 @@ class PetModel extends HiveObject {
     required this.isActive,
     this.lastHealthCheck,
     required this.personality,
+    this.talentAttack = 50,
+    this.talentDefense = 50,
+    this.talentSpeed = 50,
+    this.talentDiscovered = false,
   });
 
   // ファクトリーコンストラクタ: 新しいたまごを作成
   factory PetModel.createEgg(String name) {
     final now = DateTime.now();
+    final random = DateTime.now().millisecondsSinceEpoch % 100;
+
+    // 才能はランダムに決定（30〜90の範囲）
+    final talentA = 30 + (random % 60);
+    final talentB = 30 + ((random * 7) % 60);
+    final talentC = 30 + ((random * 13) % 60);
+
     return PetModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
@@ -194,6 +218,10 @@ class PetModel extends HiveObject {
       isActive: true,
       lastHealthCheck: now,
       personality: 'neutral',
+      talentAttack: talentA,
+      talentDefense: talentB,
+      talentSpeed: talentC,
+      talentDiscovered: false,
     );
   }
 

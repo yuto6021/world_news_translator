@@ -823,9 +823,353 @@ class _BattleScreenState extends State<BattleScreen>
               ),
             ),
           ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: _petTurn && !_petAttacking ? _showSkillMenu : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.auto_awesome, size: 24),
+                  SizedBox(width: 8),
+                  Text('スキル',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  void _showSkillMenu() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildSkillMenuSheet(),
+    );
+  }
+
+  Widget _buildSkillMenuSheet() {
+    final learnedSkills = widget.pet.skills;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.7,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // ヘッダー
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade700, Colors.purple.shade700],
+              ),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.auto_awesome, color: Colors.white, size: 28),
+                const SizedBox(width: 12),
+                const Text(
+                  'スキル選択',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+
+          // スキルリスト
+          Expanded(
+            child: learnedSkills.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.info_outline,
+                            size: 64, color: Colors.grey.shade400),
+                        const SizedBox(height: 16),
+                        Text(
+                          'まだスキルを習得していません',
+                          style: TextStyle(
+                              fontSize: 16, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: learnedSkills.length,
+                    itemBuilder: (context, index) {
+                      final skill = learnedSkills[index];
+                      return _buildSkillCard(skill);
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkillCard(Skill skill) {
+    final elementIcon = _getElementIcon(skill.element);
+    final elementColor = _getElementColor(skill.element);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {
+          Navigator.pop(context);
+          _useSkill(skill);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  // スキルアイコン
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: elementColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(elementIcon, color: elementColor, size: 28),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // スキル名とタイプ
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          skill.name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            _buildSkillTypeBadge(skill.type),
+                            if (skill.element != null) ...[
+                              const SizedBox(width: 8),
+                              _buildElementBadge(skill.element!, elementColor),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 威力/効果値
+                  if (skill.power > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade100,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.flash_on,
+                              size: 16, color: Colors.red.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            skill.power.toString(),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // 説明
+              Text(
+                skill.description,
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkillTypeBadge(String type) {
+    Color color;
+    IconData icon;
+    String label;
+
+    switch (type) {
+      case 'attack':
+        color = Colors.red;
+        icon = Icons.flash_on;
+        label = '攻撃';
+        break;
+      case 'support':
+        color = Colors.green;
+        icon = Icons.favorite;
+        label = '補助';
+        break;
+      case 'passive':
+        color = Colors.purple;
+        icon = Icons.shield;
+        label = 'パッシブ';
+        break;
+      default:
+        color = Colors.grey;
+        icon = Icons.help_outline;
+        label = type;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.bold, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildElementBadge(String element, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(
+        element,
+        style:
+            TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+      ),
+    );
+  }
+
+  IconData _getElementIcon(String? element) {
+    if (element == null) return Icons.auto_awesome;
+
+    switch (element.toLowerCase()) {
+      case 'fire':
+      case '炎':
+        return Icons.local_fire_department;
+      case 'water':
+      case '水':
+        return Icons.water_drop;
+      case 'grass':
+      case '草':
+        return Icons.eco;
+      case 'electric':
+      case '雷':
+        return Icons.bolt;
+      case 'ice':
+      case '氷':
+        return Icons.ac_unit;
+      case 'dark':
+      case '闇':
+        return Icons.dark_mode;
+      case 'light':
+      case '光':
+        return Icons.wb_sunny;
+      default:
+        return Icons.auto_awesome;
+    }
+  }
+
+  Color _getElementColor(String? element) {
+    if (element == null) return Colors.grey;
+
+    switch (element.toLowerCase()) {
+      case 'fire':
+      case '炎':
+        return Colors.orange;
+      case 'water':
+      case '水':
+        return Colors.blue;
+      case 'grass':
+      case '草':
+        return Colors.green;
+      case 'electric':
+      case '雷':
+        return Colors.yellow.shade700;
+      case 'ice':
+      case '氷':
+        return Colors.cyan;
+      case 'dark':
+      case '闇':
+        return Colors.purple.shade900;
+      case 'light':
+      case '光':
+        return Colors.amber;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  void _useSkill(Skill skill) {
+    // スキル使用処理（既存のattack処理を拡張）
+    _addLog('${widget.pet.nickname}は${skill.name}を使った！');
+
+    // TODO: スキルタイプに応じた処理を実装
+    if (skill.type == 'attack') {
+      // 攻撃スキル
+      _petAttack(); // 既存の攻撃処理を利用
+    } else if (skill.type == 'support') {
+      // 補助スキル（回復など）
+      _addLog('${skill.description}');
+    }
   }
 
   String _secretBossAttackFrame() {

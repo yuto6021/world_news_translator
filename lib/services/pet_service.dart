@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import '../models/pet.dart';
 import 'dart:math';
+import 'training_policy_service.dart';
 
 class PetService {
   static const String _boxName = 'pets';
@@ -386,9 +387,24 @@ class PetService {
     while (pet.canLevelUp()) {
       pet.level += 1;
       pet.exp -= pet.expToNextLevel;
-      pet.attack += 2;
-      pet.defense += 2;
-      pet.speed += 1;
+
+      // 才能値による基礎成長量
+      final baseAttackGrowth = 2 + (pet.talentAttack / 30).floor();
+      final baseDefenseGrowth = 2 + (pet.talentDefense / 30).floor();
+      final baseSpeedGrowth = 1 + (pet.talentSpeed / 40).floor();
+
+      // 育成方針による補正を適用
+      final policy = await TrainingPolicyService.getPolicy(pet.id);
+      final bonusStats = TrainingPolicyService.applyPolicyBonus(
+        policy,
+        baseAttackGrowth,
+        baseDefenseGrowth,
+        baseSpeedGrowth,
+      );
+
+      pet.attack += bonusStats['attack']!;
+      pet.defense += bonusStats['defense']!;
+      pet.speed += bonusStats['speed']!;
     }
   }
 
@@ -481,6 +497,50 @@ class PetService {
     }
 
     await pet.save();
+  }
+
+  // === ヘルパーメソッド（他サービスから使用） ===
+
+  /// ペットをIDで取得
+  static Future<PetModel?> getPetById(String petId) async {
+    await init();
+    return _box!.get(petId);
+  }
+
+  /// ペットのステータスを更新
+  static Future<void> updatePetStats(
+    String petId, {
+    int? attack,
+    int? defense,
+    int? speed,
+    int? hp,
+  }) async {
+    await init();
+    final pet = _box!.get(petId);
+    if (pet == null) return;
+
+    if (attack != null) pet.attack = attack;
+    if (defense != null) pet.defense = defense;
+    if (speed != null) pet.speed = speed;
+    if (hp != null) pet.hp = hp.clamp(0, 100);
+
+    await pet.save();
+  }
+
+  /// ペットのスキルリストを更新
+  static Future<void> updatePetSkills(String petId, List<String> skills) async {
+    await init();
+    final pet = _box!.get(petId);
+    if (pet == null) return;
+
+    pet.skills = skills;
+    await pet.save();
+  }
+
+  /// ペットBoxを取得（直接操作用）
+  static Future<Box<PetModel>> getPetsBox() async {
+    await init();
+    return _box!;
   }
 
   /// 配合（2体のペットから新しいたまご生成）

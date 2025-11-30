@@ -1,59 +1,277 @@
 import 'package:flutter/material.dart';
+import '../models/pet.dart';
+import '../services/pet_service.dart';
+import 'idle_training_screen.dart';
 import 'dart:async';
 import '../services/training_service.dart';
-import '../models/pet.dart';
+import '../widgets/animated_reward.dart';
 
 class TrainingScreen extends StatefulWidget {
-  final PetModel pet;
-
-  const TrainingScreen({super.key, required this.pet});
+  const TrainingScreen({super.key});
 
   @override
   State<TrainingScreen> createState() => _TrainingScreenState();
 }
 
-class _TrainingScreenState extends State<TrainingScreen> {
-  String? _selectedTraining;
+class _TrainingScreenState extends State<TrainingScreen>
+    with SingleTickerProviderStateMixin {
+  PetModel? _pet;
+  bool _loading = true;
+  late TabController _tabController;
   int _todayCount = 0;
+  String? _selectedTraining;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final pet = await PetService.getActivePet();
+    if (!mounted) return;
+    setState(() {
+      _pet = pet;
+      _loading = false;
+    });
     _loadTodayCount();
   }
 
   Future<void> _loadTodayCount() async {
-    final count = await TrainingService.getTodayTrainingCount(widget.pet.id);
+    if (_pet == null) return;
+    final count = await TrainingService.getTodayTrainingCount(_pet!.id);
+    if (!mounted) return;
     setState(() => _todayCount = count);
+  }
+
+  Future<void> _allocStat(String key) async {
+    if (_pet == null) return;
+    if (_pet!.skillPoints <= 0) return;
+
+    final p = _pet!;
+    String statName;
+    IconData icon;
+    Color color;
+
+    switch (key) {
+      case 'attack':
+        await PetService.updatePetStats(p.id, attack: p.attack + 1);
+        statName = '攻撃';
+        icon = Icons.flash_on;
+        color = Colors.red;
+        break;
+      case 'defense':
+        await PetService.updatePetStats(p.id, defense: p.defense + 1);
+        statName = '防御';
+        icon = Icons.shield;
+        color = Colors.blue;
+        break;
+      case 'speed':
+        await PetService.updatePetStats(p.id, speed: p.speed + 1);
+        statName = '素早さ';
+        icon = Icons.speed;
+        color = Colors.green;
+        break;
+      default:
+        return;
+    }
+
+    await PetService.updatePet(p.id, {
+      'skillPoints': (p.skillPoints - 1).clamp(0, 999),
+    });
+
+    final updated = await PetService.getPetById(p.id);
+    if (!mounted) return;
+    setState(() {
+      _pet = updated;
+    });
+
+    AnimationHelper.showReward(
+      context,
+      text: '$statName +1',
+      icon: icon,
+      color: color,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (_loading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('トレーニング')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_pet == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('トレーニング')),
+        body: const Center(child: Text('ペットが見つかりません')),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('特訓'),
-        actions: [
-          Padding(
+        title: const Text('トレーニング'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.bar_chart), text: 'ステータス'),
+            Tab(icon: Icon(Icons.sports_gymnastics), text: '特訓'),
+            Tab(icon: Icon(Icons.schedule), text: '放置'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // ステータス
+          SingleChildScrollView(
             padding: const EdgeInsets.all(16),
-            child: Text('今日: $_todayCount/3回',
-                style: const TextStyle(fontSize: 14)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildStatCard(),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const Icon(Icons.stars, color: Colors.purple),
+                    const SizedBox(width: 6),
+                    Text('SP: ${_pet!.skillPoints}'),
+                  ],
+                ),
+              ],
+            ),
           ),
+          // 特訓（ミニゲーム）
+          _selectedTraining == null ? _buildTrainingMenu() : _buildMiniGame(),
+          // 放置トレ
+          _buildIdleTrainingTab(),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [const Color(0xFF1a1a2e), const Color(0xFF16213e)]
-                : [const Color(0xFFfff3e0), const Color(0xFFffe0b2)],
-          ),
+    );
+  }
+
+  Widget _buildStatCard() {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_graph, color: Colors.indigo.shade700),
+                const SizedBox(width: 8),
+                const Text(
+                  'ステータス配分',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _StatRow(
+              label: '攻撃',
+              icon: Icons.flash_on,
+              value: _pet!.attack,
+              color: Colors.red,
+              onAdd: _pet!.skillPoints > 0 ? () => _allocStat('attack') : null,
+            ),
+            const SizedBox(height: 12),
+            _StatRow(
+              label: '防御',
+              icon: Icons.shield,
+              value: _pet!.defense,
+              color: Colors.blue,
+              onAdd: _pet!.skillPoints > 0 ? () => _allocStat('defense') : null,
+            ),
+            const SizedBox(height: 12),
+            _StatRow(
+              label: '素早さ',
+              icon: Icons.speed,
+              value: _pet!.speed,
+              color: Colors.green,
+              onAdd: _pet!.skillPoints > 0 ? () => _allocStat('speed') : null,
+            ),
+            const SizedBox(height: 12),
+            const Divider(),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.favorite, color: Colors.red, size: 20),
+                const SizedBox(width: 8),
+                const Text('HP', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: LinearProgressIndicator(
+                    value: _pet!.hp / 100.0,
+                    minHeight: 10,
+                    backgroundColor: Colors.grey.shade200,
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text('${_pet!.hp}/100'),
+              ],
+            ),
+          ],
         ),
-        child:
-            _selectedTraining == null ? _buildTrainingMenu() : _buildMiniGame(),
+      ),
+    );
+  }
+
+  Widget _buildIdleTrainingTab() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.schedule, size: 80, color: Colors.indigo.shade300),
+            const SizedBox(height: 24),
+            const Text(
+              '放置トレーニング',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '時間経過でSPとマスタリーXPを獲得できます',
+              style: TextStyle(color: Colors.grey.shade600),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const IdleTrainingScreen(),
+                  ),
+                ).then((_) => _load());
+              },
+              icon: const Icon(Icons.play_arrow, size: 28),
+              label: const Text('放置トレーニングを開始', style: TextStyle(fontSize: 18)),
+              style: ElevatedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -198,12 +416,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     try {
       final result = await TrainingService.executeTrain(
-        petId: widget.pet.id,
+        petId: _pet!.id,
         trainingType: _selectedTraining!,
         miniGameScore: score,
       );
 
-      await TrainingService.incrementTodayTrainingCount(widget.pet.id);
+      await TrainingService.incrementTodayTrainingCount(_pet!.id);
 
       if (!mounted) return;
 
@@ -289,6 +507,86 @@ class _TrainingScreenState extends State<TrainingScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// _StatRowウィジェット
+class _StatRow extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final int value;
+  final Color color;
+  final VoidCallback? onAdd;
+
+  const _StatRow({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.color,
+    this.onAdd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 60,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          Expanded(
+            child: LinearProgressIndicator(
+              value: (value.clamp(0, 100)) / 100.0,
+              minHeight: 12,
+              backgroundColor: Colors.grey.shade200,
+              color: color,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 40,
+            child: Text(
+              value.toString(),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: onAdd,
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(40, 40),
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+            ),
+            child: const Icon(Icons.add, size: 20),
           ),
         ],
       ),

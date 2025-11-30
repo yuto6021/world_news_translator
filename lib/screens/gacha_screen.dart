@@ -119,11 +119,15 @@ class _GachaScreenState extends State<GachaScreen>
       ),
       body: Container(
         decoration: BoxDecoration(
+          image: const DecorationImage(
+            image: AssetImage('assets/ui/backgrounds/gacha_bg.png'),
+            fit: BoxFit.cover,
+          ),
           gradient: LinearGradient(
             colors: [
-              Colors.purple.shade900,
-              Colors.purple.shade700,
-              Colors.pink.shade700,
+              Colors.purple.shade900.withOpacity(0.6),
+              Colors.purple.shade700.withOpacity(0.6),
+              Colors.pink.shade700.withOpacity(0.6),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

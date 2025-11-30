@@ -6,6 +6,7 @@ import '../models/skill.dart';
 import '../services/talent_discovery_service.dart';
 import '../services/intimacy_bond_service.dart';
 import 'battle_screen.dart';
+import 'stage_select_screen.dart';
 import 'item_shop_screen.dart';
 import 'inventory_screen.dart';
 import 'training_screen.dart';
@@ -15,6 +16,8 @@ import 'detailed_stats_screen.dart';
 import 'equipment_screen.dart';
 import 'skill_tree_screen.dart';
 import 'pet_detail_screen.dart';
+import 'breeding_screen.dart';
+import '../widgets/animated_reward.dart';
 
 class PetCareScreenFull extends StatefulWidget {
   const PetCareScreenFull({super.key});
@@ -32,6 +35,12 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
   @override
   void initState() {
     super.initState();
+    // レベルアップコールバックを設定
+    PetService.onLevelUp = (level) {
+      if (!mounted) return;
+      AnimationHelper.showLevelUp(context, level);
+    };
+
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -87,20 +96,48 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
       switch (action) {
         case 'feed':
           await PetService.feedPet(_currentPet!.id);
-          _showMessage('🍚 ごはんを食べました！', 'お腹+30、機嫌+5');
+          if (mounted) {
+            AnimationHelper.showReward(
+              context,
+              text: 'お腹 +30',
+              icon: Icons.restaurant,
+              color: Colors.orange,
+            );
+          }
           break;
         case 'play':
           await PetService.playWithPet(_currentPet!.id, 'ball');
-          _showMessage('🎾 楽しく遊びました！', '機嫌+20、経験値+10、親密度+2');
+          if (mounted) {
+            AnimationHelper.showReward(
+              context,
+              text: '経験値 +10',
+              icon: Icons.sports_esports,
+              color: Colors.green,
+            );
+          }
           break;
         case 'clean':
           await PetService.cleanPet(_currentPet!.id);
-          _showMessage('🧼 ピカピカになりました！', '汚れ0、機嫌+15');
+          if (mounted) {
+            AnimationHelper.showReward(
+              context,
+              text: 'ピカピカ！',
+              icon: Icons.cleaning_services,
+              color: Colors.blue,
+            );
+          }
           break;
         case 'medicine':
           if (_currentPet!.isSick) {
             await PetService.giveMedicine(_currentPet!.id);
-            _showMessage('💊 病気が治りました！', '元気になりました');
+            if (mounted) {
+              AnimationHelper.showReward(
+                context,
+                text: '病気治癒',
+                icon: Icons.health_and_safety,
+                color: Colors.red,
+              );
+            }
           } else {
             _showMessage('💊 病気ではありません', '健康です');
           }
@@ -125,7 +162,7 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => BattleScreen(pet: _currentPet!),
+        builder: (context) => StageSelectScreen(pet: _currentPet!),
       ),
     ).then((_) => _loadPet());
   }
@@ -587,7 +624,7 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => TrainingScreen(pet: _currentPet!),
+                        builder: (context) => const TrainingScreen(),
                       ),
                     );
 
@@ -665,6 +702,22 @@ class _PetCareScreenFullState extends State<PetCareScreenFull>
                             PetDetailScreen(pet: _currentPet!),
                       ),
                     );
+                  },
+                ),
+                _buildActionButton(
+                  '繁殖',
+                  Icons.favorite,
+                  Colors.pinkAccent,
+                  () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const BreedingScreen(),
+                      ),
+                    );
+                    if (result == true) {
+                      _loadPet(); // たまご誕生後にリロード
+                    }
                   },
                 ),
               ],

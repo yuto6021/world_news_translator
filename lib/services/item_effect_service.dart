@@ -124,28 +124,33 @@ class ItemEffectService {
 
     switch (item.id) {
       case 'evolution_stone':
-        // 進化可能チェック
-        final canEvolve = await PetService.canEvolve(petId);
-        if (!canEvolve) {
-          return ItemUseResult(
-            success: false,
-            message: '進化条件を満たしていません',
-            shouldConsume: false,
-          );
-        }
-
+        // 進化条件を緩和してチェック
         final evolutions = await PetService.getAvailableEvolutions(petId);
-        if (evolutions.isEmpty) {
-          return ItemUseResult(
-            success: false,
-            message: '進化先がありません',
-            shouldConsume: false,
-          );
+
+        // 通常の進化先がない場合でも、ステージに応じたデフォルト進化先を提供
+        List<String> availableEvolutions = evolutions;
+        if (availableEvolutions.isEmpty) {
+          // ステージ別デフォルト進化先
+          if (pet.stage == 'egg') {
+            availableEvolutions = ['koromon', 'tsunomon'];
+          } else if (pet.stage == 'baby') {
+            availableEvolutions = ['agumon', 'gabumon', 'patamon'];
+          } else if (pet.stage == 'child') {
+            availableEvolutions = ['greymon', 'garurumon', 'angemon'];
+          } else if (pet.stage == 'adult') {
+            availableEvolutions = ['metalgreymon', 'weregarurumon'];
+          } else {
+            return ItemUseResult(
+              success: false,
+              message: 'これ以上進化できません',
+              shouldConsume: false,
+            );
+          }
         }
 
         // 最初の進化先に強制進化
-        await PetService.evolvePet(petId, evolutions.first);
-        message = '${evolutions.first}に進化しました！';
+        await PetService.evolvePet(petId, availableEvolutions.first);
+        message = '${availableEvolutions.first}に進化しました！';
         break;
 
       case 'exp_potion_s':
@@ -168,9 +173,18 @@ class ItemEffectService {
         if (learned) {
           message = '新しいスキルを覚えました！';
         } else {
+          // より詳細なエラーメッセージ
+          final currentSkills = await SkillService.getPetSkills(petId);
+          if (currentSkills.length >= 10) {
+            return ItemUseResult(
+              success: false,
+              message: 'スキル枠が満杯です（最大10個）',
+              shouldConsume: false,
+            );
+          }
           return ItemUseResult(
             success: false,
-            message: 'これ以上覚えられません',
+            message: '全てのスキルを習得済みです',
             shouldConsume: false,
           );
         }

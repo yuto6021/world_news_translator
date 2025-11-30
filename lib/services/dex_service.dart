@@ -1,6 +1,25 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+/// 配合レシピデータクラス
+class BreedingRecipe {
+  final List<String> requiredParents;
+  final String resultSpecies;
+  final String name;
+  final String description;
+  final String rarity; // 'legendary', 'mythic'
+  final bool requiresAllUltimate;
+
+  const BreedingRecipe({
+    required this.requiredParents,
+    required this.resultSpecies,
+    required this.name,
+    required this.description,
+    required this.rarity,
+    this.requiresAllUltimate = false,
+  });
+}
+
 /// 図鑑サービス - 敵・ペット・アイテムの収集管理
 class DexService {
   static const String _enemyDexKey = 'enemy_dex';
@@ -22,9 +41,86 @@ class DexService {
     'secret_boss', // ???
   ];
 
-  // ペット種族図鑑
+  // ペット種族図鑑（60種以上）
   static const List<String> allPetSpecies = [
     'default',
+    // === 通常種族 ===
+    // 炎系統（6種）
+    'agumon',
+    'greymon',
+    'metalgreymon',
+    'wargreymon',
+    'tyrannomon',
+    'mastertyranomon',
+    // 氷・水系統（6種）
+    'gabumon',
+    'garurumon',
+    'weregarurumon',
+    'metalgarurumon',
+    'seadramon',
+    'megaseadramon',
+    // 光・天使系統（6種）
+    'patamon',
+    'angemon',
+    'angewomon',
+    'seraphimon',
+    'gatomon',
+    'magnaangemon',
+    // 昆虫系統（5種）
+    'tentomon',
+    'kabuterimon',
+    'atlurkabuterimon',
+    'herculeskabuterimon',
+    'kuwagamon',
+    // 闇・悪魔系統（6種）
+    'devimon',
+    'myotismon',
+    'venommyotismon',
+    'piedmon',
+    'deathmon',
+    'phantomon',
+    // 獣系統（6種）
+    'leomon',
+    'saberleomon',
+    'bancholeomon',
+    'gaomon',
+    'machgaogamon',
+    'miragegaogamon',
+    // ドラゴン系統（6種）
+    'veemon',
+    'exveemon',
+    'paildramon',
+    'imperialdramon',
+    'dorumon',
+    'dorugoramon',
+    // 機械系統（5種）
+    'hagurumon',
+    'guardromon',
+    'andromon',
+    'machinedramon',
+    'cyberdramon',
+    // 植物系統（4種）
+    'palmon',
+    'togemon',
+    'lillymon',
+    'rosemon',
+    // 妖精・魔法系統（4種）
+    'wizardmon',
+    'mysticmon',
+    'sorcerymon',
+    'beelzemon',
+    // === 配合限定種族（10種）===
+    'omegamon', // WarGreymon × MetalGarurumon
+    'alphamon', // Omegamon × Imperialdramon
+    'susanoomon', // Seraphimon × BanchoLeomon
+    'imperialdramon_pm', // Imperialdramon × Omegamon（パラディンモード）
+    'gallantmon', // WarGreymon × Seraphimon
+    'beelzebumon', // Beelzemon × VenomMyotismon
+    'apocalymon', // 全究極体配合
+    'lucemon', // Seraphimon × Piedmon
+    'chaosmon', // BanchoLeomon × Darkdramon
+    'darkdramon', // Cyberdramon × Devimon
+    // 旧種族（互換性）
     'fire',
     'water',
     'thunder',
@@ -34,6 +130,107 @@ class DexService {
     'dragon',
     'ultimate_dragon',
   ];
+
+  // === 配合レシピ（特定の親の組み合わせで特別なペット誕生）===
+  static const Map<String, BreedingRecipe> breedingRecipes = {
+    'omegamon': BreedingRecipe(
+      requiredParents: ['wargreymon', 'metalgarurumon'],
+      resultSpecies: 'omegamon',
+      name: 'オメガモン',
+      description: '戦士の絆が生み出す究極の騎士',
+      rarity: 'legendary',
+    ),
+    'alphamon': BreedingRecipe(
+      requiredParents: ['omegamon', 'imperialdramon'],
+      resultSpecies: 'alphamon',
+      name: 'アルファモン',
+      description: '空座の十三騎士団の筆頭',
+      rarity: 'mythic',
+    ),
+    'imperialdramon_pm': BreedingRecipe(
+      requiredParents: ['imperialdramon', 'omegamon'],
+      resultSpecies: 'imperialdramon_pm',
+      name: 'インペリアルドラモン（PM）',
+      description: 'パラディンモードに覚醒した最強形態',
+      rarity: 'mythic',
+    ),
+    'gallantmon': BreedingRecipe(
+      requiredParents: ['wargreymon', 'seraphimon'],
+      resultSpecies: 'gallantmon',
+      name: 'デュークモン',
+      description: '炎と光の融合戦士',
+      rarity: 'legendary',
+    ),
+    'susanoomon': BreedingRecipe(
+      requiredParents: ['seraphimon', 'bancholeomon'],
+      resultSpecies: 'susanoomon',
+      name: 'スサノオモン',
+      description: '十闘士の力を継承する神',
+      rarity: 'mythic',
+    ),
+    'beelzebumon': BreedingRecipe(
+      requiredParents: ['beelzemon', 'venommyotismon'],
+      resultSpecies: 'beelzebumon',
+      name: 'ベルゼブモン',
+      description: '闇の力を極めし魔王',
+      rarity: 'legendary',
+    ),
+    'lucemon': BreedingRecipe(
+      requiredParents: ['seraphimon', 'piedmon'],
+      resultSpecies: 'lucemon',
+      name: 'ルーチェモン',
+      description: '光と闇の両面を持つ堕天使',
+      rarity: 'mythic',
+    ),
+    'darkdramon': BreedingRecipe(
+      requiredParents: ['cyberdramon', 'devimon'],
+      resultSpecies: 'darkdramon',
+      name: 'ダークドラモン',
+      description: '機械と闇が融合した破壊兵器',
+      rarity: 'legendary',
+    ),
+    'chaosmon': BreedingRecipe(
+      requiredParents: ['bancholeomon', 'darkdramon'],
+      resultSpecies: 'chaosmon',
+      name: 'カオスモン',
+      description: '秩序と混沌の化身',
+      rarity: 'mythic',
+    ),
+    'apocalymon': BreedingRecipe(
+      requiredParents: ['omegamon', 'alphamon'],
+      resultSpecies: 'apocalymon',
+      name: 'アポカリモン',
+      description: '全てを終わらせる終焉の存在',
+      rarity: 'mythic',
+      requiresAllUltimate: true,
+    ),
+  };
+
+  /// 配合レシピに一致するか確認
+  static String? checkBreedingRecipe(
+      String parent1Species, String parent2Species) {
+    for (final entry in breedingRecipes.entries) {
+      final recipe = entry.value;
+      final required = recipe.requiredParents;
+
+      // 順不同で一致確認
+      if ((required[0] == parent1Species && required[1] == parent2Species) ||
+          (required[0] == parent2Species && required[1] == parent1Species)) {
+        return recipe.resultSpecies;
+      }
+    }
+    return null;
+  }
+
+  /// 配合レシピ情報を取得
+  static BreedingRecipe? getBreedingRecipe(String recipeId) {
+    return breedingRecipes[recipeId];
+  }
+
+  /// 配合限定ペットかどうか
+  static bool isBreedingExclusive(String species) {
+    return breedingRecipes.values.any((r) => r.resultSpecies == species);
+  }
 
   // アイテム図鑑
   static const List<String> allItems = [

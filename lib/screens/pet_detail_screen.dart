@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/pet.dart';
 import '../services/pet_service.dart';
+import '../widgets/pet_card_widget.dart';
+import '../utils/pet_image_resolver.dart';
+import 'detailed_stats_screen.dart';
 
 class PetDetailScreen extends StatelessWidget {
   final PetModel pet;
@@ -12,6 +15,20 @@ class PetDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('${pet.name}の詳細'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.assessment),
+            tooltip: '詳細統計',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetailedStatsScreen(pet: pet),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -24,8 +41,27 @@ class PetDetailScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // 基本ステータス
-            _buildBasicStatsCard(),
+            // ペットカード（レア度表示）
+            Center(
+              child: PetCardWidget(
+                petImagePath: PetImageResolver.resolveImage(
+                  pet.stage,
+                  pet.species,
+                  'normal',
+                ),
+                petName: pet.name,
+                level: pet.level,
+                species: pet.species,
+                stage: pet.stage,
+                hp: pet.hp,
+                attack: pet.attack,
+                defense: pet.defense,
+                rarity: pet.rarity,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // 戦績
+            _buildBattleStatsCard(),
             const SizedBox(height: 16),
 
             // 性格カード
@@ -48,7 +84,7 @@ class PetDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBasicStatsCard() {
+  Widget _buildBattleStatsCard() {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -59,10 +95,10 @@ class PetDetailScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.pets, color: Colors.blue, size: 28),
+                const Icon(Icons.military_tech, color: Colors.red, size: 28),
                 const SizedBox(width: 12),
                 const Text(
-                  '基本情報',
+                  'バトル情報',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -71,15 +107,12 @@ class PetDetailScreen extends StatelessWidget {
               ],
             ),
             const Divider(height: 24),
-            _buildStatRow(
-                'レベル', pet.level.toString(), Icons.star, Colors.amber),
-            _buildStatRow('種族', pet.species, Icons.category, Colors.green),
-            _buildStatRow(
-                '成長段階', _getStageName(pet.stage), Icons.upgrade, Colors.purple),
             _buildStatRow('戦績', '${pet.wins}勝 ${pet.losses}敗',
                 Icons.military_tech, Colors.red),
             _buildStatRow('経験値', '${pet.exp} / ${pet.level * 100}',
                 Icons.trending_up, Colors.blue),
+            _buildStatRow(
+                'レア度', '★' * pet.rarity, Icons.auto_awesome, Colors.amber),
           ],
         ),
       ),

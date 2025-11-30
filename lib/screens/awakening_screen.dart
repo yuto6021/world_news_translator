@@ -36,8 +36,9 @@ class _AwakeningScreenState extends State<AwakeningScreen>
   @override
   Widget build(BuildContext context) {
     final canAwaken = AwakeningService.canAwaken(widget.pet);
-    final progress = AwakeningService.getAwakeningProgress(widget.pet);
+    final progress = AwakeningService.getAwakeningProgress(widget.pet) ?? 0.0;
     final status = AwakeningService.getAwakeningStatus(widget.pet);
+    final isAwakened = status['awakened'] == true;
 
     return Scaffold(
       appBar: AppBar(
@@ -116,7 +117,7 @@ class _AwakeningScreenState extends State<AwakeningScreen>
                         ),
                       ),
                       const SizedBox(height: 16),
-                      if (status['isAwakened'])
+                      if (isAwakened)
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 20, vertical: 10),
@@ -257,7 +258,7 @@ class _AwakeningScreenState extends State<AwakeningScreen>
               const SizedBox(height: 32),
 
               // 覚醒ボタン
-              if (!status['isAwakened'])
+              if (!isAwakened)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

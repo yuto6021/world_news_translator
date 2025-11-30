@@ -14,9 +14,11 @@ import '../services/wikipedia_history_service.dart';
 import '../services/comments_service.dart';
 import '../services/reading_time_service.dart';
 import '../services/achievements_service.dart';
+import '../services/pet_service.dart';
 import '../models/news_insight.dart';
 import '../widgets/auto_link_text.dart';
 import '../widgets/achievement_animation.dart';
+import '../widgets/animated_reward.dart';
 
 class ArticleDetailScreen extends StatefulWidget {
   final Article article;
@@ -34,11 +36,21 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // レベルアップコールバックを設定
+    PetService.onLevelUp = (level) {
+      if (!mounted) return;
+      AnimationHelper.showLevelUp(context, level);
+    };
+
     // 読書時間トラッキング開始
     ReadingTimeService.startSession();
 
     // 記事閲覧を記録（実績解除用）
     _recordArticleRead();
+
+    // ペットに経験値を付与
+    _grantPetExperience();
+
     // 自動翻訳が有効な場合のみ翻訳を行う
     if (AppSettingsService.instance.autoTranslate.value) {
       _fetchTranslation();
@@ -51,6 +63,38 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
           _fetchTranslation();
         }
       });
+    }
+  }
+
+  Future<void> _grantPetExperience() async {
+    try {
+      final pet = await PetService.getActivePet();
+      if (pet != null) {
+        // 記事閲覧で汎用ジャンルの経験値を付与
+        String genre = 'general';
+        // タイトルや説明文から簡易判定（オプション）
+        final text =
+            '${widget.article.title} ${widget.article.description ?? ''}'
+                .toLowerCase();
+        if (text.contains('tech') ||
+            text.contains('science') ||
+            text.contains('ai')) {
+          genre = 'technology';
+        } else if (text.contains('sport') || text.contains('game')) {
+          genre = 'sports';
+        } else if (text.contains('business') ||
+            text.contains('econom') ||
+            text.contains('market')) {
+          genre = 'business';
+        } else if (text.contains('entertain') ||
+            text.contains('music') ||
+            text.contains('movie')) {
+          genre = 'entertainment';
+        }
+        await PetService.incrementGenreStat(pet.id, genre);
+      }
+    } catch (e) {
+      debugPrint('ペット経験値付与エラー: $e');
     }
   }
 

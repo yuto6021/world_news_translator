@@ -17,7 +17,9 @@ import 'swipe_news_screen.dart';
 import 'stats_screen.dart';
 import 'game_screen.dart';
 import 'gacha_screen.dart';
+import 'pet_gacha_screen.dart';
 import 'achievement_collection_screen.dart';
+import 'bestiary_screen.dart';
 import 'shop_screen.dart';
 import 'user_profile_screen.dart';
 import 'pet_care_screen_full.dart';
@@ -384,6 +386,28 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             ),
                             tooltip: '実績ガチャ',
+                          ),
+                          // 敵図鑑ボタン
+                          IconButton(
+                            icon: const Icon(Icons.auto_stories),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const BestiaryScreen(),
+                              ),
+                            ),
+                            tooltip: '敵図鑑',
+                          ),
+                          // ペットガチャボタン
+                          IconButton(
+                            icon: const Icon(Icons.pets),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PetGachaScreen(),
+                              ),
+                            ),
+                            tooltip: 'ペットガチャ',
                           ),
                           // 実績図鑑ボタン
                           IconButton(

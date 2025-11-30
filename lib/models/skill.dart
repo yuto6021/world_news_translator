@@ -168,6 +168,7 @@ class Skill {
       category: SkillCategory.attack,
       effects: {'berserkMod': 50},
       requiredLevel: 30,
+      requiredItem: 'skill_book',
     ),
 
     // === 通常攻撃スキル (8種) ===
@@ -208,6 +209,7 @@ class Skill {
       manaCost: 20,
       effects: {'hits': 3},
       requiredLevel: 20,
+      requiredItem: 'skill_book',
     ),
     Skill(
       id: 'active_rapid_strike',
@@ -221,6 +223,7 @@ class Skill {
       manaCost: 22,
       effects: {'hits': 5},
       requiredLevel: 28,
+      requiredItem: 'skill_book',
     ),
     Skill(
       id: 'active_final_blow',
@@ -233,6 +236,7 @@ class Skill {
       cooldown: 5,
       manaCost: 30,
       requiredLevel: 35,
+      requiredItem: 'skill_book',
     ),
     Skill(
       id: 'active_critical_strike',
@@ -246,6 +250,7 @@ class Skill {
       manaCost: 18,
       effects: {'guaranteedCrit': true},
       requiredLevel: 24,
+      requiredItem: 'skill_book',
     ),
     Skill(
       id: 'active_piercing_shot',
@@ -315,6 +320,7 @@ class Skill {
       element: 'electric',
       effects: {'statusChance': 20, 'status': 'paralysis'},
       requiredLevel: 22,
+      requiredItem: 'skill_book',
     ),
     Skill(
       id: 'active_ice_beam',
@@ -420,6 +426,7 @@ class Skill {
       effects: {'attackBuff': 50, 'duration': 3},
       targetType: 'self',
       requiredLevel: 18,
+      requiredItem: 'skill_book',
     ),
     Skill(
       id: 'active_speed_boost',
@@ -432,6 +439,7 @@ class Skill {
       effects: {'speedBuff': 100, 'duration': 3},
       targetType: 'self',
       requiredLevel: 20,
+      requiredItem: 'skill_book',
     ),
     Skill(
       id: 'active_focus_up',

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/achievement.dart';
+import 'equipment_service.dart';
+import 'inventory_service.dart';
 
 /// ショップアイテム
 class ShopItem {
@@ -53,13 +55,13 @@ class ShopService {
   static Future<int> getPoints() async {
     final prefs = await SharedPreferences.getInstance();
     final points = prefs.getInt(_pointsKey);
-    
+
     // 初回は1000pt付与（テスト用）
     if (points == null) {
       await prefs.setInt(_pointsKey, 1000);
       return 1000;
     }
-    
+
     return points;
   }
 
@@ -96,16 +98,21 @@ class ShopService {
     if (points < item.price) return false;
 
     final prefs = await SharedPreferences.getInstance();
-    
+
     // ポイント減算
     await prefs.setInt(_pointsKey, points - item.price);
-    
+
     // 購入履歴に追加
     final purchasedStr = prefs.getString(_purchasedKey) ?? '[]';
     final purchased = List<String>.from(json.decode(purchasedStr));
     purchased.add(item.id);
     await prefs.setString(_purchasedKey, json.encode(purchased));
-    
+
+    // 装備アイテムの場合、EquipmentServiceのインベントリに追加
+    if (item.type == 'equipment' || item.id.startsWith('item_')) {
+      await EquipmentService.addEquipment(item.id, 1);
+    }
+
     return true;
   }
 
@@ -143,7 +150,7 @@ class ShopService {
         'accent_color': '#FF4081',
       };
     }
-    
+
     final item = getAllItems().firstWhere(
       (item) => item.id == themeId,
       orElse: () => ShopItem(
@@ -156,7 +163,7 @@ class ShopService {
         data: {'primary_color': '#3F51B5', 'accent_color': '#FF4081'},
       ),
     );
-    
+
     return item.data ?? {'primary_color': '#3F51B5', 'accent_color': '#FF4081'};
   }
 
@@ -248,6 +255,56 @@ class ShopService {
         type: 'pet_item',
       ),
 
+      // 装備アイテム（ショップ専用、クラフト不可）
+      ShopItem(
+        id: 'shop_ring_power',
+        name: 'パワーリング',
+        description: '攻撃力+8%のリング',
+        icon: '💍',
+        price: 300,
+        type: 'equipment',
+      ),
+      ShopItem(
+        id: 'shop_amulet_shield',
+        name: 'シールドアミュレット',
+        description: '防御力+8%のお守り',
+        icon: '📿',
+        price: 300,
+        type: 'equipment',
+      ),
+      ShopItem(
+        id: 'shop_boots_speed',
+        name: 'スピードブーツ',
+        description: '素早さ+10%のブーツ',
+        icon: '👢',
+        price: 350,
+        type: 'equipment',
+      ),
+      ShopItem(
+        id: 'shop_necklace_hp',
+        name: 'HPネックレス',
+        description: 'HP+12%のネックレス',
+        icon: '📿',
+        price: 400,
+        type: 'equipment',
+      ),
+      ShopItem(
+        id: 'shop_crown_exp',
+        name: 'クラウン',
+        description: '経験値+15%の王冠',
+        icon: '👑',
+        price: 500,
+        type: 'equipment',
+      ),
+      ShopItem(
+        id: 'shop_gloves_crit',
+        name: 'グローブ',
+        description: 'クリティカル率+8%の手袋',
+        icon: '🧤',
+        price: 450,
+        type: 'equipment',
+      ),
+
       // その他
       ShopItem(
         id: 'time_capsule_slot',
@@ -279,5 +336,55 @@ class ShopService {
   /// カテゴリ別アイテム取得
   static List<ShopItem> getItemsByType(String type) {
     return getAllItems().where((item) => item.type == type).toList();
+  }
+
+  /// 素材アイテムの売却価格を取得
+  static int getMaterialSellPrice(String materialId) {
+    final prices = <String, int>{
+      'goblin_sword': 10,
+      'slime_jelly': 5,
+      'wolf_fang': 15,
+      'zombie_bone': 12,
+      'fairy_dust': 20,
+      'elemental_crystal': 25,
+      'dragon_scale': 50,
+      'iron_ingot': 30,
+      'wood_plank': 10,
+      'leather_strip': 15,
+      'rune_stone': 40,
+      'magic_core_small': 20,
+      'magic_core_medium': 35,
+      'magic_core_large': 60,
+    };
+    return prices[materialId] ?? 1;
+  }
+
+  /// 素材アイテムを売却
+  static Future<bool> sellMaterial(String materialId, int quantity) async {
+    // 装備インベントリから素材を確認
+    final inventory = await EquipmentService.getInventory();
+    final current = inventory[materialId] ?? 0;
+
+    if (current < quantity) {
+      return false; // 所持数不足
+    }
+
+    // 売却価格計算
+    final sellPrice = getMaterialSellPrice(materialId);
+    final totalPrice = sellPrice * quantity;
+
+    // 素材を減らす（EquipmentServiceから）
+    final prefs = await SharedPreferences.getInstance();
+    final updatedInventory = Map<String, int>.from(inventory);
+    updatedInventory[materialId] = current - quantity;
+    if (updatedInventory[materialId]! <= 0) {
+      updatedInventory.remove(materialId);
+    }
+    await prefs.setString('equipment_inventory', json.encode(updatedInventory));
+
+    // コインを増やす
+    await InventoryService.addCoins(totalPrice);
+
+    return true;
   }
 }

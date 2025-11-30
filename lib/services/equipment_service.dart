@@ -6,6 +6,40 @@ import 'pet_service.dart';
 class EquipmentService {
   static const String _keyInventory = 'equipment_inventory';
 
+  /// ショップ専用装備（クラフト不可、購入のみ）
+  static final Map<String, Map<String, dynamic>> shopEquipment = {
+    'shop_ring_power': {
+      'effect': {'attack': 1.08}, // 攻撃+8%
+      'name': 'パワーリング',
+      'image': 'assets/items/equipment/shop_ring_power.png',
+    },
+    'shop_amulet_shield': {
+      'effect': {'defense': 1.08}, // 防御+8%
+      'name': 'シールドアミュレット',
+      'image': 'assets/items/equipment/shop_amulet_shield.png',
+    },
+    'shop_boots_speed': {
+      'effect': {'speed': 1.10}, // 素早さ+10%
+      'name': 'スピードブーツ',
+      'image': 'assets/items/equipment/shop_boots_speed.png',
+    },
+    'shop_necklace_hp': {
+      'effect': {'hp': 1.12}, // HP+12%
+      'name': 'HPネックレス',
+      'image': 'assets/items/equipment/shop_necklace_hp.png',
+    },
+    'shop_crown_exp': {
+      'effect': {'exp_bonus': 1.15}, // 経験値+15%
+      'name': 'クラウン',
+      'image': 'assets/items/equipment/shop_crown_exp.png',
+    },
+    'shop_gloves_crit': {
+      'effect': {'crit_rate': 0.08}, // クリティカル率+8%
+      'name': 'グローブ',
+      'image': 'assets/items/equipment/shop_gloves_crit.png',
+    },
+  };
+
   /// クラフトレシピ（素材 → 装備）
   static const Map<String, Map<String, dynamic>> recipes = {
     // === 剣系 ===
@@ -165,6 +199,14 @@ class EquipmentService {
     await prefs.setString(_keyInventory, json.encode(inventory));
   }
 
+  /// 装備を追加（ショップ購入時など）
+  static Future<void> addEquipment(String equipmentId, int count) async {
+    final inventory = await getInventory();
+    inventory[equipmentId] = (inventory[equipmentId] ?? 0) + count;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyInventory, json.encode(inventory));
+  }
+
   /// クラフト実行
   static Future<bool> craft(String equipmentId) async {
     final recipe = recipes[equipmentId];
@@ -234,9 +276,39 @@ class EquipmentService {
 
   /// 装備の効果を取得
   static Map<String, double> getEquipmentEffect(String equipmentId) {
+    // ショップ専用装備をチェック
+    final shopItem = shopEquipment[equipmentId];
+    if (shopItem != null) {
+      return Map<String, double>.from(shopItem['effect'] as Map);
+    }
+
+    // クラフト装備をチェック
     final recipe = recipes[equipmentId];
     if (recipe == null) return {};
     return Map<String, double>.from(recipe['effect'] as Map);
+  }
+
+  /// 装備の詳細情報を取得（名前、画像、効果）
+  static Map<String, dynamic>? getEquipmentDetails(String equipmentId) {
+    // ショップ専用装備をチェック
+    if (shopEquipment.containsKey(equipmentId)) {
+      return shopEquipment[equipmentId];
+    }
+
+    // クラフト装備をチェック
+    if (recipes.containsKey(equipmentId)) {
+      return recipes[equipmentId];
+    }
+
+    return null;
+  }
+
+  /// すべての装備を取得（ショップ専用＋クラフト）
+  static Map<String, Map<String, dynamic>> getAllEquipment() {
+    return {
+      ...shopEquipment,
+      ...recipes,
+    };
   }
 
   /// ペットの全装備効果を計算
@@ -252,6 +324,27 @@ class EquipmentService {
         getEquipmentEffect(equipment).forEach((key, value) {
           total[key] = (total[key] ?? 1.0) * value;
         });
+      }
+    }
+
+    // セットボーナス（簡易）
+    final ids = [weapon, armor, accessory].whereType<String>().toList();
+    if (ids.isNotEmpty) {
+      final hasDragon = ids.where((id) => id.contains('dragon')).length >= 2;
+      if (hasDragon) {
+        total['attack'] = (total['attack'] ?? 1.0) * 1.10;
+        total['defense'] = (total['defense'] ?? 1.0) * 1.10;
+      }
+
+      final hasIron = ids.where((id) => id.contains('iron')).length >= 2;
+      if (hasIron) {
+        total['defense'] = (total['defense'] ?? 1.0) * 1.05;
+      }
+
+      final swiftAndCrit =
+          ids.contains('item_boots_swift') && ids.contains('item_ring_crit');
+      if (swiftAndCrit) {
+        total['speed'] = (total['speed'] ?? 1.0) * 1.05;
       }
     }
 

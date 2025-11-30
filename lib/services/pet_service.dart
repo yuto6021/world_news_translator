@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import '../models/pet.dart';
 import 'dart:math';
 import 'training_policy_service.dart';
+import 'dex_service.dart';
 
 class PetService {
   static const String _boxName = 'pets';
@@ -12,6 +13,12 @@ class PetService {
     if (_box == null || !_box!.isOpen) {
       _box = await Hive.openBox<PetModel>(_boxName);
     }
+  }
+
+  // Boxを取得
+  static Future<Box<PetModel>> getBox() async {
+    await init();
+    return _box!;
   }
 
   // === 基本世話機能 ===
@@ -470,6 +477,9 @@ class PetService {
     }
   }
 
+  /// レベルアップコールバック（アニメーション用）
+  static void Function(int level)? onLevelUp;
+
   /// レベルアップチェック
   static Future<void> _checkLevelUpLogic(PetModel pet) async {
     while (pet.canLevelUp()) {
@@ -493,6 +503,9 @@ class PetService {
       pet.attack += bonusStats['attack']!;
       pet.defense += bonusStats['defense']!;
       pet.speed += bonusStats['speed']!;
+
+      // レベルアップコールバック実行
+      onLevelUp?.call(pet.level);
     }
   }
 
@@ -692,13 +705,38 @@ class PetService {
     if (parent1.stage != 'adult' && parent1.stage != 'ultimate') return '';
     if (parent2.stage != 'adult' && parent2.stage != 'ultimate') return '';
 
-    // 新しいたまご作成
-    final egg = PetModel.createEgg('配合たまご');
+    // 配合レシピチェック
+    String? recipeSpecies = DexService.checkBreedingRecipe(
+      parent1.species,
+      parent2.species,
+    );
 
-    // 親のスキルを継承（ランダムで2つ）
+    // 新しいたまご作成
+    final egg = recipeSpecies != null
+        ? PetModel.createEgg('配合たまご - 特別な予感')
+        : PetModel.createEgg('配合たまご');
+
+    // 配合限定種族の場合は種族を設定
+    if (recipeSpecies != null) {
+      egg.species = recipeSpecies;
+    } else {
+      // 通常配合：親のどちらかの種族を継承
+      egg.species =
+          [parent1.species, parent2.species][DateTime.now().millisecond % 2];
+    }
+
+    // 親のスキルを継承（ランダムで2-3つ）
     final allSkills = [...parent1.skills, ...parent2.skills];
     allSkills.shuffle();
-    egg.skills = allSkills.take(2).toList();
+    final skillCount = recipeSpecies != null ? 3 : 2; // 配合限定は3つ
+    egg.skills = allSkills.take(skillCount).toList();
+
+    // ステータスは親の平均値 + ボーナス
+    final bonus = recipeSpecies != null ? 1.2 : 1.0;
+    egg.attack = ((parent1.attack + parent2.attack) / 2 * bonus).round();
+    egg.defense = ((parent1.defense + parent2.defense) / 2 * bonus).round();
+    egg.speed = ((parent1.speed + parent2.speed) / 2 * bonus).round();
+    egg.hp = ((parent1.hp + parent2.hp) / 2 * bonus).round();
 
     await _box!.put(egg.id, egg);
     return egg.id;

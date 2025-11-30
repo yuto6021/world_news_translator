@@ -44,6 +44,7 @@ class PetModelAdapter extends TypeAdapter<PetModel> {
       speed: fields[24] as int,
       wins: fields[25] as int,
       losses: fields[26] as int,
+      winStreak: fields[49] as int? ?? 0,
       playCount: fields[27] as int,
       cleanCount: fields[28] as int,
       battleCount: fields[29] as int,
@@ -61,7 +62,7 @@ class PetModelAdapter extends TypeAdapter<PetModel> {
   @override
   void write(BinaryWriter writer, PetModel obj) {
     writer
-      ..writeByte(38)
+      ..writeByte(39)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -116,6 +117,8 @@ class PetModelAdapter extends TypeAdapter<PetModel> {
       ..write(obj.wins)
       ..writeByte(26)
       ..write(obj.losses)
+      ..writeByte(49)
+      ..write(obj.winStreak)
       ..writeByte(27)
       ..write(obj.playCount)
       ..writeByte(28)

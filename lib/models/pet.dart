@@ -91,6 +91,9 @@ class PetModel extends HiveObject {
   @HiveField(26)
   int losses;
 
+  @HiveField(49)
+  int winStreak; // 連勝数
+
   // その他
   @HiveField(27)
   int playCount;
@@ -192,6 +195,7 @@ class PetModel extends HiveObject {
     required this.speed,
     required this.wins,
     required this.losses,
+    this.winStreak = 0,
     required this.playCount,
     required this.cleanCount,
     required this.battleCount,
@@ -215,6 +219,44 @@ class PetModel extends HiveObject {
     this.equippedArmor,
     this.equippedAccessory,
   });
+
+  // レア度（1-5）: 既存種族に対して動的に決定（永続化しない）
+  static const Map<String, int> _speciesRarityMap = {
+    // コモン（1）: baby/child段階
+    'koromon': 1,
+    'tsunomon': 1,
+    'agumon': 1,
+    'gabumon': 1,
+    'patamon': 1,
+    'palmon': 1,
+    'tentomon': 1,
+
+    // レア（2-3）: adult段階
+    'greymon': 2,
+    'garurumon': 2,
+    'angemon': 3,
+    'devimon': 3,
+    'leomon': 3,
+
+    // エピック（4）: 上級adult/初期ultimate
+    'metalgreymon': 4,
+    'weregarurumon': 4,
+    'angewomon': 4,
+    'megakabuterimon': 4,
+
+    // レジェンダリー（5）: ultimate段階
+    'wargreymon': 5,
+    'metalgarurumon': 5,
+    'seraphimon': 5,
+    'herculeskabuterimon': 5,
+    'omegamon': 5,
+
+    // オリジナル例（後で追加拡張可）
+    'ignisaur': 3,
+    'volcanisaur': 5,
+  };
+
+  int get rarity => _speciesRarityMap[species] ?? 1;
 
   // ファクトリーコンストラクタ: 新しいたまごを作成
   factory PetModel.createEgg(String name) {
@@ -257,9 +299,10 @@ class PetModel extends HiveObject {
       skills: [],
       attack: 10,
       defense: 10,
-      speed: 10,
+      speed: 5,
       wins: 0,
       losses: 0,
+      winStreak: 0,
       playCount: 0,
       cleanCount: 0,
       battleCount: 0,

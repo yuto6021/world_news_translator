@@ -212,4 +212,15 @@ class AchievementService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_petOverplayKey) ?? false;
   }
+
+  // ===== 汎用実績API（バトル等で利用） =====
+  static Future<void> unlock(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('achievement_$key', true);
+  }
+
+  static Future<bool> isUnlocked(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('achievement_$key') ?? false;
+  }
 }

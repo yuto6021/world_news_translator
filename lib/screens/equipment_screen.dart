@@ -39,11 +39,10 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.purple.shade50, Colors.blue.shade50],
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/ui/backgrounds/bg_battle_ruins.png'),
+            fit: BoxFit.cover,
           ),
         ),
         child: ListView(
@@ -52,11 +51,9 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
             // 現在の装備
             _buildCurrentEquipment(),
             const SizedBox(height: 24),
-
             // 装備効果サマリー
             _buildEquipmentStats(),
             const SizedBox(height: 24),
-
             // 所持装備リスト
             _buildEquipmentInventory(),
           ],
@@ -117,8 +114,9 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
 
   Widget _buildEquipmentSlot(
       String slot, String label, String? equipmentId, Color color) {
-    final equipment =
-        equipmentId != null ? EquipmentService.recipes[equipmentId] : null;
+    final equipment = equipmentId != null
+        ? EquipmentService.getEquipmentDetails(equipmentId)
+        : null;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -255,7 +253,7 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
 
   Widget _buildEquipmentInventory() {
     final equipments = _inventory.entries
-        .where((e) => EquipmentService.recipes.containsKey(e.key))
+        .where((e) => EquipmentService.getEquipmentDetails(e.key) != null)
         .toList();
 
     if (equipments.isEmpty) {
@@ -317,7 +315,7 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
   }
 
   Widget _buildEquipmentItem(String equipmentId, int count) {
-    final equipment = EquipmentService.recipes[equipmentId]!;
+    final equipment = EquipmentService.getEquipmentDetails(equipmentId)!;
     final isEquipped = widget.pet.equippedWeapon == equipmentId ||
         widget.pet.equippedArmor == equipmentId ||
         widget.pet.equippedAccessory == equipmentId;
@@ -397,7 +395,7 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
 
   void _showEquipDialog(String slot) {
     final equipments = _inventory.entries
-        .where((e) => EquipmentService.recipes.containsKey(e.key))
+        .where((e) => EquipmentService.getEquipmentDetails(e.key) != null)
         .toList();
 
     showDialog(
@@ -410,24 +408,22 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
                 width: double.maxFinite,
                 child: ListView(
                   shrinkWrap: true,
-                  children: equipments
-                      .map((e) => ListTile(
-                            leading: _buildItemImage(
-                                EquipmentService.recipes[e.key]!['image'],
-                                '⚔️'),
-                            title:
-                                Text(EquipmentService.recipes[e.key]!['name']),
-                            subtitle: Text(
-                              _getEffectDescription(
-                                  EquipmentService.recipes[e.key]!['effect']),
-                            ),
-                            trailing: Text('×${e.value}'),
-                            onTap: () {
-                              Navigator.pop(context);
-                              _equip(slot, e.key);
-                            },
-                          ))
-                      .toList(),
+                  children: equipments.map((e) {
+                    final equipment =
+                        EquipmentService.getEquipmentDetails(e.key)!;
+                    return ListTile(
+                      leading: _buildItemImage(equipment['image'], '⚔️'),
+                      title: Text(equipment['name']),
+                      subtitle: Text(
+                        _getEffectDescription(equipment['effect']),
+                      ),
+                      trailing: Text('×${e.value}'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _equip(slot, e.key);
+                      },
+                    );
+                  }).toList(),
                 ),
               ),
         actions: [
@@ -459,8 +455,8 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text('${EquipmentService.recipes[equipmentId]!['name']}を装備しました'),
+          content: Text(
+              '${EquipmentService.getEquipmentDetails(equipmentId)!['name']}を装備しました'),
           backgroundColor: Colors.green,
         ),
       );

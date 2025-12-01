@@ -60,6 +60,117 @@ class Enemy {
   double get hpPercent => currentHp / maxHp;
 }
 
+/// 敵スキルデータ
+class EnemySkill {
+  final String name;
+  final String icon;
+  final double damageMultiplier; // 攻撃力に対する倍率
+  final String element; // 属性
+  final String? statusEffect; // 付与する状態異常
+
+  const EnemySkill({
+    required this.name,
+    required this.icon,
+    required this.damageMultiplier,
+    required this.element,
+    this.statusEffect,
+  });
+}
+
+// 敵スキルデータベース（属性別）
+final Map<String, List<EnemySkill>> _enemySkillDatabase = {
+  'fire': [
+    EnemySkill(
+      name: '炎の息',
+      icon: '🔥',
+      damageMultiplier: 1.5,
+      element: 'fire',
+      statusEffect: 'burn',
+    ),
+    EnemySkill(
+      name: '爆炎波',
+      icon: '💥',
+      damageMultiplier: 1.8,
+      element: 'fire',
+    ),
+  ],
+  'water': [
+    EnemySkill(
+      name: '水流弾',
+      icon: '💧',
+      damageMultiplier: 1.4,
+      element: 'water',
+    ),
+    EnemySkill(
+      name: '濁流',
+      icon: '🌊',
+      damageMultiplier: 1.6,
+      element: 'water',
+    ),
+  ],
+  'electric': [
+    EnemySkill(
+      name: '雷撃',
+      icon: '⚡',
+      damageMultiplier: 1.5,
+      element: 'electric',
+      statusEffect: 'paralysis',
+    ),
+    EnemySkill(
+      name: '放電',
+      icon: '✨',
+      damageMultiplier: 1.3,
+      element: 'electric',
+    ),
+  ],
+  'grass': [
+    EnemySkill(
+      name: '毒の粉',
+      icon: '🍃',
+      damageMultiplier: 1.2,
+      element: 'grass',
+      statusEffect: 'poison',
+    ),
+    EnemySkill(
+      name: '蔓縛り',
+      icon: '🌿',
+      damageMultiplier: 1.5,
+      element: 'grass',
+    ),
+  ],
+  'dark': [
+    EnemySkill(
+      name: '闇の波動',
+      icon: '🌑',
+      damageMultiplier: 1.7,
+      element: 'dark',
+    ),
+    EnemySkill(
+      name: '呪縛',
+      icon: '💀',
+      damageMultiplier: 1.4,
+      element: 'dark',
+      statusEffect: 'sleep',
+    ),
+  ],
+  'light': [
+    EnemySkill(
+      name: '聖光',
+      icon: '✨',
+      damageMultiplier: 1.6,
+      element: 'light',
+    ),
+  ],
+  'normal': [
+    EnemySkill(
+      name: '怒りの一撃',
+      icon: '💢',
+      damageMultiplier: 1.5,
+      element: 'normal',
+    ),
+  ],
+};
+
 class _BattleScreenState extends State<BattleScreen>
     with TickerProviderStateMixin {
   // ステージ／ウェーブ管理
@@ -85,10 +196,11 @@ class _BattleScreenState extends State<BattleScreen>
   bool _showComboEffect = false;
   int _comboCount = 0; // 連続攻撃のコンボカウント
   List<String> _logHistory = [];
-  
+
   // エフェクト管理
   bool _showParticles = false;
   String _particleType = 'none'; // fire, water, electric, grass, dark, light
+  Alignment _particlePosition = const Alignment(0.5, -0.2); // パーティクル表示位置
   bool _showVictoryCutIn = false;
   bool _showDefeatCutIn = false;
   List<_DamageNumber> _damageNumbers = [];
@@ -264,7 +376,7 @@ class _BattleScreenState extends State<BattleScreen>
   void initState() {
     super.initState();
     _currentStage = widget.initialStage;
-    
+
     // レベルアップコールバックを設定
     PetService.onLevelUp = (level) {
       if (!mounted) return;
@@ -600,16 +712,15 @@ class _BattleScreenState extends State<BattleScreen>
   }) {
     final id = _toastSeq++;
     final screenSize = MediaQuery.of(context).size;
-    
+
     // 敵または味方の位置に応じて表示位置を決定
     final position = isEnemy
         ? Offset(screenSize.width * 0.5, screenSize.height * 0.3)
         : Offset(screenSize.width * 0.5, screenSize.height * 0.65);
-    
-    final color = isCritical 
-        ? Colors.yellow 
-        : (isEnemy ? Colors.red : Colors.blue);
-    
+
+    final color =
+        isCritical ? Colors.yellow : (isEnemy ? Colors.red : Colors.blue);
+
     setState(() {
       _damageNumbers.add(_DamageNumber(
         id: id,
@@ -619,7 +730,7 @@ class _BattleScreenState extends State<BattleScreen>
         isCritical: isCritical,
       ));
     });
-    
+
     Future.delayed(Duration(milliseconds: isCritical ? 1500 : 1200), () {
       if (!mounted) return;
       setState(() => _damageNumbers.removeWhere((d) => d.id == id));
@@ -880,20 +991,21 @@ class _BattleScreenState extends State<BattleScreen>
     _shakeController.forward(from: 0);
     _flashController.forward(from: 0);
 
-    // パーティクルエフェクト表示
+    // パーティクルエフェクト表示（敵側に表示）
     setState(() {
       _showParticles = true;
       _particleType = petElement;
+      _particlePosition = const Alignment(0.5, -0.2); // 敵側（右）
     });
     _particleController.forward(from: 0);
-    
+
     // ダメージ数値アニメーション
     _showEnhancedDamageNumber(
       damage,
       isCritical: isCritical,
       isEnemy: true,
     );
-    
+
     // パーティクルを0.8秒後に非表示
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
@@ -958,65 +1070,137 @@ class _BattleScreenState extends State<BattleScreen>
       return;
     }
 
-    _addLog('${_currentEnemy.name}の攻撃！');
-    if (_currentEnemy.type == 'secret_boss') {
-      _secretBossFrameIndex = (_secretBossFrameIndex + 1) % 3;
-    }
-
-    await _wait(800);
-
+    // スキル使用判定（35%の確率）
     final random = Random();
-    var baseDamage = _currentEnemy.attack;
+    final useSkill = random.nextInt(100) < 35;
+    EnemySkill? selectedSkill;
 
-    // 火傷状態なら攻撃力半減
-    if (_enemyStatus == 'burn') {
-      baseDamage = (baseDamage * 0.5).round();
+    if (useSkill) {
+      // 敵の属性に応じたスキルをランダム選択
+      final skills = _enemySkillDatabase[_currentEnemy.element] ??
+          _enemySkillDatabase['normal']!;
+      if (skills.isNotEmpty) {
+        selectedSkill = skills[random.nextInt(skills.length)];
+      }
     }
 
-    final defense = widget.pet.defense;
+    if (selectedSkill != null) {
+      // スキル攻撃
+      _addLog(
+          '${_currentEnemy.name}が${selectedSkill.icon}${selectedSkill.name}を使った！');
+      if (_currentEnemy.type == 'secret_boss') {
+        _secretBossFrameIndex = (_secretBossFrameIndex + 1) % 3;
+      }
 
-    // 同じダメージ計算式を適用
-    final defenseFactor = defense / (defense + 100);
-    final rawDamage = baseDamage * (1 - defenseFactor);
-    int damage =
-        (rawDamage + random.nextInt(baseDamage ~/ 5 + 1) - baseDamage ~/ 10)
-            .round();
-    damage = max(1, damage);
+      await _wait(800);
 
-    // 防御時ダメージ軽減
-    if (_isGuarding) {
-      damage = (damage * 0.6).round();
-    }
-    _petCurrentHp = max(0, _petCurrentHp - damage);
-    _shakeController.forward(from: 0);
-    _flashController.forward(from: 0);
+      var baseDamage =
+          (_currentEnemy.attack * selectedSkill.damageMultiplier).round();
 
-    // 敵攻撃エフェクト（属性パーティクル＋ダメージ数値）
-    final enemyElement = _currentEnemy.element;
-    setState(() {
-      _showParticles = true;
-      _particleType = enemyElement;
-    });
-    _showEnhancedDamageNumber(damage, toEnemy: false, isCritical: false);
-    
-    // パーティクルを一定時間後に消す
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) setState(() => _showParticles = false);
-    });
+      // 火傷状態なら攻撃力半減
+      if (_enemyStatus == 'burn') {
+        baseDamage = (baseDamage * 0.5).round();
+      }
 
-    _addLog('${widget.pet.name}に${damage}ダメージ！');
-    _showDamageToast('-$damage',
-        align: const Alignment(0, 0.6), color: Colors.orangeAccent);
-    _isGuarding = false; // 一度きり
-    _gainOverdrive(8);
+      final defense = widget.pet.defense;
+      final defenseFactor = defense / (defense + 100);
+      final rawDamage = baseDamage * (1 - defenseFactor);
+      int damage =
+          (rawDamage + random.nextInt(baseDamage ~/ 5 + 1) - baseDamage ~/ 10)
+              .round();
+      damage = max(1, damage);
 
-    // 状態異常付与チェック（敵の属性に応じて）
-    if (enemyElement == 'fire') {
-      _tryApplyStatus('pet', 'burn');
-    } else if (enemyElement == 'electric') {
-      _tryApplyStatus('pet', 'paralysis');
-    } else if (enemyElement == 'grass') {
-      _tryApplyStatus('pet', 'poison');
+      // 防御時ダメージ軽減
+      if (_isGuarding) {
+        damage = (damage * 0.6).round();
+      }
+      _petCurrentHp = max(0, _petCurrentHp - damage);
+      _shakeController.forward(from: 0);
+      _flashController.forward(from: 0);
+
+      // スキルエフェクト（属性パーティクル＋ダメージ数値）- ペット側に表示
+      setState(() {
+        _showParticles = true;
+        _particleType = selectedSkill!.element;
+        _particlePosition = const Alignment(-0.5, -0.2); // ペット側（左）
+      });
+      _showEnhancedDamageNumber(damage, isEnemy: false, isCritical: false);
+
+      // パーティクルを一定時間後に消す
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) setState(() => _showParticles = false);
+      });
+
+      _addLog('${widget.pet.name}に${damage}ダメージ！');
+      _showDamageToast('-$damage',
+          align: const Alignment(0, 0.6), color: Colors.orangeAccent);
+      _isGuarding = false;
+      _gainOverdrive(8);
+
+      // スキル固有の状態異常付与
+      if (selectedSkill.statusEffect != null) {
+        _tryApplyStatus('pet', selectedSkill.statusEffect!);
+      }
+    } else {
+      // 通常攻撃
+      _addLog('${_currentEnemy.name}の攻撃！');
+      if (_currentEnemy.type == 'secret_boss') {
+        _secretBossFrameIndex = (_secretBossFrameIndex + 1) % 3;
+      }
+
+      await _wait(800);
+
+      var baseDamage = _currentEnemy.attack;
+
+      // 火傷状態なら攻撃力半減
+      if (_enemyStatus == 'burn') {
+        baseDamage = (baseDamage * 0.5).round();
+      }
+
+      final defense = widget.pet.defense;
+      final defenseFactor = defense / (defense + 100);
+      final rawDamage = baseDamage * (1 - defenseFactor);
+      int damage =
+          (rawDamage + random.nextInt(baseDamage ~/ 5 + 1) - baseDamage ~/ 10)
+              .round();
+      damage = max(1, damage);
+
+      // 防御時ダメージ軽減
+      if (_isGuarding) {
+        damage = (damage * 0.6).round();
+      }
+      _petCurrentHp = max(0, _petCurrentHp - damage);
+      _shakeController.forward(from: 0);
+      _flashController.forward(from: 0);
+
+      // 敵攻撃エフェクト（属性パーティクル＋ダメージ数値）- ペット側に表示
+      final enemyElement = _currentEnemy.element;
+      setState(() {
+        _showParticles = true;
+        _particleType = enemyElement;
+        _particlePosition = const Alignment(-0.5, -0.2); // ペット側（左）
+      });
+      _showEnhancedDamageNumber(damage, isEnemy: false, isCritical: false);
+
+      // パーティクルを一定時間後に消す
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) setState(() => _showParticles = false);
+      });
+
+      _addLog('${widget.pet.name}に${damage}ダメージ！');
+      _showDamageToast('-$damage',
+          align: const Alignment(0, 0.6), color: Colors.orangeAccent);
+      _isGuarding = false; // 一度きり
+      _gainOverdrive(8);
+
+      // 状態異常付与チェック（敵の属性に応じて）
+      if (enemyElement == 'fire') {
+        _tryApplyStatus('pet', 'burn');
+      } else if (enemyElement == 'electric') {
+        _tryApplyStatus('pet', 'paralysis');
+      } else if (enemyElement == 'grass') {
+        _tryApplyStatus('pet', 'poison');
+      }
     }
 
     await _wait(1000);
@@ -1035,14 +1219,14 @@ class _BattleScreenState extends State<BattleScreen>
     // 勝利カットインアニメーション表示
     setState(() => _showVictoryCutIn = true);
     _victoryController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 1500));
-    
+
     if (mounted) {
       setState(() => _showVictoryCutIn = false);
       _victoryController.reset();
     }
-    
+
     // (C) 連勝ボーナス更新
     _sessionWinStreak++;
     final streakBonus =
@@ -1226,7 +1410,7 @@ class _BattleScreenState extends State<BattleScreen>
     // 敗北カットインアニメーション表示
     setState(() => _showDefeatCutIn = true);
     _defeatController.forward();
-    
+
     _addLog('💔 ${widget.pet.name}は倒れた...');
     if (_sessionWinStreak > 0) {
       _addLog('連勝記録: $_sessionWinStreak 途切れた...');
@@ -1239,7 +1423,7 @@ class _BattleScreenState extends State<BattleScreen>
       if (mounted) {
         setState(() => _showDefeatCutIn = false);
         _defeatController.reset();
-        
+
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -1361,7 +1545,9 @@ class _BattleScreenState extends State<BattleScreen>
                 top: 8,
                 left: 8,
                 right: 8,
-                child: _buildBattleHud(),
+                child: SafeArea(
+                  child: _buildBattleHud(),
+                ),
               ),
             // 背景の上に薄いブラー/カラーオーバーレイ
             Positioned.fill(
@@ -1441,19 +1627,29 @@ class _BattleScreenState extends State<BattleScreen>
 
             Column(
               children: [
-                // 敵エリア
+                // 上部のHUDスペース確保（重なり防止）
+                if (_battleStarted) const SizedBox(height: 130),
+
+                // ポケモン風横並びバトルエリア
                 Expanded(
-                  flex: 2,
-                  child: _buildEnemyArea(),
+                  child: Row(
+                    children: [
+                      // ペットエリア（左側）
+                      Expanded(
+                        child: _buildPetArea(),
+                      ),
+
+                      const SizedBox(width: 16),
+
+                      // 敵エリア（右側）
+                      Expanded(
+                        child: _buildEnemyArea(),
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 8),
-
-                // ペットエリア
-                Expanded(
-                  flex: 2,
-                  child: _buildPetArea(),
-                ),
 
                 // アクションボタン
                 if (_battleStarted) _buildActionButtons() else _buildStartCTA(),
@@ -1462,14 +1658,14 @@ class _BattleScreenState extends State<BattleScreen>
 
             // コンボエフェクトオーバーレイ
             if (_showComboEffect) _buildComboOverlay(),
-            
-            // パーティクルエフェクト
+
+            // パーティクルエフェクト（攻撃対象側に表示）
             if (_showParticles)
               _ParticleEffect(
                 type: _particleType,
-                position: const Alignment(0, -0.2),
+                position: _particlePosition,
               ),
-            
+
             // ダメージ数値アニメーション
             ..._damageNumbers.map((dmg) => _AnimatedDamageNumber(
                   text: dmg.text,
@@ -1477,13 +1673,13 @@ class _BattleScreenState extends State<BattleScreen>
                   color: dmg.color,
                   isCritical: dmg.isCritical,
                 )),
-            
+
             // ダメージトースト
             _buildToastsOverlay(),
-            
+
             // 勝利カットイン
             if (_showVictoryCutIn) _buildVictoryCutIn(),
-            
+
             // 敗北カットイン
             if (_showDefeatCutIn) _buildDefeatCutIn(),
           ],
@@ -1873,9 +2069,11 @@ class _BattleScreenState extends State<BattleScreen>
         animation: _victoryController,
         builder: (context, child) {
           final progress = _victoryController.value;
-          final slideProgress = Curves.easeOutCubic.transform(progress.clamp(0.0, 0.5) * 2);
-          final fadeProgress = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
-          
+          final slideProgress =
+              Curves.easeOutCubic.transform(progress.clamp(0.0, 0.5) * 2);
+          final fadeProgress =
+              progress < 0.5 ? progress * 2 : (1 - progress) * 2;
+
           return Stack(
             children: [
               // 背景フラッシュ
@@ -1941,9 +2139,11 @@ class _BattleScreenState extends State<BattleScreen>
         animation: _defeatController,
         builder: (context, child) {
           final progress = _defeatController.value;
-          final slideProgress = Curves.easeOutCubic.transform(progress.clamp(0.0, 0.5) * 2);
-          final fadeProgress = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
-          
+          final slideProgress =
+              Curves.easeOutCubic.transform(progress.clamp(0.0, 0.5) * 2);
+          final fadeProgress =
+              progress < 0.5 ? progress * 2 : (1 - progress) * 2;
+
           return Stack(
             children: [
               // 背景ダーク化
@@ -2024,143 +2224,99 @@ class _BattleScreenState extends State<BattleScreen>
             _enemyAttacking ? 0.0 : sin(_shakeController.value * pi * 4) * 10;
         return Transform.translate(
           offset: Offset(offset, 0),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 敵ステータス
-                Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  color: _currentEnemy.type == 'secret_boss'
-                      ? Colors.purple.withOpacity(0.3)
-                      : _currentEnemy.type == 'boss'
-                          ? Colors.red.withOpacity(0.3)
-                          : Colors.black.withOpacity(0.5),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        Text(
-                          _currentEnemy.name,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: _currentEnemy.type == 'secret_boss'
-                                ? Colors.purple[200]
-                                : _currentEnemy.type == 'boss'
-                                    ? Colors.red[200]
-                                    : Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Lv.${_currentEnemy.level}',
-                          style: TextStyle(color: Colors.grey[400]),
-                        ),
-                        const SizedBox(height: 4),
-                        // 属性バッジ
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getElementColor(_currentEnemy.element)
-                                .withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: _getElementColor(_currentEnemy.element)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _getElementIcon(_currentEnemy.element),
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _getElementName(_currentEnemy.element),
-                                style: TextStyle(
-                                  color:
-                                      _getElementColor(_currentEnemy.element),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // 状態異常アイコン
-                        if (_enemyStatus != null) ...[
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.red),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 敵ステータス（コンパクト版）
+              Card(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                elevation: 2,
+                color: _currentEnemy.type == 'secret_boss'
+                    ? Colors.purple.withOpacity(0.3)
+                    : _currentEnemy.type == 'boss'
+                        ? Colors.red.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.5),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _currentEnemy.name,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: _currentEnemy.type == 'secret_boss'
+                                  ? Colors.purple[200]
+                                  : _currentEnemy.type == 'boss'
+                                      ? Colors.red[200]
+                                      : Colors.white,
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _getStatusIcon(_enemyStatus!),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _getStatusName(_enemyStatus!),
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Lv.${_currentEnemy.level}',
+                            style: TextStyle(
+                                color: Colors.grey[400], fontSize: 12),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _getElementIcon(_currentEnemy.element),
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          if (_enemyStatus != null) ...[
+                            const SizedBox(width: 4),
+                            Text(
+                              _getStatusIcon(_enemyStatus!),
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.favorite,
+                              color: Colors.red, size: 14),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                value: _currentEnemy.hpPercent,
+                                minHeight: 10,
+                                backgroundColor: Colors.grey[700],
+                                color: _currentEnemy.hpPercent > 0.5
+                                    ? Colors.green
+                                    : _currentEnemy.hpPercent > 0.25
+                                        ? Colors.orange
+                                        : Colors.red,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${_currentEnemy.currentHp}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.favorite,
-                                color: Colors.red, size: 16),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: LinearProgressIndicator(
-                                  value: _currentEnemy.hpPercent,
-                                  minHeight: 16,
-                                  backgroundColor: Colors.grey[700],
-                                  color: _currentEnemy.hpPercent > 0.5
-                                      ? Colors.green
-                                      : _currentEnemy.hpPercent > 0.25
-                                          ? Colors.orange
-                                          : Colors.red,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${_currentEnemy.currentHp}/${_currentEnemy.maxHp}',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 12),
 
-                // 敵画像
-                AnimatedBuilder(
+              // 敵画像
+              Expanded(
+                child: AnimatedBuilder(
                   animation: _flashController,
                   builder: (context, child) {
                     return Opacity(
@@ -2173,11 +2329,12 @@ class _BattleScreenState extends State<BattleScreen>
                                 ? _secretBossAttackFrame()
                                 : _currentEnemy.attackAssetPath)
                             : _currentEnemy.assetPath,
-                        height: 160,
+                        height: 120,
+                        fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Icon(
                             Icons.error,
-                            size: 160,
+                            size: 100,
                             color: Colors.red[300],
                           );
                         },
@@ -2185,8 +2342,8 @@ class _BattleScreenState extends State<BattleScreen>
                     );
                   },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -2207,14 +2364,12 @@ class _BattleScreenState extends State<BattleScreen>
             _petAttacking ? 0.0 : sin(_shakeController.value * pi * 4) * 10;
         return Transform.translate(
           offset: Offset(offset, 0),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // ペット画像
-                AnimatedBuilder(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // ペット画像
+              Expanded(
+                child: AnimatedBuilder(
                   animation: _flashController,
                   builder: (context, child) {
                     return Opacity(
@@ -2223,142 +2378,97 @@ class _BattleScreenState extends State<BattleScreen>
                           : 1.0 - (_flashController.value * 0.7),
                       child: Image.asset(
                         petImage,
-                        height: 140,
+                        height: 120,
+                        fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return const Icon(Icons.pets,
-                              size: 140, color: Colors.grey);
+                              size: 100, color: Colors.grey);
                         },
                       ),
                     );
                   },
                 ),
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 12),
 
-                // ペットステータス
-                Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  color: Colors.blue.withOpacity(0.3),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        Text(
-                          widget.pet.name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Lv.${widget.pet.level}',
-                          style: TextStyle(color: Colors.grey[400]),
-                        ),
-                        const SizedBox(height: 4),
-                        // ペット属性バッジ
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getElementColor(
-                                    _getPetElement(widget.pet.species))
-                                .withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: _getElementColor(
-                                    _getPetElement(widget.pet.species))),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _getElementIcon(
-                                    _getPetElement(widget.pet.species)),
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _getElementName(
-                                    _getPetElement(widget.pet.species)),
-                                style: TextStyle(
-                                  color: _getElementColor(
-                                      _getPetElement(widget.pet.species)),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // ペット状態異常アイコン
-                        if (_petStatus != null) ...[
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.red),
+              // ペットステータス（コンパクト版）
+              Card(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                elevation: 2,
+                color: Colors.blue.withOpacity(0.3),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.pet.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _getStatusIcon(_petStatus!),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _getStatusName(_petStatus!),
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Lv.${widget.pet.level}',
+                            style: TextStyle(
+                                color: Colors.grey[400], fontSize: 12),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _getElementIcon(_getPetElement(widget.pet.species)),
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          if (_petStatus != null) ...[
+                            const SizedBox(width: 4),
+                            Text(
+                              _getStatusIcon(_petStatus!),
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.favorite,
+                              color: Colors.red, size: 14),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                value: _petCurrentHp / widget.pet.hp,
+                                minHeight: 10,
+                                backgroundColor: Colors.grey[700],
+                                color: _petCurrentHp / widget.pet.hp > 0.5
+                                    ? Colors.green
+                                    : _petCurrentHp / widget.pet.hp > 0.25
+                                        ? Colors.orange
+                                        : Colors.red,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$_petCurrentHp',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.favorite,
-                                color: Colors.red, size: 16),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: LinearProgressIndicator(
-                                  value: _petCurrentHp / widget.pet.hp,
-                                  minHeight: 16,
-                                  backgroundColor: Colors.grey[700],
-                                  color: _petCurrentHp / widget.pet.hp > 0.5
-                                      ? Colors.green
-                                      : _petCurrentHp / widget.pet.hp > 0.25
-                                          ? Colors.orange
-                                          : Colors.red,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$_petCurrentHp/${widget.pet.hp}',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -2540,8 +2650,18 @@ class _BattleScreenState extends State<BattleScreen>
     _shakeController.forward(from: 0);
     _flashController.forward(from: 0);
 
+    // 必殺技エフェクト（敵側に表示）
     setState(() {
+      _showParticles = true;
+      _particleType = petElement;
+      _particlePosition = const Alignment(0.5, -0.2); // 敵側（右）
       _overdrive = 0;
+    });
+    _showEnhancedDamageNumber(damage, isEnemy: true, isCritical: true);
+
+    // パーティクルを一定時間後に消す
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) setState(() => _showParticles = false);
     });
 
     await _wait(800);
@@ -2707,81 +2827,88 @@ class _BattleScreenState extends State<BattleScreen>
   }
 
   Widget _buildSkillMenuSheet() {
-    final learnedSkillIds = widget.pet.skills;
-    final learnedSkills = learnedSkillIds
-        .map((id) => Skill.getSkillById(id))
-        .where((skill) => skill != null)
-        .cast<Skill>()
-        .toList();
+    return FutureBuilder<PetModel?>(
+      future: PetService.getPetById(widget.pet.id),
+      builder: (context, snapshot) {
+        final pet = snapshot.data ?? widget.pet;
+        final learnedSkillIds = pet.skills;
+        final learnedSkills = learnedSkillIds
+            .map((id) => Skill.getSkillById(id))
+            .where((skill) => skill != null)
+            .cast<Skill>()
+            .toList();
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          // ヘッダー
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue.shade700, Colors.purple.shade700],
-              ),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.auto_awesome, color: Colors.white, size: 28),
-                const SizedBox(width: 12),
-                const Text(
-                  'スキル選択',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: Colors.white),
-                ),
-              ],
-            ),
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-
-          // スキルリスト
-          Expanded(
-            child: learnedSkills.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.info_outline,
-                            size: 64, color: Colors.grey.shade400),
-                        const SizedBox(height: 16),
-                        Text(
-                          'まだスキルを習得していません',
-                          style: TextStyle(
-                              fontSize: 16, color: Colors.grey.shade600),
-                        ),
-                      ],
+          child: Column(
+            children: [
+              // ヘッダー
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade700, Colors.purple.shade700],
+                  ),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.auto_awesome,
+                        color: Colors.white, size: 28),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'スキル選択',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: learnedSkills.length,
-                    itemBuilder: (context, index) {
-                      final skill = learnedSkills[index];
-                      return _buildSkillCard(skill);
-                    },
-                  ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+
+              // スキルリスト
+              Expanded(
+                child: learnedSkills.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.info_outline,
+                                size: 64, color: Colors.grey.shade400),
+                            const SizedBox(height: 16),
+                            Text(
+                              'まだスキルを習得していません',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.grey.shade600),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: learnedSkills.length,
+                        itemBuilder: (context, index) {
+                          final skill = learnedSkills[index];
+                          return _buildSkillCard(skill);
+                        },
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -3131,13 +3258,14 @@ class _BattleScreenState extends State<BattleScreen>
     _shakeController.forward(from: 0);
     _flashController.forward(from: 0);
 
-    // スキル発動エフェクト（属性パーティクル＋ダメージ数値）
+    // スキル発動エフェクト（属性パーティクル＋ダメージ数値）- 敵側に表示
     setState(() {
       _showParticles = true;
       _particleType = skillElement;
+      _particlePosition = const Alignment(0.5, -0.2); // 敵側（右）
     });
-    _showEnhancedDamageNumber(damage, toEnemy: true, isCritical: isCritical);
-    
+    _showEnhancedDamageNumber(damage, isEnemy: true, isCritical: isCritical);
+
     // パーティクルを一定時間後に消す
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) setState(() => _showParticles = false);
@@ -3652,7 +3780,7 @@ class _DamageNumber {
   final Offset position;
   final Color color;
   final bool isCritical;
-  
+
   _DamageNumber({
     required this.id,
     required this.text,
@@ -3668,7 +3796,7 @@ class _AnimatedDamageNumber extends StatefulWidget {
   final Offset position;
   final Color color;
   final bool isCritical;
-  
+
   const _AnimatedDamageNumber({
     required this.text,
     required this.position,
@@ -3694,22 +3822,24 @@ class _AnimatedDamageNumberState extends State<_AnimatedDamageNumber>
       duration: Duration(milliseconds: widget.isCritical ? 1500 : 1200),
       vsync: this,
     )..forward();
-    
+
     _opacity = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 20),
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 40),
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 40),
     ]).animate(_controller);
-    
+
     _scale = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween(begin: 0.5, end: widget.isCritical ? 1.5 : 1.2)
             .chain(CurveTween(curve: Curves.elasticOut)),
         weight: 30,
       ),
-      TweenSequenceItem(tween: Tween(begin: widget.isCritical ? 1.5 : 1.2, end: 1.0), weight: 70),
+      TweenSequenceItem(
+          tween: Tween(begin: widget.isCritical ? 1.5 : 1.2, end: 1.0),
+          weight: 70),
     ]).animate(_controller);
-    
+
     _offset = Tween<Offset>(
       begin: Offset.zero,
       end: Offset(0, widget.isCritical ? -1.5 : -1.0),
@@ -3765,7 +3895,7 @@ class _AnimatedDamageNumberState extends State<_AnimatedDamageNumber>
 class _ParticleEffect extends StatefulWidget {
   final String type; // fire, water, electric, grass, dark, light
   final Alignment position;
-  
+
   const _ParticleEffect({
     required this.type,
     this.position = Alignment.center,
@@ -3785,23 +3915,25 @@ class _ParticleEffectState extends State<_ParticleEffect>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..forward();
-    
+
     // パーティクル生成
     _generateParticles();
   }
 
   void _generateParticles() {
-    final particleCount = widget.type == 'electric' ? 15 : 20;
+    final particleCount = widget.type == 'electric' ? 20 : 25;
     for (int i = 0; i < particleCount; i++) {
       _particles.add(_Particle(
         type: widget.type,
         angle: _random.nextDouble() * 2 * pi,
-        distance: 50 + _random.nextDouble() * 100,
-        size: widget.type == 'electric' ? 3 + _random.nextDouble() * 2 : 4 + _random.nextDouble() * 6,
-        delay: _random.nextDouble() * 0.2,
+        distance: 50 + _random.nextDouble() * 70,
+        size: widget.type == 'electric'
+            ? 3 + _random.nextDouble() * 2
+            : 4 + _random.nextDouble() * 3,
+        delay: _random.nextDouble() * 0.3,
       ));
     }
   }
@@ -3839,17 +3971,18 @@ class _ParticleEffectState extends State<_ParticleEffect>
         animation: _controller,
         builder: (context, child) {
           return SizedBox(
-            width: 300,
-            height: 300,
+            width: 200,
+            height: 200,
             child: Stack(
               children: _particles.map((particle) {
-                final progress = ((_controller.value - particle.delay) / (1 - particle.delay))
+                final progress = ((_controller.value - particle.delay) /
+                        (1 - particle.delay))
                     .clamp(0.0, 1.0);
                 final opacity = (1 - progress).clamp(0.0, 1.0);
-                
+
                 final dx = cos(particle.angle) * particle.distance * progress;
                 final dy = sin(particle.angle) * particle.distance * progress;
-                
+
                 return Positioned(
                   left: 150 + dx,
                   top: 150 + dy,
@@ -3860,14 +3993,14 @@ class _ParticleEffectState extends State<_ParticleEffect>
                       height: particle.size,
                       decoration: BoxDecoration(
                         color: _getParticleColor(widget.type),
-                        shape: widget.type == 'electric' 
-                            ? BoxShape.rectangle 
+                        shape: widget.type == 'electric'
+                            ? BoxShape.rectangle
                             : BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color: _getParticleColor(widget.type),
-                            blurRadius: particle.size * 2,
-                            spreadRadius: particle.size,
+                            blurRadius: particle.size * 6,
+                            spreadRadius: particle.size * 3,
                           ),
                         ],
                       ),
@@ -3889,7 +4022,7 @@ class _Particle {
   final double distance;
   final double size;
   final double delay;
-  
+
   _Particle({
     required this.type,
     required this.angle,

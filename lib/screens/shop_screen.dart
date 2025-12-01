@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/shop_service.dart';
+import '../services/equipment_service.dart';
+import '../services/item_effect_service.dart';
+import '../services/pet_service.dart';
 
 /// ショップ画面
 class ShopScreen extends StatefulWidget {
@@ -9,7 +12,8 @@ class ShopScreen extends StatefulWidget {
   State<ShopScreen> createState() => _ShopScreenState();
 }
 
-class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateMixin {
+class _ShopScreenState extends State<ShopScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _points = 0;
   List<String> _purchased = [];
@@ -17,7 +21,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _loadData();
   }
 
@@ -80,13 +84,11 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
       ),
     );
 
-    if (confirmed != true) return;
-
-    // 購入処理
-    final success = await ShopService.purchaseItem(item);
-    if (success) {
-      await _loadData();
-      if (mounted) {
+    if (confirmed == true) {
+      final success = await ShopService.purchaseItem(item);
+      if (success) {
+        await _loadData();
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${item.name}を購入しました！'),
@@ -95,15 +97,89 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
         );
       }
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('ポイントが不足しています'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ポイントが不足しています'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
+  }
+
+  Widget _buildPurchasedAction(ShopItem item) {
+    // テーマ適用
+    if (item.type == 'theme') {
+      return ElevatedButton(
+        onPressed: () async {
+          await ShopService.setActiveTheme(item.id);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ ${item.name}を適用しました\nアプリを再起動すると反映されます'),
+              duration: const Duration(seconds: 3),
+              backgroundColor: Colors.green,
+              action: SnackBarAction(
+                label: '再起動',
+                textColor: Colors.white,
+                onPressed: () {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+              ),
+            ),
+          );
+        },
+        child: const Text('適用'),
+      );
+    }
+
+    // スキルブック使用
+    if (item.id == 'skill_book') {
+      return ElevatedButton(
+        onPressed: () async {
+          final pet = await PetService.getActivePet();
+          if (pet == null) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('アクティブなペットがいません'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+          final result = await ItemEffectService.useItem('skill_book', pet.id);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message ?? 'スキルブックを使用しました'),
+              backgroundColor: result.success ? Colors.green : Colors.red,
+              duration: const Duration(seconds: 3),
+              action: result.success
+                  ? SnackBarAction(
+                      label: 'スキル確認',
+                      textColor: Colors.white,
+                      onPressed: () async {
+                        final updatedPet = await PetService.getPetById(pet.id);
+                        if (updatedPet != null && mounted) {
+                          Navigator.pushNamed(
+                            context,
+                            '/skillTree',
+                            arguments: updatedPet,
+                          );
+                        }
+                      },
+                    )
+                  : null,
+            ),
+          );
+        },
+        child: const Text('使用'),
+      );
+    }
+
+    // その他購入済み表示
+    return const Icon(Icons.check_circle, color: Colors.green);
   }
 
   @override
@@ -121,6 +197,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
             Tab(text: '🐾 ペット'),
             Tab(text: '🎫 その他'),
             Tab(text: '🎁 購入済み'),
+            Tab(text: '💰 売却'),
           ],
         ),
       ),
@@ -168,12 +245,119 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                   ...ShopService.getItemsByType('hint'),
                 ]),
                 _buildPurchasedList(),
+                _buildSellTab(),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildSellTab() {
+    return FutureBuilder<Map<String, int>>(
+      future: EquipmentService.getInventory(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final inventory = snapshot.data!;
+
+        // 売却対象: 素材のみ（装備売却は後続対応）
+        final sellable = inventory.entries
+            .where((e) => ShopService.getMaterialSellPrice(e.key) > 0)
+            .toList();
+
+        if (sellable.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.sell, size: 64, color: Colors.grey),
+                SizedBox(height: 12),
+                Text('売却可能な素材がありません', style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: sellable.length,
+          itemBuilder: (context, index) {
+            final entry = sellable[index];
+            final materialId = entry.key;
+            final count = entry.value;
+            final price = ShopService.getMaterialSellPrice(materialId);
+            final materialName = EquipmentService.getMaterialName(materialId);
+            final imagePath = EquipmentService.getMaterialImage(materialId);
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: imagePath != null
+                    ? Image.asset(imagePath, width: 48, height: 48)
+                    : const Icon(Icons.inventory_2),
+                title: Text(materialName),
+                subtitle: Text('所持: $count / 単価: $price pt'),
+                trailing: ElevatedButton(
+                  onPressed: () async {
+                    final qty = await _askQuantity(context, count);
+                    if (qty != null && qty > 0) {
+                      final ok =
+                          await ShopService.sellMaterial(materialId, qty);
+                      if (!mounted) return;
+                      if (ok) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                '$materialName を $qty 個売却しました (+${price * qty}pt)'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        await _loadData();
+                        if (!mounted) return;
+                        setState(() {});
+                      }
+                    }
+                  },
+                  child: const Text('売却'),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<int?> _askQuantity(BuildContext context, int maxCount) async {
+    final controller = TextEditingController(text: '1');
+    final result = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('数量を入力'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(helperText: '最大: $maxCount'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final n = int.tryParse(controller.text) ?? 0;
+              Navigator.pop(context, n.clamp(0, maxCount));
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    return result;
   }
 
   Widget _buildItemList(List<ShopItem> items) {
@@ -242,9 +426,8 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                       '${item.price} pt',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: _points >= item.price
-                            ? Colors.green
-                            : Colors.red,
+                        color:
+                            _points >= item.price ? Colors.green : Colors.red,
                       ),
                     ),
                   ],
@@ -299,31 +482,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
             leading: Text(item.icon, style: const TextStyle(fontSize: 32)),
             title: Text(item.name),
             subtitle: Text(item.description),
-            trailing: item.type == 'theme'
-                ? ElevatedButton(
-                    onPressed: () async {
-                      await ShopService.setActiveTheme(item.id);
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('✅ ${item.name}を適用しました\nアプリを再起動すると反映されます'),
-                            duration: const Duration(seconds: 3),
-                            backgroundColor: Colors.green,
-                            action: SnackBarAction(
-                              label: '再起動',
-                              textColor: Colors.white,
-                              onPressed: () {
-                                // アプリ再起動の代わりにホーム画面に戻る
-                                Navigator.of(context).popUntil((route) => route.isFirst);
-                              },
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    child: const Text('適用'),
-                  )
-                : const Icon(Icons.check_circle, color: Colors.green),
+            trailing: _buildPurchasedAction(item),
           ),
         );
       },

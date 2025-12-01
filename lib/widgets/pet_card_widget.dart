@@ -1,4 +1,241 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
+
+/// LED風発光アニメ付きラッパー
+class GlowingPetCard extends StatefulWidget {
+  final PetModelLike pet; // 必要最低限のフィールドを持つインターフェース
+  final String imagePath;
+  const GlowingPetCard({super.key, required this.pet, required this.imagePath});
+
+  @override
+  State<GlowingPetCard> createState() => _GlowingPetCardState();
+}
+
+/// 最低限必要なPet互換インターフェース（直接PetModelを参照しないため）
+abstract class PetModelLike {
+  String get name;
+  int get level;
+  String get species;
+  String get stage;
+  int get hp;
+  int get attack;
+  int get defense;
+  int? get rarity;
+}
+
+class _GlowingPetCardState extends State<GlowingPetCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _elementOfSpecies(String s) {
+    const map = {
+      'agumon': 'fire',
+      'greymon': 'fire',
+      'wargreymon': 'fire',
+      'gabumon': 'water',
+      'garurumon': 'water',
+      'metalgarurumon': 'water',
+      'patamon': 'light',
+      'angemon': 'light',
+      'devimon': 'dark',
+      'palmon': 'grass',
+      'tentomon': 'electric',
+    };
+    return map[s] ?? 'normal';
+  }
+
+  Color _elementColor(String e) {
+    switch (e) {
+      case 'fire':
+        return Colors.deepOrange;
+      case 'water':
+        return Colors.blue;
+      case 'grass':
+        return Colors.green;
+      case 'electric':
+        return Colors.yellow;
+      case 'ice':
+        return Colors.cyan;
+      case 'dark':
+        return Colors.purple;
+      case 'light':
+        return Colors.amber;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _elementEmoji(String e) {
+    switch (e) {
+      case 'fire':
+        return '🔥';
+      case 'water':
+        return '💧';
+      case 'grass':
+        return '🌿';
+      case 'electric':
+        return '⚡';
+      case 'ice':
+        return '❄️';
+      case 'dark':
+        return '🌑';
+      case 'light':
+        return '✨';
+      default:
+        return '⚪';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final element = _elementOfSpecies(widget.pet.species);
+    final elementColor = _elementColor(element);
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = _controller.value;
+        // 虹っぽいグラデーションを枠に流す
+        final gradient = SweepGradient(
+          colors: [
+            elementColor,
+            elementColor.withOpacity(0.7),
+            Colors.white,
+            elementColor,
+          ],
+          startAngle: 0,
+          endAngle: 3.14 * 2,
+          transform: GradientRotation(t * 3.14 * 2),
+        );
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            // 発光する外枠
+            Container(
+              width: 300,
+              height: 430,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color:
+                        elementColor.withOpacity(0.4 + math.sin(t * 6) * 0.2),
+                    blurRadius: 24,
+                    spreadRadius: 3,
+                  ),
+                ],
+              ),
+              child: CustomPaint(
+                painter: _AnimatedBorderPainter(gradient, t),
+              ),
+            ),
+            // 元カード
+            PetCardWidget(
+              petImagePath: widget.imagePath,
+              petName: widget.pet.name,
+              level: widget.pet.level,
+              species: widget.pet.species,
+              stage: widget.pet.stage,
+              hp: widget.pet.hp,
+              attack: widget.pet.attack,
+              defense: widget.pet.defense,
+              rarity: widget.pet.rarity,
+              showFrameCorners: true,
+            ),
+            // 属性バッジ
+            Positioned(
+              top: 12,
+              left: 12,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [elementColor, elementColor.withOpacity(0.6)],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: elementColor.withOpacity(0.5),
+                      blurRadius: 12,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_elementEmoji(element),
+                        style: const TextStyle(fontSize: 16)),
+                    const SizedBox(width: 4),
+                    Text(
+                      element.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AnimatedBorderPainter extends CustomPainter {
+  final Gradient gradient;
+  final double progress;
+  _AnimatedBorderPainter(this.gradient, this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..shader = gradient.createShader(rect);
+
+    // 角丸矩形枠
+    final rrect =
+        RRect.fromRectAndRadius(rect.deflate(3), const Radius.circular(20));
+    canvas.drawRRect(rrect, paint);
+
+    // LED風点滅ドット（簡易）
+    final dotPaint = Paint()..color = Colors.white.withOpacity(0.8);
+    const dotCount = 24;
+    for (int i = 0; i < dotCount; i++) {
+      final p = (i / dotCount + progress) % 1.0;
+      final angle = p * 3.1415926 * 2;
+      final cx = rect.center.dx + (rect.width / 2 - 10) * math.cos(angle);
+      final cy = rect.center.dy + (rect.height / 2 - 10) * math.sin(angle);
+      canvas.drawCircle(Offset(cx, cy), 2.2, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _AnimatedBorderPainter oldDelegate) => true;
+}
 
 /// ポケモンカード風のペット表示ウィジェット
 class PetCardWidget extends StatelessWidget {
@@ -207,14 +444,26 @@ class PetCardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(9),
         child: Stack(
           children: [
-            // 背景グラデーション
-            Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  colors: [
-                    Colors.white,
-                    Colors.grey.shade200,
-                  ],
+            // ステージに応じた背景画像
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.4,
+                child: Image.asset(
+                  _getStageBgImage(stage),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    // 背景画像がない場合はグラデーション
+                    return Container(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          colors: [
+                            Colors.white,
+                            Colors.grey.shade200,
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -446,6 +695,24 @@ class PetCardWidget extends StatelessWidget {
         return Icons.star;
       default:
         return Icons.help;
+    }
+  }
+
+  /// 進化段階に応じたバトル背景画像パスを返す
+  String _getStageBgImage(String stage) {
+    switch (stage) {
+      case 'egg':
+        return 'assets/ui/backgrounds/bg_battle_field.png';
+      case 'baby':
+        return 'assets/ui/backgrounds/bg_battle_forest.png';
+      case 'child':
+        return 'assets/ui/backgrounds/bg_battle_sky.png';
+      case 'adult':
+        return 'assets/ui/backgrounds/bg_battle_ocean.png';
+      case 'ultimate':
+        return 'assets/ui/backgrounds/bg_battle_ruins.png';
+      default:
+        return 'assets/ui/backgrounds/bg_battle_field.png';
     }
   }
 

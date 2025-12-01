@@ -108,8 +108,10 @@ class ShopService {
     purchased.add(item.id);
     await prefs.setString(_purchasedKey, json.encode(purchased));
 
-    // 装備アイテムの場合、EquipmentServiceのインベントリに追加
-    if (item.type == 'equipment' || item.id.startsWith('item_')) {
+    // インベントリに追加が必要なアイテム種別（装備 / 素材系 / スキルブック）
+    if (item.type == 'equipment' ||
+        item.id.startsWith('item_') ||
+        item.id == 'skill_book') {
       await EquipmentService.addEquipment(item.id, 1);
     }
 
@@ -303,6 +305,16 @@ class ShopService {
         icon: '🧤',
         price: 450,
         type: 'equipment',
+      ),
+
+      // スキルブック（未習得スキルをランダム習得）
+      ShopItem(
+        id: 'skill_book',
+        name: 'スキルブック',
+        description: '未習得のスキルを1つランダムで覚える（最大10個まで）',
+        icon: '📘',
+        price: 400,
+        type: 'rare',
       ),
 
       // その他

@@ -394,8 +394,33 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
   }
 
   void _showEquipDialog(String slot) {
+    String _inferSlot(String equipmentId) {
+      final details = EquipmentService.getEquipmentDetails(equipmentId);
+      if (details != null && details['slot'] is String) {
+        return details['slot'] as String;
+      }
+      // レシピIDから推測
+      if (equipmentId.startsWith('item_sword') ||
+          equipmentId.startsWith('item_staff')) {
+        return 'weapon';
+      }
+      if (equipmentId.startsWith('item_shield') ||
+          equipmentId.startsWith('item_armor')) {
+        return 'armor';
+      }
+      if (equipmentId.startsWith('item_ring') ||
+          equipmentId.startsWith('item_amulet') ||
+          equipmentId.startsWith('item_boots')) {
+        // ブーツはアクセ扱い（ショップ装備はslot定義済み）
+        return 'accessory';
+      }
+      // ショップ専用装備はdetailsにslotあり
+      return 'accessory';
+    }
+
     final equipments = _inventory.entries
         .where((e) => EquipmentService.getEquipmentDetails(e.key) != null)
+        .where((e) => _inferSlot(e.key) == slot)
         .toList();
 
     showDialog(

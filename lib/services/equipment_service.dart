@@ -12,31 +12,37 @@ class EquipmentService {
       'effect': {'attack': 1.08}, // 攻撃+8%
       'name': 'パワーリング',
       'image': 'assets/items/equipment/shop_ring_power.png',
+      'slot': 'accessory',
     },
     'shop_amulet_shield': {
       'effect': {'defense': 1.08}, // 防御+8%
       'name': 'シールドアミュレット',
       'image': 'assets/items/equipment/shop_amulet_shield.png',
+      'slot': 'accessory',
     },
     'shop_boots_speed': {
       'effect': {'speed': 1.10}, // 素早さ+10%
       'name': 'スピードブーツ',
       'image': 'assets/items/equipment/shop_boots_speed.png',
+      'slot': 'accessory',
     },
     'shop_necklace_hp': {
       'effect': {'hp': 1.12}, // HP+12%
       'name': 'HPネックレス',
       'image': 'assets/items/equipment/shop_necklace_hp.png',
+      'slot': 'accessory',
     },
     'shop_crown_exp': {
       'effect': {'exp_bonus': 1.15}, // 経験値+15%
       'name': 'クラウン',
       'image': 'assets/items/equipment/shop_crown_exp.png',
+      'slot': 'accessory',
     },
     'shop_gloves_crit': {
       'effect': {'crit_rate': 0.08}, // クリティカル率+8%
       'name': 'グローブ',
       'image': 'assets/items/equipment/shop_gloves_crit.png',
+      'slot': 'accessory',
     },
   };
 

@@ -43,20 +43,13 @@ class PetDetailScreen extends StatelessWidget {
           children: [
             // ペットカード（レア度表示）
             Center(
-              child: PetCardWidget(
-                petImagePath: PetImageResolver.resolveImage(
+              child: GlowingPetCard(
+                pet: _PetAdapter(pet),
+                imagePath: PetImageResolver.resolveImage(
                   pet.stage,
                   pet.species,
                   'normal',
                 ),
-                petName: pet.name,
-                level: pet.level,
-                species: pet.species,
-                stage: pet.stage,
-                hp: pet.hp,
-                attack: pet.attack,
-                defense: pet.defense,
-                rarity: pet.rarity,
               ),
             ),
             const SizedBox(height: 16),
@@ -769,4 +762,26 @@ class PetDetailScreen extends StatelessWidget {
     if (discipline >= 20) return Colors.deepOrange;
     return Colors.red;
   }
+}
+
+// GlowingPetCard用PetModelアダプタ
+class _PetAdapter implements PetModelLike {
+  final PetModel src;
+  _PetAdapter(this.src);
+  @override
+  String get name => src.name;
+  @override
+  int get level => src.level;
+  @override
+  String get species => src.species;
+  @override
+  String get stage => src.stage;
+  @override
+  int get hp => src.hp;
+  @override
+  int get attack => src.attack;
+  @override
+  int get defense => src.defense;
+  @override
+  int? get rarity => src.rarity;
 }

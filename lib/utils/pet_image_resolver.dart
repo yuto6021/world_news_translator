@@ -38,15 +38,20 @@ class PetImageResolver {
   /// 両対応の柔軟解決メソッド（状態 or アクション問わず）
   /// 呼び出し側は希望状態(新/旧)を渡せば最適な既存アセットパスを返す
   static String resolveFlexible(String stage, String species, String desired) {
+    // 入力を小文字に正規化（アセット命名は小文字前提）
+    final st = stage.toLowerCase();
+    final sp = species.toLowerCase();
+    final des = desired.toLowerCase();
+
     // 直接旧仕様に存在する場合はそのまま
-    if (_legacyStates.contains(desired) || _legacyActions.contains(desired)) {
-      return 'assets/pets/$stage/${stage}_${species}_$desired.png';
+    if (_legacyStates.contains(des) || _legacyActions.contains(des)) {
+      return 'assets/pets/$st/${st}_${sp}_$des.png';
     }
 
     // 新仕様状態の場合フォールバック列を生成
     final candidates = <String>[];
-    if (_stateFallbacks.containsKey(desired)) {
-      candidates.addAll(_stateFallbacks[desired]!);
+    if (_stateFallbacks.containsKey(des)) {
+      candidates.addAll(_stateFallbacks[des]!);
     } else {
       // 未知の入力は normal に丸める
       candidates.add('normal');
@@ -54,11 +59,11 @@ class PetImageResolver {
 
     for (final c in candidates) {
       if (_legacyStates.contains(c) || _legacyActions.contains(c)) {
-        return 'assets/pets/$stage/${stage}_${species}_$c.png';
+        return 'assets/pets/$st/${st}_${sp}_$c.png';
       }
     }
     // 最終保険
-    return 'assets/pets/$stage/${stage}_${species}_normal.png';
+    return 'assets/pets/$st/${st}_${sp}_normal.png';
   }
 
   /// 互換維持のため旧メソッドはそのまま利用可（既存コード用）

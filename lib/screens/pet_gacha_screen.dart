@@ -5,6 +5,7 @@ import '../services/pet_service.dart';
 import '../services/dex_service.dart';
 import '../models/pet.dart';
 import '../services/inventory_service.dart';
+import '../utils/pet_image_resolver.dart';
 
 /// ペットガチャ画面
 class PetGachaScreen extends StatefulWidget {
@@ -432,10 +433,7 @@ class _PetGachaScreenState extends State<PetGachaScreen>
 
   Widget _buildPetImage(String species, double size) {
     final stage = _getInitialStage(species);
-    // アグモンは adult ディレクトリに実画像があるため種族別にパス補正
-    final imagePath = species == 'agumon'
-        ? 'assets/pets/adult/adult_agumon_normal.png'
-        : 'assets/pets/$stage/${stage}_${species}_normal.png';
+    final imagePath = PetImageResolver.resolveImage(stage, species, 'normal');
 
     return Image.asset(
       imagePath,

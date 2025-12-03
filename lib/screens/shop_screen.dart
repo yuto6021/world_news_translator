@@ -3,6 +3,7 @@ import '../services/shop_service.dart';
 import '../services/equipment_service.dart';
 import '../services/item_effect_service.dart';
 import '../services/pet_service.dart';
+import '../utils/localization_helper.dart';
 
 /// ショップ画面
 class ShopScreen extends StatefulWidget {
@@ -289,7 +290,7 @@ class _ShopScreenState extends State<ShopScreen>
             final materialId = entry.key;
             final count = entry.value;
             final price = ShopService.getMaterialSellPrice(materialId);
-            final materialName = EquipmentService.getMaterialName(materialId);
+            final materialName = LocalizationHelper.getMaterialName(materialId);
             final imagePath = EquipmentService.getMaterialImage(materialId);
 
             return Card(

@@ -2,6 +2,7 @@ import '../services/pet_service.dart';
 import '../services/inventory_service.dart';
 import '../services/skill_service.dart';
 import '../models/game_item.dart';
+import '../models/skill.dart';
 
 /// アイテム効果適用サービス
 class ItemEffectService {
@@ -169,9 +170,24 @@ class ItemEffectService {
         break;
 
       case 'skill_book':
+        // 取得前後で差分をとり、PetModelにも同期
+        final before = await SkillService.getPetSkills(petId);
         final learned = await SkillService.learnSkillFromItem(petId, item.id);
         if (learned) {
-          message = '新しいスキルを覚えました！';
+          final after = await SkillService.getPetSkills(petId);
+          // Hive上のペットにも同期してUI反映
+          await PetService.updatePetSkills(petId, after);
+
+          // どのスキルか特定してメッセージに表示
+          final gained = after.firstWhere(
+            (id) => !before.contains(id),
+            orElse: () => '',
+          );
+          final gainedSkill =
+              gained.isNotEmpty ? Skill.getSkillById(gained) : null;
+          message = gainedSkill != null
+              ? '新しいスキル「${gainedSkill.name}」を覚えました！'
+              : '新しいスキルを覚えました！';
         } else {
           // より詳細なエラーメッセージ
           final currentSkills = await SkillService.getPetSkills(petId);

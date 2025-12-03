@@ -14,6 +14,7 @@ import '../services/bestiary_service.dart';
 import '../services/quest_service.dart';
 import '../services/stage_service.dart';
 import '../widgets/animated_reward.dart';
+import '../utils/localization_helper.dart';
 
 class BattleScreen extends StatefulWidget {
   final PetModel pet;
@@ -323,6 +324,190 @@ class _BattleScreenState extends State<BattleScreen>
       itemDrop: 'golem_core',
       element: 'normal',
     ),
+    // === 敵専用キャラ ===
+    Enemy(
+      name: 'ドルモン',
+      assetPath: 'assets/enemies/enemy_dorumon_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_dorumon_attack.png',
+      level: 15,
+      maxHp: 180,
+      attack: 32,
+      defense: 28,
+      speed: 22,
+      expReward: 55,
+      itemDrop: 'beast_fang',
+      element: 'normal',
+    ),
+    Enemy(
+      name: 'ドルゴラモン',
+      assetPath: 'assets/enemies/enemy_dorugoramon_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_dorugoramon_attack.png',
+      level: 25,
+      maxHp: 350,
+      attack: 55,
+      defense: 45,
+      speed: 28,
+      expReward: 120,
+      itemDrop: 'dragon_scale',
+      element: 'normal',
+    ),
+    Enemy(
+      name: 'ガオモン',
+      assetPath: 'assets/enemies/enemy_gaomon_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_gaomon_attack.png',
+      level: 12,
+      maxHp: 140,
+      attack: 28,
+      defense: 22,
+      speed: 26,
+      expReward: 45,
+      itemDrop: 'beast_claw',
+      element: 'normal',
+    ),
+    Enemy(
+      name: 'マッハガオガモン',
+      assetPath: 'assets/enemies/enemy_machgaogamon_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_machgaogamon_attack.png',
+      level: 28,
+      maxHp: 400,
+      attack: 65,
+      defense: 50,
+      speed: 45,
+      expReward: 150,
+      itemDrop: 'thunder_fang',
+      element: 'electric',
+    ),
+    Enemy(
+      name: 'ミラージュガオガモン',
+      assetPath: 'assets/enemies/enemy_miragegaogamon_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_miragegaogamon_attack.png',
+      level: 32,
+      maxHp: 480,
+      attack: 72,
+      defense: 65,
+      speed: 50,
+      expReward: 180,
+      itemDrop: 'metal_wing',
+      element: 'normal',
+    ),
+    Enemy(
+      name: 'バンチョーレオモン',
+      assetPath: 'assets/enemies/enemy_bancholeomon_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_bancholeomon_attack.png',
+      level: 35,
+      maxHp: 550,
+      attack: 85,
+      defense: 70,
+      speed: 40,
+      expReward: 220,
+      itemDrop: 'beast_hide',
+      element: 'normal',
+    ),
+    Enemy(
+      name: 'ファントモン',
+      assetPath: 'assets/enemies/enemy_phantomon_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_phantomon_attack.png',
+      level: 30,
+      maxHp: 420,
+      attack: 68,
+      defense: 55,
+      speed: 35,
+      expReward: 170,
+      itemDrop: 'sinigamicore',
+      element: 'dark',
+    ),
+    Enemy(
+      name: 'ピエモン',
+      assetPath: 'assets/enemies/enemy_piedmon_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_piedmon_attack.png',
+      level: 38,
+      maxHp: 600,
+      attack: 90,
+      defense: 75,
+      speed: 55,
+      expReward: 250,
+      itemDrop: 'piero_face',
+      element: 'dark',
+    ),
+    Enemy(
+      name: 'ヘラクレスカブテリモン',
+      assetPath: 'assets/enemies/enemy_herculeskabuterimon_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_herculeskabuterimon_attack.png',
+      level: 42,
+      maxHp: 700,
+      attack: 95,
+      defense: 85,
+      speed: 48,
+      expReward: 280,
+      itemDrop: 'golden_horn',
+      element: 'electric',
+    ),
+    // === 属性騎士 ===
+    Enemy(
+      name: '火の騎士',
+      assetPath: 'assets/enemies/enemy_fire_knight_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_fire_knight_attack.png',
+      level: 35,
+      maxHp: 520,
+      attack: 78,
+      defense: 68,
+      speed: 42,
+      expReward: 200,
+      itemDrop: 'firecore',
+      element: 'fire',
+    ),
+    Enemy(
+      name: '水の騎士',
+      assetPath: 'assets/enemies/enemy_water_knight_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_water_knight_attack.png',
+      level: 35,
+      maxHp: 520,
+      attack: 78,
+      defense: 68,
+      speed: 42,
+      expReward: 200,
+      itemDrop: 'watercore',
+      element: 'water',
+    ),
+    Enemy(
+      name: '木の騎士',
+      assetPath: 'assets/enemies/enemy_wood_knight_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_wood_knight_attack.png',
+      level: 35,
+      maxHp: 520,
+      attack: 78,
+      defense: 68,
+      speed: 42,
+      expReward: 200,
+      itemDrop: 'woodcore',
+      element: 'grass',
+    ),
+    Enemy(
+      name: '雷の騎士',
+      assetPath: 'assets/enemies/enemy_thunder_knight_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_thunder_knight_attack.png',
+      level: 35,
+      maxHp: 520,
+      attack: 78,
+      defense: 68,
+      speed: 42,
+      expReward: 200,
+      itemDrop: 'thundercore',
+      element: 'electric',
+    ),
+    Enemy(
+      name: '光の騎士',
+      assetPath: 'assets/enemies/enemy_light_knight_normal.png',
+      attackAssetPath: 'assets/enemies/enemy_light_knight_attack.png',
+      level: 35,
+      maxHp: 520,
+      attack: 78,
+      defense: 68,
+      speed: 42,
+      expReward: 200,
+      itemDrop: 'lightcore',
+      element: 'light',
+    ),
   ];
 
   static final List<Enemy> _bossEnemies = [
@@ -370,6 +555,21 @@ class _BattleScreenState extends State<BattleScreen>
     expReward: 1000,
     itemDrop: 'ultimate_crystal',
     element: 'dark',
+  );
+
+  static final Enemy _spiritKing = Enemy(
+    name: '精霊王',
+    assetPath: 'assets/enemies/secret_boss/enemy_spirit_king_normal.png',
+    attackAssetPath: 'assets/enemies/secret_boss/enemy_spirit_king_attack.png',
+    level: 95,
+    maxHp: 12000,
+    attack: 180,
+    defense: 120,
+    speed: 60,
+    type: 'secret_boss',
+    expReward: 1500,
+    itemDrop: 'kingcore',
+    element: 'light',
   );
 
   @override
@@ -579,23 +779,85 @@ class _BattleScreenState extends State<BattleScreen>
       return;
     }
 
-    // ステージ別の敵フィルタリング（柔軟化）
+    // ステージ別の敵フィルタリング（大幅拡張）
     List<Enemy> stageEnemies;
     if (_currentStage == 1) {
-      // Stage 1: 初級敵（スライム、ゴブリン、ウルフ）
+      // Stage 1: 初級（スライム、ゴブリン、ウルフ）
       stageEnemies = _normalEnemies
           .where((e) => ['スライム', 'ゴブリン', 'ウルフ'].contains(e.name))
           .toList();
     } else if (_currentStage == 2) {
-      // Stage 2: 中級敵（ウルフ、ゾンビ、フェアリー、エレメンタル）
+      // Stage 2: 中級（ウルフ、ゾンビ、フェアリー）
       stageEnemies = _normalEnemies
-          .where((e) => ['ウルフ', 'ゾンビ', 'フェアリー', 'エレメンタル'].contains(e.name))
+          .where((e) => ['ウルフ', 'ゾンビ', 'フェアリー'].contains(e.name))
           .toList();
+    } else if (_currentStage == 3) {
+      // Stage 3: 上級（エレメンタル、ゴーレム、ドラゴン）
+      stageEnemies = _normalEnemies
+          .where((e) => ['エレメンタル', 'ゴーレム', 'ドラゴン'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 4) {
+      // Stage 4: 獣系特化（ドルモン、ガオモン、バンチョーレオモン）
+      stageEnemies = _normalEnemies
+          .where((e) => ['ドルモン', 'ガオモン', 'バンチョーレオモン'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 5) {
+      // Stage 5: 炎系（ドラゴン、火の騎士）
+      stageEnemies = _normalEnemies
+          .where((e) => ['ドラゴン', '火の騎士'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 6) {
+      // Stage 6: 水系（スライム、水の騎士）
+      stageEnemies = _normalEnemies
+          .where((e) => ['スライム', '水の騎士'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 7) {
+      // Stage 7: 草系（フェアリー、木の騎士）
+      stageEnemies = _normalEnemies
+          .where((e) => ['フェアリー', '木の騎士'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 8) {
+      // Stage 8: 雷系（エレメンタル、雷の騎士、ヘラクレスカブテリモン）
+      stageEnemies = _normalEnemies
+          .where((e) => ['エレメンタル', '雷の騎士', 'ヘラクレスカブテリモン'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 9) {
+      // Stage 9: 光系（フェアリー、光の騎士）
+      stageEnemies = _normalEnemies
+          .where((e) => ['フェアリー', '光の騎士'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 10) {
+      // Stage 10: 闇系（ゾンビ、ファントモン、ピエモン）
+      stageEnemies = _normalEnemies
+          .where((e) => ['ゾンビ', 'ファントモン', 'ピエモン'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 11) {
+      // Stage 11: ドラゴン系特化（ドラゴン、ドルゴラモン）
+      stageEnemies = _normalEnemies
+          .where((e) => ['ドラゴン', 'ドルゴラモン'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 12) {
+      // Stage 12: 機械系（ガオモン、マッハガオガモン、ミラージュガオガモン）
+      stageEnemies = _normalEnemies
+          .where((e) => ['ガオモン', 'マッハガオガモン', 'ミラージュガオガモン'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 13) {
+      // Stage 13: 五属性騎士混合
+      stageEnemies = _normalEnemies
+          .where(
+              (e) => ['火の騎士', '水の騎士', '木の騎士', '雷の騎士', '光の騎士'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 14) {
+      // Stage 14: エリート戦（バンチョーレオモン、ヘラクレスカブテリモン、ピエモン）
+      stageEnemies = _normalEnemies
+          .where((e) => ['バンチョーレオモン', 'ヘラクレスカブテリモン', 'ピエモン'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 15) {
+      // Stage 15: カオス（全敵ランダム）
+      stageEnemies = _normalEnemies;
     } else {
-      // Stage 3+: 上級敵（エレメンタル、ドラゴン、ゴーレム）
-      stageEnemies = _normalEnemies
-          .where((e) => ['エレメンタル', 'ドラゴン', 'ゴーレム'].contains(e.name))
-          .toList();
+      // Stage 16+: 最高難度（上位敵のみ）
+      stageEnemies = _normalEnemies.where((e) => e.level >= 25).toList();
     }
 
     // フォールバック: 該当敵がいない場合は全敵から選択
@@ -1281,7 +1543,8 @@ class _BattleScreenState extends State<BattleScreen>
         'コイン+$coinReward (Stage x${stageConfig.rewardMultiplier.toStringAsFixed(2)} / Wave x${waveScaling.toStringAsFixed(2)})');
 
     if (_currentEnemy.itemDrop != null) {
-      _addLog('アイテム「${_currentEnemy.itemDrop}」を入手！');
+      final itemName = LocalizationHelper.getItemName(_currentEnemy.itemDrop!);
+      _addLog('アイテム「$itemName」を入手！');
     }
 
     // データベース更新
@@ -2221,7 +2484,7 @@ class _BattleScreenState extends State<BattleScreen>
       animation: _shakeController,
       builder: (context, child) {
         final offset =
-            _enemyAttacking ? 0.0 : sin(_shakeController.value * pi * 4) * 10;
+            _enemyAttacking ? 0.0 : sin(_shakeController.value * pi * 4) * 18;
         return Transform.translate(
           offset: Offset(offset, 0),
           child: Column(
@@ -2322,7 +2585,7 @@ class _BattleScreenState extends State<BattleScreen>
                     return Opacity(
                       opacity: _enemyAttacking
                           ? 1.0
-                          : 1.0 - (_flashController.value * 0.7),
+                          : 1.0 - (_flashController.value * 0.15),
                       child: Image.asset(
                         _enemyAttacking
                             ? (_currentEnemy.type == 'secret_boss'
@@ -2361,7 +2624,7 @@ class _BattleScreenState extends State<BattleScreen>
       animation: _shakeController,
       builder: (context, child) {
         final offset =
-            _petAttacking ? 0.0 : sin(_shakeController.value * pi * 4) * 10;
+            _petAttacking ? 0.0 : sin(_shakeController.value * pi * 4) * 18;
         return Transform.translate(
           offset: Offset(offset, 0),
           child: Column(
@@ -2375,7 +2638,7 @@ class _BattleScreenState extends State<BattleScreen>
                     return Opacity(
                       opacity: _petAttacking
                           ? 1.0
-                          : 1.0 - (_flashController.value * 0.7),
+                          : 1.0 - (_flashController.value * 0.15),
                       child: Image.asset(
                         petImage,
                         height: 120,
@@ -3924,16 +4187,22 @@ class _ParticleEffectState extends State<_ParticleEffect>
   }
 
   void _generateParticles() {
-    final particleCount = widget.type == 'electric' ? 20 : 25;
+    // パーティクル数を大幅増加（2層構造）
+    final particleCount = widget.type == 'electric' ? 35 : 40;
     for (int i = 0; i < particleCount; i++) {
+      // 内側と外側の2層
+      final isInnerLayer = i < particleCount * 0.4;
       _particles.add(_Particle(
         type: widget.type,
         angle: _random.nextDouble() * 2 * pi,
-        distance: 50 + _random.nextDouble() * 70,
+        distance: isInnerLayer
+            ? 30 + _random.nextDouble() * 50 // 内側層：30-80
+            : 60 + _random.nextDouble() * 90, // 外側層：60-150
         size: widget.type == 'electric'
-            ? 3 + _random.nextDouble() * 2
-            : 4 + _random.nextDouble() * 3,
-        delay: _random.nextDouble() * 0.3,
+            ? (isInnerLayer ? 4 : 5) + _random.nextDouble() * 3
+            : (isInnerLayer ? 5 : 6) + _random.nextDouble() * 4,
+        delay: _random.nextDouble() * 0.25,
+        isInner: isInnerLayer,
       ));
     }
   }
@@ -3971,43 +4240,72 @@ class _ParticleEffectState extends State<_ParticleEffect>
         animation: _controller,
         builder: (context, child) {
           return SizedBox(
-            width: 200,
-            height: 200,
+            width: 300, // エリアを拡大
+            height: 300,
             child: Stack(
-              children: _particles.map((particle) {
-                final progress = ((_controller.value - particle.delay) /
-                        (1 - particle.delay))
-                    .clamp(0.0, 1.0);
-                final opacity = (1 - progress).clamp(0.0, 1.0);
-
-                final dx = cos(particle.angle) * particle.distance * progress;
-                final dy = sin(particle.angle) * particle.distance * progress;
-
-                return Positioned(
-                  left: 150 + dx,
-                  top: 150 + dy,
-                  child: Opacity(
-                    opacity: opacity,
-                    child: Container(
-                      width: particle.size,
-                      height: particle.size,
-                      decoration: BoxDecoration(
-                        color: _getParticleColor(widget.type),
-                        shape: widget.type == 'electric'
-                            ? BoxShape.rectangle
-                            : BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: _getParticleColor(widget.type),
-                            blurRadius: particle.size * 6,
-                            spreadRadius: particle.size * 3,
+              children: [
+                // 背景爆発エフェクト（最初0.2秒間のみ）
+                if (_controller.value < 0.2)
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: (1 - _controller.value / 0.2).clamp(0.0, 1.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              _getParticleColor(widget.type).withOpacity(0.8),
+                              _getParticleColor(widget.type).withOpacity(0.3),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.5, 1.0],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                );
-              }).toList(),
+                // パーティクル渦巻き
+                ..._particles.map((particle) {
+                  final progress = ((_controller.value - particle.delay) /
+                          (1 - particle.delay))
+                      .clamp(0.0, 1.0);
+                  final opacity = (1 - progress).clamp(0.0, 1.0);
+
+                  // 渦巻き軌道: 内側層は3回転、外側層は2.5回転
+                  final double turns = particle.isInner ? 3.0 : 2.5;
+                  final double radius = particle.distance * progress;
+                  final double theta =
+                      particle.angle + progress * turns * 2 * pi;
+
+                  final dx = cos(theta) * radius;
+                  final dy = sin(theta) * radius;
+
+                  return Positioned(
+                    left: 150 + dx,
+                    top: 150 + dy,
+                    child: Opacity(
+                      opacity: opacity,
+                      child: Container(
+                        width: particle.size,
+                        height: particle.size,
+                        decoration: BoxDecoration(
+                          color: _getParticleColor(widget.type),
+                          shape: widget.type == 'electric'
+                              ? BoxShape.rectangle
+                              : BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: _getParticleColor(widget.type),
+                              blurRadius: particle.size * 8, // グロー強化
+                              spreadRadius: particle.size * 4,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
             ),
           );
         },
@@ -4022,6 +4320,7 @@ class _Particle {
   final double distance;
   final double size;
   final double delay;
+  final bool isInner; // 内側層/外側層
 
   _Particle({
     required this.type,
@@ -4029,5 +4328,6 @@ class _Particle {
     required this.distance,
     required this.size,
     required this.delay,
+    this.isInner = false,
   });
 }

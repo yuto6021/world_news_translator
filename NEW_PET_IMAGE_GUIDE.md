@@ -462,7 +462,7 @@ assets/pets/
   - `assets/pets/adult/adult_atlurkabuterimon_[状態].png`（8枚）
   - `assets/pets/ultimate/ultimate_atlurkabuterimon_[状態].png`（8枚）
 
-### 22. HerculesKabuterimon（ヘラクレスカブテリモン）
+### 22. HerculesKabuterimon（ヘラクレスカブテリモン）　敵として
 - **Stage**: ultimate
 - **特徴**: ヘラクレスオオカブト型、黄金の角
 - **属性**: 雷
@@ -509,7 +509,7 @@ assets/pets/
 - **保存先**:
   - `assets/pets/ultimate/ultimate_venommyotismon_[状態].png`（8枚）
 
-### 27. Piedmon（ピエモン）
+### 27. Piedmon（ピエモン）　敵に変更
 - **Stage**: adult → ultimate
 - **特徴**: ピエロ型、4本の剣
 - **属性**: 闇
@@ -517,7 +517,7 @@ assets/pets/
   - `assets/pets/adult/adult_piedmon_[状態].png`（8枚）
   - `assets/pets/ultimate/ultimate_piedmon_[状態].png`（8枚）
 
-### 28. Deathmon（デスモン）
+### 28. Deathmon（デスモン）　作らない
 - **Stage**: adult → ultimate
 - **特徴**: 死神型、鎌を持つ
 - **属性**: 闇
@@ -525,9 +525,9 @@ assets/pets/
   - `assets/pets/adult/adult_deathmon_[状態].png`（8枚）
   - `assets/pets/ultimate/ultimate_deathmon_[状態].png`（8枚）
 
-### 29. Phantomon（ファントモン）
+### 29. Phantomon（ファントモン）敵として
 - **Stage**: adult
-- **特徴**: 幽霊型、大鎌と鎖
+- **特徴**: 幽霊型、鎖
 - **属性**: 闇
 - **保存先**:
   - `assets/pets/adult/adult_phantomon_[状態].png`（8枚）
@@ -568,14 +568,14 @@ assets/pets/
   - `assets/pets/ultimate/ultimate_saberleomon_[状態].png`（8枚）
 （adult_saberleomon_* は不要）
 
-### 32. BanchoLeomon（バンチョーレオモン）
+### 32. BanchoLeomon（バンチョーレオモン）敵
 - **Stage**: ultimate
 - **特徴**: 番長スタイル、学ラン着用
 - **属性**: 無
 - **保存先**:
   - `assets/pets/ultimate/ultimate_bancholeomon_[状態].png`（8枚）
 
-### 33. Gaomon（ガオモン）
+### 33. Gaomon（ガオモン）敵
 - **Stage**: baby → child
 - **特徴**: ボクシンググローブを着けた犬
 - **属性**: 無
@@ -583,7 +583,7 @@ assets/pets/
   - `assets/pets/baby/baby_gaomon_[状態].png`（8枚）
   - `assets/pets/child/child_gaomon_[状態].png`（8枚）
 
-### 34. MachGaogamon（マッハガオガモン）
+### 34. MachGaogamon（マッハガオガモン）敵
 - **Stage**: child → adult
 - **特徴**: 高速犬型、流線型のボディ
 - **属性**: 無
@@ -591,7 +591,7 @@ assets/pets/
   - `assets/pets/child/child_machgaogamon_[状態].png`（8枚）
   - `assets/pets/adult/adult_machgaogamon_[状態].png`（8枚）
 
-### 35. MirageGaogamon（ミラージュガオガモン）
+### 35. MirageGaogamon（ミラージュガオガモン）　敵
 - **Stage**: adult → ultimate
 - **特徴**: 幻獣型、翼を持つ犬戦士
 - **属性**: 無
@@ -638,14 +638,14 @@ assets/pets/
   - `assets/pets/adult/adult_paildramon_[状態].png`（8枚）
   - `assets/pets/ultimate/ultimate_paildramon_[状態].png`（8枚）
 
-### 39. Imperialdramon（インペリアルドラモン）
+### 39. Imperialdramon（インペリアルドラモン）なし
 - **Stage**: ultimate
 - **特徴**: 巨大ドラゴン騎士、槍を持つ
 - **属性**: ドラゴン
 - **保存先**:
   - `assets/pets/ultimate/ultimate_imperialdramon_[状態].png`（8枚）
 
-### 40. Dorumon（ドルモン）
+### 40. Dorumon（ドルモン）敵
 - **Stage**: baby → child
 - **特徴**: 紫色の小型獣竜
 - **属性**: ドラゴン
@@ -653,7 +653,7 @@ assets/pets/
   - `assets/pets/baby/baby_dorumon_[状態].png`（8枚）
   - `assets/pets/child/child_dorumon_[状態].png`（8枚）
 
-### 41. Dorugoramon（ドルゴラモン）
+### 41. Dorugoramon（ドルゴラモン）敵
 - **Stage**: child → adult
 - **特徴**: 翼竜型、金属の翼
 - **属性**: ドラゴン
@@ -700,14 +700,14 @@ assets/pets/
   - `assets/pets/adult/adult_andromon_[状態].png`（8枚）
   - `assets/pets/ultimate/ultimate_andromon_[状態].png`（8枚）
 
-### 45. Machinedramon（ムゲンドラモン）
+### 45. Machinedramon（ムゲンドラモン）いらない
 - **Stage**: ultimate
 - **特徴**: 機械ドラゴン、巨大砲塔
 - **属性**: 機械
 - **保存先**:
   - `assets/pets/ultimate/ultimate_machinedramon_[状態].png`（8枚）
 
-### 46. Cyberdramon（サイバードラモン）
+### 46. Cyberdramon（サイバードラモン）いらない
 - **Stage**: adult → ultimate
 - **特徴**: サイボーグドラゴン、ブレード装備
 - **属性**: 機械
@@ -717,7 +717,7 @@ assets/pets/
 
 ---
 
-## 🌿 植物系統（4種）
+## 🌿 植物系統（4種）以下いらない
 
 ### 47. Palmon（パルモン）
 - **Stage**: baby → child
@@ -816,7 +816,7 @@ assets/pets/
 |------|------|------|------|------------|
 | 55 | Omegamon | WarGreymon × MetalGarurumon | 火・水 | 絆統合の双腕騎士 |
 | 56 | Alphamon | Omegamon × (任意究極体) | 光・無 | 秩序と王格 |
-| 57 | Susanoomon | Seraphimon × BanchoLeomon | 光・武 | 神話融合戦士 |
+| 57 | Susanoomon | Seraphimon × 任意にするBanchoLeomon | 光・武 | 神話融合戦士 |
 | 58 | Gallantmon | WarGreymon × Seraphimon | 火・光 | 炎と聖の槍盾騎士 |
 | 59 | Apocalymon | Omegamon × Alphamon | 全属性 | 終焉・最終目標 |
 

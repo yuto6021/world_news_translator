@@ -177,11 +177,13 @@ class _BattleScreenState extends State<BattleScreen>
   // ステージ／ウェーブ管理
   int _currentStage = 1;
   int _currentWave = 1;
-  final int _wavesPerStage = 3;
+  int get _wavesPerStage => _currentStage == 25 ? 7 : 3; // Stage 25は7wave
   int _highestClearedStage = 1; // 選択可能最大ステージ
   int _sessionWinStreak = 0; // セッション内連勝数
   late Enemy _currentEnemy;
   late int _petCurrentHp;
+  late int _petCurrentMp; // MPシステム
+  late int _petMaxMp; // 最大MP
   late AnimationController _shakeController;
   late AnimationController _flashController;
   late AnimationController _comboController;
@@ -584,6 +586,8 @@ class _BattleScreenState extends State<BattleScreen>
     };
 
     _petCurrentHp = widget.pet.hp;
+    _petMaxMp = widget.pet.level * 5 + 50; // Lv×5+50 (例: Lv1=55, Lv20=150)
+    _petCurrentMp = _petMaxMp; // 戦闘開始時は満タンMP
     _selectRandomEnemy();
     _loadStageProgress();
 
@@ -855,8 +859,79 @@ class _BattleScreenState extends State<BattleScreen>
     } else if (_currentStage == 15) {
       // Stage 15: カオス（全敵ランダム）
       stageEnemies = _normalEnemies;
+    } else if (_currentStage == 16) {
+      // Stage 16: 魔王の城（ボス系とエリート）
+      stageEnemies = _normalEnemies.where((e) => e.level >= 30).toList();
+      // 精霊王も50%の確率で出現
+      if (random.nextInt(2) == 0 && petLevel >= 50) {
+        _currentEnemy = _createScaledEnemy(_spiritKing, petLevel);
+        _addLog('⚠️ 精霊王が現れた！');
+        return;
+      }
+    } else if (_currentStage == 17) {
+      // Stage 17: 紅蓮の地獄（炎系強化版）
+      stageEnemies = _normalEnemies
+          .where((e) => ['ドラゴン', '火の騎士'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 18) {
+      // Stage 18: 深淵の海溝（水系強化版）
+      stageEnemies = _normalEnemies
+          .where((e) => ['スライム', '水の騎士'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 19) {
+      // Stage 19: 世界樹の頂（草系強化版）
+      stageEnemies = _normalEnemies
+          .where((e) => ['木の騎士', 'フェアリー'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 20) {
+      // Stage 20: 雷帝の宮殿（雷系強化版）
+      stageEnemies = _normalEnemies
+          .where((e) => ['雷の騎士', 'ヘラクレスカブテリモン'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 21) {
+      // Stage 21: 聖光の大聖堂（光系強化版）
+      stageEnemies = _normalEnemies
+          .where((e) => ['光の騎士', 'フェアリー'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 22) {
+      // Stage 22: 虚無の暗黒界（闇系強化版）
+      stageEnemies = _normalEnemies
+          .where((e) => ['ファントモン', 'ピエモン', 'ゾンビ'].contains(e.name))
+          .toList();
+    } else if (_currentStage == 23) {
+      // Stage 23: 五大騎士の試練（全騎士強化版）
+      stageEnemies =
+          _normalEnemies.where((e) => e.name.contains('騎士')).toList();
+    } else if (_currentStage == 24) {
+      // Stage 24: 伝説の覇者たち（エリート全員）
+      stageEnemies = _normalEnemies
+          .where((e) => [
+                'バンチョーレオモン',
+                'ヘラクレスカブテリモン',
+                'ピエモン',
+                'ドルゴラモン',
+                'マッハガオガモン',
+                'ミラージュガオガモン'
+              ].contains(e.name))
+          .toList();
+    } else if (_currentStage == 25) {
+      // Stage 25: 終焉の大決戦（裏ボス確定）
+      if (_currentWave <= 5) {
+        // Wave 1-5: 最強エリート
+        stageEnemies = _normalEnemies.where((e) => e.level >= 35).toList();
+      } else if (_currentWave == 6) {
+        // Wave 6: 精霊王
+        _currentEnemy = _createScaledEnemy(_spiritKing, petLevel);
+        _addLog('⚠️ 精霊王が立ちはだかる！');
+        return;
+      } else {
+        // Wave 7: 最強裏ボス
+        _currentEnemy = _createScaledEnemy(_secretBoss, petLevel);
+        _addLog('💀 最強の裏ボスが現れた！！！');
+        return;
+      }
     } else {
-      // Stage 16+: 最高難度（上位敵のみ）
+      // Stage 26+: 最高難度（上位敵のみ）
       stageEnemies = _normalEnemies.where((e) => e.level >= 25).toList();
     }
 
@@ -864,6 +939,9 @@ class _BattleScreenState extends State<BattleScreen>
     if (stageEnemies.isEmpty) {
       stageEnemies = _normalEnemies;
     }
+
+    // Stage 17以降は色違い（強化版）を50%の確率で出現
+    final bool isShiny = _currentStage >= 17 && random.nextInt(2) == 0;
 
     // ペットレベルに近い敵を選択
     final suitableEnemies =
@@ -873,11 +951,18 @@ class _BattleScreenState extends State<BattleScreen>
         ? suitableEnemies[random.nextInt(suitableEnemies.length)]
         : stageEnemies[random.nextInt(stageEnemies.length)];
 
-    _currentEnemy = _createScaledEnemy(enemy, petLevel);
+    _currentEnemy = _createScaledEnemy(enemy, petLevel, isShiny: isShiny);
+    if (isShiny) {
+      _addLog('✨ 色違いの強敵が現れた！');
+    }
   }
 
   // 敵をペットレベルに合わせてスケーリング
-  Enemy _createScaledEnemy(Enemy baseEnemy, int petLevel) {
+  Enemy _createScaledEnemy(Enemy baseEnemy, int petLevel,
+      {bool isShiny = false}) {
+    // 色違いボーナス（全ステータス1.5倍）
+    final double shinyBonus = isShiny ? 1.5 : 1.0;
+
     // (B) ボス難易度ランプ: ステージが進むほどボス強化
     final bossStageBonus =
         (baseEnemy.type == 'boss' || baseEnemy.type == 'secret_boss')
@@ -886,31 +971,42 @@ class _BattleScreenState extends State<BattleScreen>
     // StageConfig から敵ステータス倍率取得
     final stageConfig = StageService.getConfig(_currentStage);
 
+    final String displayName =
+        isShiny ? '${baseEnemy.name}(強)' : baseEnemy.name;
+
     if (baseEnemy.type == 'secret_boss') {
       // シークレットボスはさらに強化
       return Enemy(
-        name: baseEnemy.name,
+        name: displayName,
         assetPath: baseEnemy.assetPath,
         attackAssetPath: baseEnemy.attackAssetPath,
-        level:
-            (baseEnemy.level * bossStageBonus * stageConfig.enemyStatMultiplier)
-                .round(),
-        maxHp:
-            (baseEnemy.maxHp * bossStageBonus * stageConfig.enemyStatMultiplier)
-                .round(),
+        level: (baseEnemy.level *
+                bossStageBonus *
+                stageConfig.enemyStatMultiplier *
+                shinyBonus)
+            .round(),
+        maxHp: (baseEnemy.maxHp *
+                bossStageBonus *
+                stageConfig.enemyStatMultiplier *
+                shinyBonus)
+            .round(),
         attack: (baseEnemy.attack *
                 bossStageBonus *
-                stageConfig.enemyStatMultiplier)
+                stageConfig.enemyStatMultiplier *
+                shinyBonus)
             .round(),
         defense: (baseEnemy.defense *
                 bossStageBonus *
-                stageConfig.enemyStatMultiplier)
+                stageConfig.enemyStatMultiplier *
+                shinyBonus)
             .round(),
-        speed: (baseEnemy.speed * (1 + _currentStage * 0.05)).round(), // 速度も上昇
+        speed: (baseEnemy.speed * (1 + _currentStage * 0.05) * shinyBonus)
+            .round(), // 速度も上昇
         type: baseEnemy.type,
         expReward: (baseEnemy.expReward *
                 bossStageBonus *
-                stageConfig.enemyStatMultiplier)
+                stageConfig.enemyStatMultiplier *
+                shinyBonus)
             .round(),
         itemDrop: baseEnemy.itemDrop,
         element: baseEnemy.element,
@@ -919,20 +1015,21 @@ class _BattleScreenState extends State<BattleScreen>
 
     // レベル差に応じたスケーリング係数（±30%）
     final levelDiff = petLevel - baseEnemy.level;
-    final scaleFactor =
-        (1.0 + (levelDiff * 0.06)) * bossStageBonus; // (B) ボスボーナス適用
-    final clampedScale = scaleFactor.clamp(0.7, 2.0); // 最小70%、最大200%
+    final scaleFactor = (1.0 + (levelDiff * 0.06)) *
+        bossStageBonus *
+        shinyBonus; // (B) ボスボーナス適用
+    final clampedScale = scaleFactor.clamp(0.7, 3.0); // 最小70%、最大300%（色違い考慮）
 
     final statScale = clampedScale * stageConfig.enemyStatMultiplier;
     return Enemy(
-      name: baseEnemy.name,
+      name: displayName,
       assetPath: baseEnemy.assetPath,
       attackAssetPath: baseEnemy.attackAssetPath,
       level: (baseEnemy.level + levelDiff ~/ 2).clamp(1, 99), // レベルも調整
       maxHp: (baseEnemy.maxHp * statScale).round(),
       attack: (baseEnemy.attack * statScale).round(),
       defense: (baseEnemy.defense * statScale).round(),
-      speed: baseEnemy.speed, // 速度は固定
+      speed: (baseEnemy.speed * shinyBonus).round(), // 色違いは速度も上昇
       type: baseEnemy.type,
       expReward: (baseEnemy.expReward * statScale).round(),
       itemDrop: baseEnemy.itemDrop,
@@ -2727,6 +2824,37 @@ class _BattleScreenState extends State<BattleScreen>
                           ),
                         ],
                       ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.bolt, color: Colors.blue, size: 14),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                value: _petCurrentMp / _petMaxMp,
+                                minHeight: 8,
+                                backgroundColor: Colors.grey[700],
+                                color: _petCurrentMp / _petMaxMp > 0.5
+                                    ? Colors.blue
+                                    : _petCurrentMp / _petMaxMp > 0.25
+                                        ? Colors.lightBlue
+                                        : Colors.blueGrey,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$_petCurrentMp/$_petMaxMp',
+                            style: const TextStyle(
+                              color: Colors.lightBlueAccent,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -3388,8 +3516,20 @@ class _BattleScreenState extends State<BattleScreen>
   }
 
   void _useSkill(Skill skill) {
+    // MPチェック
+    final manaCost = skill.manaCost ?? 0;
+    if (_petCurrentMp < manaCost) {
+      _addLog('⚠️ MPが足りない！');
+      return;
+    }
+
+    // MP消費
+    setState(() {
+      _petCurrentMp = max(0, _petCurrentMp - manaCost);
+    });
+
     // スキル使用処理（既存のattack処理を拡張）
-    _addLog('${widget.pet.name}は${skill.name}を使った！');
+    _addLog('${widget.pet.name}は${skill.name}を使った！(-${manaCost}MP)');
 
     // スキル習熟度を記録
     _incrementSkillMastery(skill.id);
@@ -3505,21 +3645,52 @@ class _BattleScreenState extends State<BattleScreen>
 
     damage = max(1, damage);
 
-    // クリティカル判定（スキルは20%）
-    final isCritical = random.nextInt(100) < 20;
-    if (isCritical) {
-      damage = (damage * 1.5).round();
-      _addLog('⚡ クリティカルヒット！');
-      HapticFeedback.heavyImpact();
+    // 連続攻撃判定（hits効果）
+    final int hitCount = skill.effects['hits']?.toInt() ?? 1;
+    int totalDamage = 0;
+
+    for (int i = 0; i < hitCount; i++) {
+      // 各ヒットでダメージを再計算（ランダム幅を持たせる）
+      int hitBaseDamage =
+          baseDamage + random.nextInt(baseDamage ~/ 5 + 1) - baseDamage ~/ 10;
+      hitBaseDamage = (hitBaseDamage * typeEffectiveness).round();
+      hitBaseDamage = (hitBaseDamage * elementBonus).round();
+      hitBaseDamage = max(1, hitBaseDamage);
+
+      int hitDamage = hitBaseDamage;
+
+      // クリティカル判定（スキルは各ヒット20%）
+      final isCritical = random.nextInt(100) < 20;
+      if (isCritical) {
+        hitDamage = (hitDamage * 1.5).round();
+        _addLog('⚡ クリティカルヒット！');
+        HapticFeedback.heavyImpact();
+      }
+
+      totalDamage += hitDamage;
+      _currentEnemy.currentHp = max(0, _currentEnemy.currentHp - hitDamage);
+
+      _shakeController.forward(from: 0);
+      _flashController.forward(from: 0);
+
+      _addLog('HIT ${i + 1}! ${hitDamage}ダメージ！');
+      _showDamageToast('-$hitDamage',
+          align: const Alignment(0, -0.2), color: Colors.redAccent);
+
+      // 各ヒット間に短い間隔
+      if (i < hitCount - 1) {
+        await _wait(300);
+        if (!_currentEnemy.isAlive) break;
+      }
+    }
+
+    // 最後に演出リセット
+    if (hitCount > 1) {
       _shakeController.repeat(reverse: true);
       await Future.delayed(const Duration(milliseconds: 400));
       _shakeController.stop();
       _shakeController.reset();
     }
-
-    _currentEnemy.currentHp = max(0, _currentEnemy.currentHp - damage);
-    _shakeController.forward(from: 0);
-    _flashController.forward(from: 0);
 
     // スキル発動エフェクト（属性パーティクル＋ダメージ数値）- 敵側に表示
     setState(() {
@@ -3527,17 +3698,19 @@ class _BattleScreenState extends State<BattleScreen>
       _particleType = skillElement;
       _particlePosition = const Alignment(0.5, -0.2); // 敵側（右）
     });
-    _showEnhancedDamageNumber(damage, isEnemy: true, isCritical: isCritical);
+    _showEnhancedDamageNumber(totalDamage, isEnemy: true, isCritical: false);
 
     // パーティクルを一定時間後に消す
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) setState(() => _showParticles = false);
     });
 
-    _addLog('${_currentEnemy.name}に${damage}ダメージ！');
-    _showDamageToast('-$damage',
-        align: const Alignment(0, -0.2), color: Colors.redAccent);
-    _gainOverdrive(12);
+    if (hitCount > 1) {
+      _addLog('${_currentEnemy.name}に合計${totalDamage}ダメージ！($hitCount HIT)');
+    } else {
+      _addLog('${_currentEnemy.name}に${totalDamage}ダメージ！');
+    }
+    _gainOverdrive(12 * hitCount);
 
     // スキル固有効果（状態異常付与など）
     if (skill.effects.isNotEmpty) {
@@ -3558,6 +3731,13 @@ class _BattleScreenState extends State<BattleScreen>
     if (!_currentEnemy.isAlive) {
       await _victory();
     } else {
+      // ターン終了時にMP回復（最大MPの10%）
+      final int mpRecover = (_petMaxMp * 0.1).round();
+      _petCurrentMp = min(_petMaxMp, _petCurrentMp + mpRecover);
+      if (mpRecover > 0) {
+        _addLog('💙 MP ${mpRecover}回復！');
+      }
+
       setState(() {
         _petTurn = false;
         _petAttacking = false;
@@ -3598,6 +3778,13 @@ class _BattleScreenState extends State<BattleScreen>
     }
 
     await _wait(1000);
+
+    // ターン終了時にMP回復（最大MPの10%）
+    final int mpRecover = (_petMaxMp * 0.1).round();
+    _petCurrentMp = min(_petMaxMp, _petCurrentMp + mpRecover);
+    if (mpRecover > 0) {
+      _addLog('💙 MP ${mpRecover}回復！');
+    }
 
     setState(() {
       _petTurn = false;

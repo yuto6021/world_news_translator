@@ -97,24 +97,38 @@ class _PetGachaScreenState extends State<PetGachaScreen>
     String rarity;
     List<String> speciesPool;
 
-    if (roll < 5) {
-      // 0.5% - GOD（配合限定専用）※画像未実装のため一時的にlegendaryから選択
+    if (roll < 2) {
+      // 0.2% - FUSION（配合限定）
+      rarity = 'fusion';
+      speciesPool = [
+        'omegamon',
+        'alphamon',
+        'susanoomon',
+        'gallantmon',
+        'apocalymon',
+      ];
+    } else if (roll < 7) {
+      // 0.5% - GOD（最高レア）
       rarity = 'god';
       speciesPool = [
-        // 配合限定キャラ（画像準備中）
-        // 'omegamon', 'alphamon', 'imperialdramon_pm'
-        // 一時的にlegendaryティアから代用
         'wargreymon',
         'metalgarurumon',
+        'seraphimon',
       ];
-    } else if (roll < 105) {
+    } else if (roll < 107) {
       // 10% - レジェンダリー（ultimate段階）
       rarity = 'legendary';
       speciesPool = [
         'wargreymon',
         'metalgarurumon',
-        'seraphimon',
-        'herculeskabuterimon',
+        'volcanisaur',
+        'megaseadramon',
+        'angewomon',
+        'atlurkabuterimon',
+        'venommyotismon',
+        'saberleomon',
+        'paildramon',
+        'andromon',
       ];
     } else if (roll < 305) {
       // 20% - エピック（上級adult/初期ultimate）
@@ -122,9 +136,14 @@ class _PetGachaScreenState extends State<PetGachaScreen>
       speciesPool = [
         'metalgreymon',
         'weregarurumon',
-        'angewomon',
-        'atlurkabuterimon',
-        'megakabuterimon'
+        'ignisaur',
+        'seadramon',
+        'gatomon',
+        'kabuterimon',
+        'kuwagamon',
+        'myotismon',
+        'exveemon',
+        'guardromon',
       ];
     } else if (roll < 605) {
       // 30% - レア（adult段階）
@@ -138,6 +157,8 @@ class _PetGachaScreenState extends State<PetGachaScreen>
         'gabumon',
         'patamon',
         'tentomon',
+        'veemon',
+        'hagurumon',
         'koromon',
         'tsunomon'
       ];
@@ -177,6 +198,9 @@ class _PetGachaScreenState extends State<PetGachaScreen>
 
   void _playRevealSfx(String rarity) {
     switch (rarity) {
+      case 'fusion':
+        _safePlay('assets/gacha/gacha_fusion.mp3');
+        break;
       case 'god':
         _safePlay('assets/gacha/gacha_god.mp3');
         break;
@@ -208,6 +232,10 @@ class _PetGachaScreenState extends State<PetGachaScreen>
     int count;
     double sizeMultiplier = 1.0;
     switch (rarity) {
+      case 'fusion':
+        count = 200; // 最高レアは最多
+        sizeMultiplier = 2.5; // 最大
+        break;
       case 'god':
         count = 150; // 神レアは最多
         sizeMultiplier = 2.0; // 最大
@@ -465,6 +493,9 @@ class _PetGachaScreenState extends State<PetGachaScreen>
       case 'god':
         return const LinearGradient(
             colors: [Color(0xFFFF5252), Color(0xFFFF1744), Color(0xFFD50000)]);
+      case 'fusion':
+        return const LinearGradient(
+            colors: [Color(0xFFFF00FF), Color(0xFF9C27B0), Color(0xFF4A148C)]);
       default:
         return const LinearGradient(
             colors: [Color(0xFFBDBDBD), Color(0xFF9E9E9E)]);
@@ -487,6 +518,8 @@ class _PetGachaScreenState extends State<PetGachaScreen>
         return const Color(0xFFFFA000);
       case 'god':
         return const Color(0xFFFF1744); // 神レア：鮮やかな赤
+      case 'fusion':
+        return const Color(0xFFFF00FF); // 配合限定：マゼンタ
       default:
         return const Color(0xFF9E9E9E);
     }
@@ -560,6 +593,8 @@ class _PetGachaScreenState extends State<PetGachaScreen>
                         _buildRarityInfo('エピック', '20%', Colors.purple),
                         _buildRarityInfo('レジェンダリー', '10%', Colors.amber),
                         _buildRarityInfo('GOD', '0.5%', Colors.red),
+                        _buildRarityInfo(
+                            'FUSION', '0.2%', const Color(0xFFFF00FF)),
                       ],
                     ),
                   ),

@@ -162,7 +162,7 @@ class _WorldNewsAppState extends State<WorldNewsApp> {
             : Colors.grey.shade100,
         elevation: 0,
       ),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         elevation: 2,
         margin: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       ),

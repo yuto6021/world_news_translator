@@ -1,5 +1,42 @@
 /// ペット画像のパスを解決するユーティリティ
 class PetImageResolver {
+  // 一部アセットはファイル名に大文字が含まれるため、種名を正規化する。
+  static const Map<String, String> _speciesFileAliases = {
+    'alphamon': 'Alphamon',
+    'apocalymon': 'Apocalymon',
+    'gallantmon': 'Gallantmon',
+    'omegamon': 'Omegamon',
+    'susanoomon': 'Susanoomon',
+  };
+
+  // 旧命名セット（attack/sleep/eat/clean ベース）を持つ種。
+  static const Set<String> _legacyAssetSpecies = {
+    'genki',
+    'warrior',
+    'beast',
+    'angel',
+    'demon',
+    'agumon',
+    'gabumon',
+    'greymon',
+    'garurumon',
+    'angemon',
+    'devimon',
+    'leomon',
+    'wargreymon',
+    'metalgarurumon',
+    'seraphimon',
+    'daemon',
+  };
+
+  // 旧命名から新命名への変換（新命名アセットを持つ種向け）。
+  static const Map<String, String> _legacyToModern = {
+    'attack': 'battle',
+    'sleep': 'sleeping',
+    'eat': 'eating',
+    'sick': 'sad',
+  };
+
   /// 旧仕様 + 新仕様 両対応ステートフォールバックマップ
   /// 新仕様要求 -> 旧仕様候補順（存在しない場合は次を試す）
   static const Map<String, List<String>> _stateFallbacks = {
@@ -38,32 +75,37 @@ class PetImageResolver {
   /// 両対応の柔軟解決メソッド（状態 or アクション問わず）
   /// 呼び出し側は希望状態(新/旧)を渡せば最適な既存アセットパスを返す
   static String resolveFlexible(String stage, String species, String desired) {
-    // 入力を小文字に正規化（アセット命名は小文字前提）
+    // ステージは小文字固定、種名は論理判定用とファイル名用で分離する。
     final st = stage.toLowerCase();
     final sp = species.toLowerCase();
+    final spFile = _speciesFileAliases[sp] ?? sp;
     final des = desired.toLowerCase();
-
-    // 直接旧仕様に存在する場合はそのまま
-    if (_legacyStates.contains(des) || _legacyActions.contains(des)) {
-      return 'assets/pets/$st/${st}_${sp}_$des.png';
-    }
-
-    // 新仕様状態の場合フォールバック列を生成
     final candidates = <String>[];
-    if (_stateFallbacks.containsKey(des)) {
-      candidates.addAll(_stateFallbacks[des]!);
+    final isLegacySpecies = _legacyAssetSpecies.contains(sp);
+
+    if (isLegacySpecies) {
+      if (_stateFallbacks.containsKey(des)) {
+        candidates.addAll(_stateFallbacks[des]!);
+      } else {
+        candidates.add(des);
+      }
+      candidates.add('normal');
     } else {
-      // 未知の入力は normal に丸める
+      if (_legacyToModern.containsKey(des)) {
+        candidates.add(_legacyToModern[des]!);
+      }
+      candidates.add(des);
       candidates.add('normal');
     }
 
+    final seen = <String>{};
     for (final c in candidates) {
-      if (_legacyStates.contains(c) || _legacyActions.contains(c)) {
-        return 'assets/pets/$st/${st}_${sp}_$c.png';
+      if (seen.add(c)) {
+        return 'assets/pets/$st/${st}_${spFile}_$c.png';
       }
     }
-    // 最終保険
-    return 'assets/pets/$st/${st}_${sp}_normal.png';
+
+    return 'assets/pets/$st/${st}_${spFile}_normal.png';
   }
 
   /// 互換維持のため旧メソッドはそのまま利用可（既存コード用）

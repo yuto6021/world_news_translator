@@ -42,7 +42,7 @@ dependencies:
   font_awesome_flutter: 10.5.0 # SNSアイコン用
   cached_network_image: ^3.4.0
   flutter_hooks: ^0.20.5
-  google_fonts: ^6.3.0
+  google_fonts: ^8.0.2
   flutter_dotenv: ^6.0.0
   share_plus: ^7.2.2
   shimmer: ^3.0.0

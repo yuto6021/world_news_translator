@@ -2711,12 +2711,6 @@ class _BattleScreenState extends State<BattleScreen>
   }
 
   Widget _buildPetArea() {
-    final petImage = PetImageResolver.resolveImage(
-      widget.pet.stage,
-      widget.pet.species,
-      'normal',
-    );
-
     return AnimatedBuilder(
       animation: _shakeController,
       builder: (context, child) {
@@ -2732,6 +2726,12 @@ class _BattleScreenState extends State<BattleScreen>
                 child: AnimatedBuilder(
                   animation: _flashController,
                   builder: (context, child) {
+                    final desiredState = _petAttacking ? 'battle' : 'normal';
+                    final petImage = PetImageResolver.resolveFlexible(
+                      widget.pet.stage,
+                      widget.pet.species,
+                      desiredState,
+                    );
                     return Opacity(
                       opacity: _petAttacking
                           ? 1.0

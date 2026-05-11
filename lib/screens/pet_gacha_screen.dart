@@ -159,8 +159,8 @@ class _PetGachaScreenState extends State<PetGachaScreen>
         'tentomon',
         'veemon',
         'hagurumon',
-        'koromon',
-        'tsunomon'
+        'gatomon',
+        'kabuterimon'
       ];
     }
 
@@ -406,15 +406,45 @@ class _PetGachaScreenState extends State<PetGachaScreen>
   }
 
   String _getInitialStage(String species) {
-    if (species.contains('war') ||
-        species.contains('metal') ||
-        species.contains('seraph') ||
-        species.contains('hercules')) {
+    const ultimateSpecies = {
+      'wargreymon',
+      'metalgarurumon',
+      'seraphimon',
+      'omegamon',
+      'alphamon',
+      'susanoomon',
+      'gallantmon',
+      'apocalymon',
+      'volcanisaur',
+      'megaseadramon',
+      'venommyotismon',
+      'saberleomon',
+      'paildramon',
+    };
+    const adultSpecies = {
+      'agumon',
+      'gabumon',
+      'greymon',
+      'garurumon',
+      'angemon',
+      'devimon',
+      'leomon',
+      'metalgreymon',
+      'weregarurumon',
+      'seadramon',
+      'kuwagamon',
+      'myotismon',
+      'exveemon',
+      'guardromon',
+      'andromon',
+      'angewomon',
+      'atlurkabuterimon',
+    };
+
+    if (ultimateSpecies.contains(species)) {
       return 'ultimate';
-    } else if (species.contains('grey') ||
-        species.contains('garuru') ||
-        species.contains('ange') ||
-        species.contains('kabu')) {
+    }
+    if (adultSpecies.contains(species)) {
       return 'adult';
     }
     return 'child';
